@@ -923,10 +923,57 @@ Respond ONLY in JSON (no markdown):
         correction = ev.correction;
         rule = ev.rule || rule;
       } catch { isCorrect = answer.trim().split(' ').length >= 3; feedback = isCorrect ? 'Good attempt!' : 'Please write a complete sentence.'; }
-    } else if (questionType === 'fix_error' || questionType === 'fill_blank') {
+    } else if (questionType === 'fix_error') {
+      // AI evaluation — string comparison is NOT reliable for sentence corrections.
+      // The student must fix the CORRECT error, not just change something else.
+      const prompt = `You are a strict English language examiner.
+
+The student was asked to fix ONE specific grammatical error in this sentence.
+
+ORIGINAL SENTENCE: "${questionData.text}"
+CORRECT VERSION: "${questionData.correct}"
+THE GRAMMAR RULE: ${questionData.rule || 'See correct version'}
+
+STUDENT'S ANSWER: "${answer}"
+
+Be STRICT. Ask yourself:
+1. Did the student fix the SAME error that was in the original sentence?
+2. Is the student's answer grammatically correct for this specific rule?
+
+Mark as WRONG if:
+- The student changed a DIFFERENT part of the sentence while leaving the original error
+- The student's version still contains the original grammatical error
+- The student just copied the original without fixing it
+- The student's version introduces a new grammatical error
+
+Mark as CORRECT only if:
+- The specific grammatical error from the original has been fixed
+- The sentence is now grammatically acceptable
+
+Respond ONLY in JSON (no markdown, no text outside JSON):
+{"correct": true/false, "feedback": "One sentence — if wrong, name EXACTLY what the student changed vs what they SHOULD have changed", "correction": "${questionData.correct}", "rule": "${(questionData.rule || '').replace(/"/g, "'")}"}`
+      ;
+      try {
+        const result = await model.generateContent(prompt);
+        const text = result.response.text().replace(/```json|```/g, '').trim();
+        const ev = JSON.parse(text);
+        isCorrect = ev.correct;
+        feedback = ev.feedback;
+        correction = ev.correct ? null : questionData.correct;
+        rule = ev.rule || rule;
+      } catch {
+        // Fallback: strict exact match only
+        const correct = (questionData.correct || '').toLowerCase().trim();
+        const given = answer.toLowerCase().trim();
+        isCorrect = given === correct;
+        feedback = isCorrect ? 'Correct!' : `Not quite. The correct answer is: "${questionData.correct}"`;
+        correction = isCorrect ? null : questionData.correct;
+      }
+    } else if (questionType === 'fill_blank') {
+      // Exact match — fill in blank has one specific correct word
       const correct = (questionData.correct || '').toLowerCase().trim();
       const given = answer.toLowerCase().trim();
-      isCorrect = given === correct || given.includes(correct.split(' ')[0]);
+      isCorrect = given === correct;
       feedback = isCorrect ? 'Correct!' : `Not quite. The correct answer is: "${questionData.correct}"`;
       correction = isCorrect ? null : questionData.correct;
     } else if (questionType === 'define_word') {
