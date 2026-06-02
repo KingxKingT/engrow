@@ -3,35 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const API = import.meta.env.VITE_API_URL || '/api';
-
-const SKILL_LABELS = {
-  grammar: 'Grammar',
-  vocabulary: 'Vocabulary',
-  reading: 'Reading',
-  writing: 'Writing',
-  dialogue: 'Dialogue'
-};
-
-const SKILL_DESCRIPTIONS = {
-  grammar: 'How well you use English rules',
-  vocabulary: 'How many words you know and use',
-  reading: 'How well you understand written English',
-  writing: 'How well you express ideas in writing',
-  dialogue: 'How well you understand real conversations'
-};
-
-const SKILL_COLORS = {
-  grammar: '#2563EB',
-  vocabulary: '#7C3AED',
-  reading: '#0891B2',
-  writing: '#059669',
-  dialogue: '#D97706'
-};
+const SKILL_LABELS = { grammar:'Grammar', vocabulary:'Vocabulary', reading:'Reading', writing:'Writing', dialogue:'Dialogue Comprehension' };
+const SKILL_DESCRIPTIONS = { grammar:'Grammar rules and sentence structure', vocabulary:'Word knowledge and usage', reading:'Understanding written English', writing:'Expressing ideas in writing', dialogue:'Understanding real conversations' };
+const SKILL_ORDER = ['grammar','vocabulary','reading','writing','dialogue'];
 
 export default function PlacementTest() {
   const { getToken } = useAuth();
   const navigate = useNavigate();
-  const [phase, setPhase] = useState('welcome'); // welcome, testing, skill_complete, all_complete
+  const [phase, setPhase] = useState('welcome');
   const [testId, setTestId] = useState(null);
   const [question, setQuestion] = useState(null);
   const [progress, setProgress] = useState(null);
@@ -40,32 +19,40 @@ export default function PlacementTest() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showHint, setShowHint] = useState(false);
-  const [skillComplete, setSkillComplete] = useState(null);
+  const [skillDone, setSkillDone] = useState(null);
   const [error, setError] = useState('');
-  const questionRef = useRef(null);
+  const [writingLevel, setWritingLevel] = useState(null);
+  const [serverWaking, setServerWaking] = useState(false);
+  const wakeTimerRef = useRef(null);
+  const topRef = useRef(null);
 
-  // Save progress to localStorage
   useEffect(() => {
-    if (testId) localStorage.setItem('engrow_test_id', testId);
-  }, [testId]);
+    const saved = localStorage.getItem('engrow_test_id');
+    if (saved) setTestId(saved);
+    return () => { if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current); };
+  }, []);
 
   async function startTest() {
     setLoading(true);
+    setError('');
+    // Show "waking up" message if API takes more than 4 seconds
+    wakeTimerRef.current = setTimeout(() => setServerWaking(true), 4000);
     try {
       const res = await fetch(`${API}/test/start`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${getToken()}`
-        }
+        method:'POST', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${getToken()}` }
       });
+      clearTimeout(wakeTimerRef.current);
+      setServerWaking(false);
+      if (!res.ok) throw new Error('Server error');
       const data = await res.json();
       setTestId(data.testId);
+      localStorage.setItem('engrow_test_id', data.testId);
       setPhase('testing');
       await fetchQuestion(data.testId);
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
+    } catch (e) {
+      clearTimeout(wakeTimerRef.current);
+      setServerWaking(false);
+      setError('Could not connect. Please try again — sometimes the server takes up to 30 seconds to wake up.');
       setLoading(false);
     }
   }
@@ -76,34 +63,24 @@ export default function PlacementTest() {
     setFeedback(null);
     setAnswer('');
     setShowHint(false);
+    setWritingLevel(null);
+    setError('');
     try {
-      const res = await fetch(`${API}/test/${tid}/question`, {
-        headers: { Authorization: `Bearer ${getToken()}` }
-      });
+      const res = await fetch(`${API}/test/${tid}/question`, { headers:{ Authorization:`Bearer ${getToken()}` } });
+      if (!res.ok) throw new Error();
       const data = await res.json();
-
-      if (data.completed) {
-        await completeTest(tid);
-        return;
+      if (data.completed || (data.skillComplete && data.allComplete)) {
+        await completeTest(tid); return;
       }
-
       if (data.skillComplete) {
-        if (data.allComplete) {
-          await completeTest(tid);
-        } else {
-          setSkillComplete({ skill: data.completedSkill, level: data.completedLevel, nextSkill: data.nextSkill });
-          setPhase('skill_complete');
-        }
-        return;
+        setSkillDone({ skill:data.completedSkill, level:data.completedLevel, next:data.nextSkill });
+        setPhase('skill_done'); setLoading(false); return;
       }
-
       setQuestion(data.question);
       setProgress(data.progress);
-
-      // Move focus to question for accessibility
-      setTimeout(() => questionRef.current?.focus(), 100);
+      setTimeout(() => topRef.current?.scrollIntoView({ behavior:'smooth', block:'start' }), 100);
     } catch {
-      setError('Could not load question. Please refresh.');
+      setError('Could not load question. Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -111,26 +88,30 @@ export default function PlacementTest() {
 
   async function submitAnswer() {
     if (!answer.trim()) return;
+    if (question?.type === 'free_write') {
+      const wc = answer.trim().split(/\s+/).filter(Boolean).length;
+      if (wc < 60) { setError('Please write more — aim for at least 80 words to show your real level.'); return; }
+    }
+    setError('');
     setSubmitting(true);
+    wakeTimerRef.current = setTimeout(() => setServerWaking(true), 4000);
     try {
       const res = await fetch(`${API}/test/${testId}/answer`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${getToken()}`
-        },
-        body: JSON.stringify({
-          answer: answer.trim(),
-          skill: question.skill,
-          level: question.level,
-          questionType: question.type,
-          questionData: question
-        })
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${getToken()}` },
+        body: JSON.stringify({ answer:answer.trim(), skill:question.skill, level:question.level, questionType:question.type, questionData:question })
       });
+      clearTimeout(wakeTimerRef.current);
+      setServerWaking(false);
+      if (!res.ok) throw new Error();
       const data = await res.json();
+      if (data.tooShort) { setError(data.feedback); return; }
+      if (data.writingLevel) setWritingLevel(data.writingLevel);
       setFeedback(data);
     } catch {
-      setError('Could not submit answer. Please try again.');
+      clearTimeout(wakeTimerRef.current);
+      setServerWaking(false);
+      setError('Could not submit. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -139,320 +120,226 @@ export default function PlacementTest() {
   async function completeTest(tid) {
     setPhase('completing');
     try {
-      const res = await fetch(`${API}/test/${tid}/complete`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${getToken()}` }
-      });
+      const res = await fetch(`${API}/test/${tid}/complete`, { method:'POST', headers:{ Authorization:`Bearer ${getToken()}` } });
+      if (!res.ok) throw new Error();
       const data = await res.json();
       localStorage.removeItem('engrow_test_id');
-      navigate('/placement-results', { state: { results: data } });
+      navigate('/placement-results', { state:{ results:data } });
     } catch {
-      setError('Could not complete test. Please refresh.');
+      setError('Could not complete test. Please refresh and try again.');
+      setPhase('testing');
     }
   }
 
-  function continueToNextSkill() {
-    setPhase('testing');
-    setSkillComplete(null);
-    fetchQuestion();
-  }
+  function continueSkill() { setPhase('testing'); setSkillDone(null); fetchQuestion(); }
 
-  if (phase === 'welcome') return <WelcomeScreen onStart={startTest} loading={loading} />;
-  if (phase === 'skill_complete') return <SkillCompleteScreen info={skillComplete} onContinue={continueToNextSkill} />;
-  if (phase === 'completing') return <CompletingScreen />;
+  const wordCount = answer.trim() ? answer.trim().split(/\s+/).filter(Boolean).length : 0;
+
+  if (phase === 'welcome') return <Welcome onStart={startTest} loading={loading} serverWaking={serverWaking} error={error} />;
+  if (phase === 'skill_done') return <SkillDone info={skillDone} onContinue={continueSkill} />;
+  if (phase === 'completing') return <Completing />;
 
   return (
-    <div style={styles.page}>
-      <div style={styles.container}>
-        {/* Top bar */}
-        <div style={styles.topBar}>
-          <div style={styles.skillPills}>
-            {Object.keys(SKILL_LABELS).map((s, i) => {
-              const isCurrent = progress?.currentSkill === s;
-              const isDone = progress ? i < progress.skillIndex : false;
+    <div style={S.page}>
+      <div ref={topRef} style={S.container}>
+
+        {/* Skill progress pills */}
+        {progress && (
+          <div style={S.skillBar}>
+            {SKILL_ORDER.map((s, i) => {
+              const done = i < progress.skillIndex;
+              const current = s === progress.currentSkill;
               return (
-                <div key={s} style={{
-                  ...styles.skillPill,
-                  background: isDone ? 'var(--color-success-light)' : isCurrent ? SKILL_COLORS[s] + '15' : 'transparent',
-                  color: isDone ? 'var(--color-success)' : isCurrent ? SKILL_COLORS[s] : 'var(--color-text-tertiary)',
-                  borderColor: isDone ? 'var(--color-success)' : isCurrent ? SKILL_COLORS[s] : 'var(--color-border)',
-                  fontWeight: isCurrent ? 600 : 400
+                <div key={s} style={{ ...S.skillChip,
+                  background: done ? '#DCFCE7' : current ? '#EEF2FF' : 'var(--surface)',
+                  borderColor: done ? '#86EFAC' : current ? 'var(--blue-primary)' : 'var(--border)',
+                  color: done ? '#15803D' : current ? 'var(--blue-primary)' : 'var(--text-tertiary)',
+                  fontWeight: current ? 600 : 400
                 }}>
-                  {isDone && <span aria-hidden="true">✓ </span>}
-                  {SKILL_LABELS[s]}
+                  {done && '✓ '}{SKILL_LABELS[s]}
                 </div>
               );
             })}
-          </div>
-
-          <button
-            onClick={() => {
-              if (confirm('Leave the test? Your progress is saved and you can continue later.')) {
-                navigate('/dashboard');
-              }
-            }}
-            style={styles.exitBtn}
-            aria-label="Exit test — your progress is saved"
-          >
-            Save & exit
-          </button>
-        </div>
-
-        {error && (
-          <div className="alert alert-error" style={{ marginBottom: '1rem' }} role="alert">
-            {error}
+            <button onClick={() => { if(confirm('Leave? Progress is saved — you can continue later.')) navigate('/dashboard'); }} style={S.exitBtn}>
+              Save & exit
+            </button>
           </div>
         )}
 
-        {/* Question area */}
-        {loading ? (
-          <QuestionSkeleton />
-        ) : question ? (
-          <div style={styles.questionCard}>
-            {/* Skill header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem' }}>
-              <div style={{
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                background: SKILL_COLORS[question.skill],
-                flexShrink: 0
-              }} />
-              <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-text-secondary)' }}>
+        {/* Server waking up notice */}
+        {serverWaking && (
+          <div style={{ background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'var(--radius-md)', padding:'0.75rem 1rem', marginBottom:'1rem', fontSize:'13px', color:'#92400E', display:'flex', alignItems:'center', gap:'8px' }}>
+            <div className="spinner" style={{ width:'14px', height:'14px', borderWidth:'2px', borderColor:'#FCD34D', borderTopColor:'#D97706' }} />
+            The server is waking up — this can take up to 30 seconds. Please wait.
+          </div>
+        )}
+
+        {error && !serverWaking && (
+          <div className="alert alert-error" style={{ marginBottom:'1rem' }} role="alert">{error}</div>
+        )}
+
+        {/* Question card */}
+        {loading && !question ? <Skeleton /> : question ? (
+          <div style={S.card}>
+            <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'1.25rem' }}>
+              <div style={{ width:'8px', height:'8px', borderRadius:'50%', background:'var(--blue-primary)', flexShrink:0 }} />
+              <span style={{ fontSize:'13px', color:'var(--text-secondary)' }}>
                 {SKILL_LABELS[question.skill]} — {SKILL_DESCRIPTIONS[question.skill]}
               </span>
             </div>
 
-            {/* Encouragement if struggling */}
             {progress?.showEncouragement && (
-              <div style={styles.encouragement}>
-                This is meant to be hard — that's how we find your real level. Keep going.
+              <div style={{ background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'var(--radius-md)', padding:'0.65rem 0.875rem', fontSize:'13px', color:'#92400E', marginBottom:'1.25rem' }}>
+                Getting harder on purpose — this is how we find your real ceiling. Keep going.
               </div>
             )}
 
-            {/* Question */}
-            <div
-              ref={questionRef}
-              tabIndex={-1}
-              style={styles.questionText}
-              aria-live="polite"
-            >
-              <p style={styles.instruction}>{question.instruction}</p>
+            <p style={{ fontSize:'15px', fontWeight:500, color:'var(--text)', marginBottom:'1rem', lineHeight:1.5 }}>
+              {question.instruction}
+            </p>
 
-              {/* Reading passage */}
-              {question.text && question.type !== 'fill_blank' && question.type !== 'fix_error' && (
-                <div style={styles.passage}>{question.text}</div>
-              )}
+            {/* Passage */}
+            {question.text && !['fill_blank','fix_error'].includes(question.type) && (
+              <div style={S.passage}>{question.text}</div>
+            )}
 
-              {/* Question for comprehension */}
-              {question.question && (
-                <p style={styles.questionPrompt}>{question.question}</p>
-              )}
+            {/* Comprehension question */}
+            {question.question && (
+              <p style={{ fontSize:'15px', fontWeight:500, color:'var(--text)', marginTop:'0.75rem', marginBottom:'1rem' }}>
+                {question.question}
+              </p>
+            )}
 
-              {/* Fix error sentence */}
-              {question.type === 'fix_error' && (
-                <div style={styles.errorSentence}>
-                  <span style={{ color: 'var(--color-error)', fontStyle: 'italic' }}>"{question.text}"</span>
-                </div>
-              )}
+            {/* Error sentence */}
+            {question.type === 'fix_error' && (
+              <div style={{ background:'#FFF1F2', border:'1px solid #FECACA', borderRadius:'var(--radius-md)', padding:'0.875rem 1rem', marginBottom:'1rem', fontStyle:'italic', color:'#B91C1C', fontSize:'15px' }}>
+                "{question.text}"
+              </div>
+            )}
 
-              {/* Word to define or use */}
-              {question.word && (
-                <div style={styles.wordHighlight}>
-                  <span style={{ fontFamily: 'var(--font-serif)', fontSize: '22px', color: 'var(--color-primary)' }}>
-                    {question.word}
-                  </span>
-                </div>
-              )}
-            </div>
+            {/* Word highlight */}
+            {question.word && (
+              <div style={{ background:'var(--blue-light)', border:'1px solid var(--blue-medium)', borderRadius:'var(--radius-md)', padding:'0.875rem 1.25rem', marginBottom:'1rem', textAlign:'center' }}>
+                <span style={{ fontFamily:'var(--font-serif)', fontSize:'26px', color:'var(--blue-primary)' }}>{question.word}</span>
+              </div>
+            )}
 
             {/* Answer area */}
             {!feedback && (
-              <div style={{ marginTop: '1.5rem' }}>
-                {question.type === 'fill_blank' && question.options ? (
-                  // Multiple choice for fill in blank
-                  <div style={styles.optionsGrid} role="group" aria-label="Choose your answer">
+              <div>
+                {/* Multiple choice */}
+                {(question.type === 'fill_blank' || question.type === 'choose_correct') && question.options ? (
+                  <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'1rem' }} role="group" aria-label="Choose your answer">
                     {question.options.map(opt => (
-                      <button
-                        key={opt}
-                        onClick={() => setAnswer(opt)}
-                        style={{
-                          ...styles.optionBtn,
-                          borderColor: answer === opt ? 'var(--color-primary)' : 'var(--color-border)',
-                          background: answer === opt ? 'var(--color-primary-light)' : 'white',
-                          color: answer === opt ? 'var(--color-primary)' : 'var(--color-text)',
-                          fontWeight: answer === opt ? 500 : 400
-                        }}
-                        aria-pressed={answer === opt}
-                      >
+                      <button key={opt} onClick={() => setAnswer(opt)} aria-pressed={answer===opt}
+                        style={{ padding:'0.6rem 1.25rem', border:'1.5px solid', borderRadius:'var(--radius-md)', fontSize:'14px', cursor:'pointer', fontFamily:'var(--font-sans)', transition:'all 0.14s',
+                          borderColor:answer===opt?'var(--blue-primary)':'var(--border)',
+                          background:answer===opt?'var(--blue-light)':'white',
+                          color:answer===opt?'var(--blue-primary)':'var(--text)',
+                          fontWeight:answer===opt?500:400
+                        }}>
                         {opt}
                       </button>
                     ))}
                   </div>
-                ) : question.type === 'choose_correct' && question.options ? (
-                  <div style={styles.optionsGrid} role="group" aria-label="Choose your answer">
-                    {question.options.map(opt => (
-                      <button
-                        key={opt}
-                        onClick={() => setAnswer(opt)}
-                        style={{
-                          ...styles.optionBtn,
-                          borderColor: answer === opt ? 'var(--color-primary)' : 'var(--color-border)',
-                          background: answer === opt ? 'var(--color-primary-light)' : 'white',
-                          color: answer === opt ? 'var(--color-primary)' : 'var(--color-text)'
-                        }}
-                        aria-pressed={answer === opt}
-                      >
-                        {opt}
-                      </button>
-                    ))}
+                ) : question.type === 'free_write' ? (
+                  <div>
+                    <div style={{ background:'var(--blue-light)', border:'1px solid var(--blue-medium)', borderRadius:'var(--radius-md)', padding:'0.75rem 1rem', marginBottom:'0.875rem', fontSize:'13px', color:'var(--blue-primary)', lineHeight:1.6 }}>
+                      Write between <strong>80 and 150 words</strong>. Write about a real experience — the more genuine, the more accurate your result will be.
+                    </div>
+                    <textarea className="form-input" value={answer} onChange={e => { setAnswer(e.target.value); setError(''); }}
+                      placeholder="Write your answer here..." rows={8} aria-label="Your written answer"
+                      style={{ fontSize:'15px', lineHeight:1.8 }} />
+                    <div style={{ display:'flex', justifyContent:'space-between', marginTop:'5px' }}>
+                      <span style={{ fontSize:'12px', color: wordCount < 60 ? 'var(--amber-error)' : wordCount >= 80 ? 'var(--green-accent)' : 'var(--text-tertiary)' }}>
+                        {wordCount} words {wordCount < 60 ? '— keep writing' : wordCount >= 80 && wordCount <= 150 ? '— good ✓' : wordCount > 150 ? '— slightly over' : ''}
+                      </span>
+                      <span style={{ fontSize:'12px', color:'var(--text-tertiary)' }}>Target: 80–150 words</span>
+                    </div>
                   </div>
                 ) : (
-                  // Text input for everything else
-                  <div>
-                    {question.type === 'free_write' ? (
-                      <textarea
-                        className="form-input"
-                        value={answer}
-                        onChange={e => setAnswer(e.target.value)}
-                        placeholder="Write your answer here..."
-                        rows={6}
-                        aria-label="Your answer"
-                        style={{ fontSize: '15px' }}
-                      />
-                    ) : (
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={answer}
-                        onChange={e => setAnswer(e.target.value)}
-                        placeholder="Type your answer here..."
-                        onKeyDown={e => e.key === 'Enter' && answer.trim() && submitAnswer()}
-                        aria-label="Your answer"
-                        autoFocus
-                      />
-                    )}
-
-                    {/* Word count for free write */}
-                    {question.type === 'free_write' && (
-                      <p style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginTop: '6px', textAlign: 'right' }}>
-                        {answer.trim().split(/\s+/).filter(Boolean).length} words
-                        {question.minWords && ` (aim for at least ${question.minWords})`}
-                      </p>
-                    )}
-                  </div>
+                  <input type="text" className="form-input" value={answer}
+                    onChange={e => { setAnswer(e.target.value); setError(''); }}
+                    placeholder="Type your answer here..."
+                    onKeyDown={e => e.key==='Enter' && answer.trim() && !submitting && submitAnswer()}
+                    autoFocus aria-label="Your answer" style={{ fontSize:'15px' }} />
                 )}
 
                 {/* Hint */}
-                {question.hint && (
-                  <div style={{ marginTop: '1rem' }}>
-                    {showHint ? (
-                      <div style={styles.hintBox}>
-                        <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-warning)' }}>Hint: </span>
-                        <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>{question.hint}</span>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setShowHint(true)}
-                        style={styles.hintBtn}
-                        aria-label="Show hint"
-                      >
-                        Need a hint?
-                      </button>
-                    )}
+                {question.hint && !showHint && (
+                  <button onClick={() => setShowHint(true)} style={{ background:'none', border:'none', fontSize:'13px', color:'var(--blue-primary)', cursor:'pointer', fontFamily:'var(--font-sans)', marginTop:'0.75rem', padding:0, textDecoration:'underline' }}>
+                    Need a hint?
+                  </button>
+                )}
+                {showHint && question.hint && (
+                  <div style={{ background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'var(--radius-md)', padding:'0.65rem 0.875rem', marginTop:'0.75rem', fontSize:'13px', color:'#92400E' }}>
+                    <strong>Hint: </strong>{question.hint}
                   </div>
                 )}
 
                 {/* Submit */}
-                <div style={{ display: 'flex', gap: '12px', marginTop: '1.25rem' }}>
-                  <button
-                    onClick={submitAnswer}
-                    disabled={!answer.trim() || submitting}
-                    className="btn btn-primary"
-                    style={{ flex: 1, padding: '0.7rem' }}
-                    aria-busy={submitting}
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="spinner" style={{ borderTopColor: 'white', borderColor: 'rgba(255,255,255,0.3)', width: '16px', height: '16px' }} />
-                        Checking...
+                <button onClick={submitAnswer} disabled={!answer.trim() || submitting} className="btn btn-primary"
+                  style={{ width:'100%', marginTop:'1.125rem', padding:'0.7rem' }} aria-busy={submitting}>
+                  {submitting
+                    ? <><div className="spinner" style={{ borderTopColor:'white', borderColor:'rgba(255,255,255,0.3)', width:'15px', height:'15px' }} />
+                        {question.type==='free_write' ? 'Analysing your writing...' : 'Checking your answer...'}
                       </>
-                    ) : 'Submit answer'}
-                  </button>
-                </div>
+                    : question.type === 'free_write' ? 'Submit writing →' : 'Submit answer →'
+                  }
+                </button>
               </div>
             )}
 
             {/* Feedback */}
             {feedback && (
-              <div style={{ marginTop: '1.5rem' }} aria-live="polite" aria-label="Feedback on your answer">
-                <div style={{
-                  ...styles.feedbackBox,
-                  borderColor: feedback.correct ? 'var(--green-500)' : 'var(--color-error)',
-                  background: feedback.correct ? 'var(--color-success-light)' : 'var(--color-error-light)'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <div style={{
-                      width: '22px',
-                      height: '22px',
-                      borderRadius: '50%',
-                      background: feedback.correct ? 'var(--color-success)' : 'var(--color-error)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}>
-                      {feedback.correct ? (
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" aria-hidden="true">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      ) : (
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" aria-hidden="true">
-                          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
-                      )}
+              <div aria-live="polite">
+                {writingLevel ? (
+                  <div style={{ background:'var(--blue-light)', border:'1.5px solid var(--blue-medium)', borderRadius:'var(--radius-lg)', padding:'1.25rem' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'10px' }}>
+                      <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:'var(--blue-primary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                      </div>
+                      <div>
+                        <div style={{ fontSize:'14px', fontWeight:600, color:'var(--blue-primary)' }}>Writing analysed</div>
+                        <div style={{ fontSize:'13px', color:'var(--text-secondary)' }}>Detected level: <strong>{writingLevel}</strong></div>
+                      </div>
                     </div>
-                    <span style={{
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: feedback.correct ? 'var(--color-success)' : 'var(--color-error)'
-                    }}>
-                      {feedback.correct ? 'Well done!' : 'Almost there'}
-                    </span>
+                    <p style={{ fontSize:'13px', color:'var(--text-secondary)', margin:0, lineHeight:1.7 }}>{feedback.feedback}</p>
                   </div>
-
-                  <p style={{ fontSize: '14px', color: 'var(--color-text)', marginBottom: feedback.correction ? '8px' : 0 }}>
-                    {feedback.feedback}
-                  </p>
-
-                  {feedback.correction && (
-                    <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(255,255,255,0.6)', borderRadius: 'var(--radius-md)' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--color-text-secondary)', display: 'block', marginBottom: '2px' }}>
-                        Correct answer:
-                      </span>
-                      <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-text)' }}>
-                        {feedback.correction}
-                      </span>
-                    </div>
-                  )}
-
-                  {feedback.rule && (
-                    <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(255,255,255,0.6)', borderRadius: 'var(--radius-md)' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--color-text-secondary)', display: 'block', marginBottom: '2px' }}>
-                        The rule:
-                      </span>
-                      <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
-                        {feedback.rule}
+                ) : (
+                  <div style={{ border:'1.5px solid', borderRadius:'var(--radius-lg)', padding:'1.125rem',
+                    borderColor:feedback.correct?'#86EFAC':'#FECACA',
+                    background:feedback.correct?'#F0FDF4':'#FFF1F2'
+                  }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'8px' }}>
+                      <div style={{ width:'20px', height:'20px', borderRadius:'50%', background:feedback.correct?'var(--green-accent)':'#EF4444', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                        {feedback.correct
+                          ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                          : <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        }
+                      </div>
+                      <span style={{ fontSize:'14px', fontWeight:600, color:feedback.correct?'var(--green-accent)':'#DC2626' }}>
+                        {feedback.correct ? 'Correct' : 'Almost there'}
                       </span>
                     </div>
-                  )}
-                </div>
-
-                <button
-                  onClick={() => fetchQuestion()}
-                  className="btn btn-primary"
-                  style={{ width: '100%', marginTop: '1rem', padding: '0.7rem' }}
-                >
+                    <p style={{ fontSize:'13px', color:'var(--text)', marginBottom:feedback.correction||feedback.rule?'8px':0 }}>
+                      {feedback.feedback}
+                    </p>
+                    {feedback.correction && (
+                      <div style={{ background:'rgba(255,255,255,0.7)', borderRadius:'var(--radius-md)', padding:'8px 10px', marginTop:'6px' }}>
+                        <div style={{ fontSize:'11px', fontWeight:600, color:'var(--text-secondary)', marginBottom:'2px' }}>CORRECT ANSWER</div>
+                        <div style={{ fontSize:'14px', fontWeight:500, color:'var(--text)' }}>{feedback.correction}</div>
+                      </div>
+                    )}
+                    {feedback.rule && (
+                      <div style={{ background:'rgba(255,255,255,0.7)', borderRadius:'var(--radius-md)', padding:'8px 10px', marginTop:'6px' }}>
+                        <div style={{ fontSize:'11px', fontWeight:600, color:'var(--text-secondary)', marginBottom:'2px' }}>THE RULE</div>
+                        <div style={{ fontSize:'13px', color:'var(--text-secondary)' }}>{feedback.rule}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <button onClick={() => fetchQuestion()} className="btn btn-primary" style={{ width:'100%', marginTop:'0.875rem', padding:'0.7rem' }}>
                   Next question →
                 </button>
               </div>
@@ -464,233 +351,112 @@ export default function PlacementTest() {
   );
 }
 
-function WelcomeScreen({ onStart, loading }) {
+function Welcome({ onStart, loading, serverWaking, error }) {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)', padding: '2rem 1rem' }}>
-      <div style={{ maxWidth: '520px', width: '100%', textAlign: 'center' }}>
-        <a href="/" style={{ fontFamily: 'var(--font-serif)', fontSize: '28px', color: 'var(--color-primary)', letterSpacing: '-0.02em', textDecoration: 'none', display: 'block', marginBottom: '2.5rem' }}>
-          Engrow
-        </a>
-
-        <h1 style={{ fontSize: '28px', fontWeight: 500, marginBottom: '1rem', letterSpacing: '-0.02em' }}>
-          Let's find your real English level
-        </h1>
-
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: '16px', lineHeight: 1.75, marginBottom: '2rem' }}>
-          This test checks 5 skills separately: grammar, vocabulary, reading, writing, and dialogue comprehension. It takes about <strong>10 to 15 minutes</strong>.
+    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', padding:'2rem 1rem' }}>
+      <div style={{ maxWidth:'500px', width:'100%' }}>
+        <div style={{ fontFamily:'var(--font-serif)', fontSize:'26px', color:'var(--blue-primary)', letterSpacing:'-0.02em', marginBottom:'2rem', textAlign:'center' }}>Engrow</div>
+        <h1 style={{ fontSize:'24px', fontWeight:500, marginBottom:'0.875rem', letterSpacing:'-0.02em', textAlign:'center' }}>Your placement test</h1>
+        <p style={{ color:'var(--text-secondary)', fontSize:'14px', lineHeight:1.75, marginBottom:'1.5rem', textAlign:'center' }}>
+          This test checks 5 skills separately. It adapts to your level as you go. Takes about <strong>12–18 minutes</strong>.
         </p>
 
-        <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '1.25rem 1.5rem', marginBottom: '2rem', textAlign: 'left' }}>
+        <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--radius-lg)', padding:'1.125rem 1.375rem', marginBottom:'1.25rem' }}>
           {[
-            'The questions get harder as you do well — that\'s how we find your real level.',
-            'If you feel stuck near the end, that\'s normal and expected.',
-            'Each skill is tested separately. You may score differently on each one.',
-            'Your progress is saved if you need to stop and come back.'
-          ].map((item, i) => (
-            <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: i < 3 ? '10px' : 0 }}>
-              <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'var(--color-primary-light)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 600, flexShrink: 0, marginTop: '2px' }}>
-                {i + 1}
+            ['Grammar','Fix errors and write sentences — tests real knowledge'],
+            ['Vocabulary','Define words and use them — tests depth, not guessing'],
+            ['Reading','Passages that get harder — tests real comprehension'],
+            ['Writing','Write 80–150 words — AI reads and assesses your level'],
+            ['Dialogue','Real conversations — tests meaning and tone']
+          ].map(([skill, desc], i) => (
+            <div key={skill} style={{ display:'flex', gap:'10px', alignItems:'flex-start', marginBottom: i < 4 ? '10px' : 0 }}>
+              <div style={{ width:'22px', height:'22px', borderRadius:'50%', background:'var(--blue-light)', color:'var(--blue-primary)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:700, flexShrink:0, marginTop:'2px' }}>{i+1}</div>
+              <div>
+                <div style={{ fontSize:'13px', fontWeight:500, color:'var(--text)' }}>{skill}</div>
+                <div style={{ fontSize:'12px', color:'var(--text-tertiary)', marginTop:'1px' }}>{desc}</div>
               </div>
-              <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.6 }}>{item}</p>
             </div>
           ))}
         </div>
 
-        <button onClick={onStart} disabled={loading} className="btn btn-primary btn-lg" style={{ width: '100%' }}>
-          {loading ? (
-            <><div className="spinner" style={{ borderTopColor: 'white', borderColor: 'rgba(255,255,255,0.3)' }} />Starting...</>
-          ) : 'Start placement test'}
-        </button>
-
-        <p style={{ marginTop: '1rem', fontSize: '13px', color: 'var(--color-text-tertiary)' }}>
-          Free — no credit card needed
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function SkillCompleteScreen({ info, onContinue }) {
-  const nextLabel = SKILL_LABELS[info.nextSkill];
-  return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)', padding: '2rem 1rem' }}>
-      <div style={{ maxWidth: '480px', width: '100%', textAlign: 'center' }}>
-        <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--color-success-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2.5" aria-hidden="true">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
+        <div style={{ background:'var(--blue-light)', border:'1px solid var(--blue-medium)', borderRadius:'var(--radius-md)', padding:'0.75rem 1rem', marginBottom:'1.25rem', fontSize:'13px', color:'var(--blue-primary)', lineHeight:1.6 }}>
+          The test gets harder near the end on purpose — this is how we find your real ceiling. If it feels hard, that is correct.
         </div>
-        <h2 style={{ fontSize: '22px', fontWeight: 500, marginBottom: '0.75rem' }}>
-          {SKILL_LABELS[info.skill]} complete
-        </h2>
-        <p style={{ color: 'var(--color-text-secondary)', marginBottom: '2rem', lineHeight: 1.75 }}>
-          That skill is done. Up next: <strong>{nextLabel}</strong> — {SKILL_DESCRIPTIONS[info.nextSkill]}.
-        </p>
-        <button onClick={onContinue} className="btn btn-primary btn-lg" style={{ width: '100%' }}>
-          Continue to {nextLabel} →
+
+        {serverWaking && (
+          <div style={{ background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'var(--radius-md)', padding:'0.75rem 1rem', marginBottom:'1rem', fontSize:'13px', color:'#92400E', display:'flex', alignItems:'center', gap:'8px' }}>
+            <div className="spinner" style={{ width:'14px', height:'14px', borderWidth:'2px', borderColor:'#FCD34D', borderTopColor:'#D97706' }} />
+            Server is waking up — please wait up to 30 seconds. Do not refresh.
+          </div>
+        )}
+
+        {error && !serverWaking && (
+          <div className="alert alert-error" style={{ marginBottom:'1rem' }} role="alert">{error}
+            <button onClick={onStart} style={{ marginLeft:'10px', background:'none', border:'none', color:'var(--amber-error)', textDecoration:'underline', cursor:'pointer', fontFamily:'var(--font-sans)', fontSize:'13px' }}>
+              Try again
+            </button>
+          </div>
+        )}
+
+        <button onClick={onStart} disabled={loading} className="btn btn-primary btn-lg" style={{ width:'100%' }}>
+          {loading && !serverWaking
+            ? <><div className="spinner" style={{ borderTopColor:'white', borderColor:'rgba(255,255,255,0.3)' }} />Connecting...</>
+            : loading && serverWaking
+            ? <><div className="spinner" style={{ borderTopColor:'white', borderColor:'rgba(255,255,255,0.3)' }} />Waiting for server...</>
+            : 'Start placement test'}
         </button>
+        <p style={{ textAlign:'center', fontSize:'12px', color:'var(--text-tertiary)', marginTop:'0.875rem' }}>
+          Free — progress is saved if you need to stop
+        </p>
       </div>
     </div>
   );
 }
 
-function CompletingScreen() {
+function SkillDone({ info, onContinue }) {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)', flexDirection: 'column', gap: '1rem' }}>
-      <div className="spinner" style={{ width: '32px', height: '32px', borderWidth: '3px' }} />
-      <p style={{ color: 'var(--color-text-secondary)', fontSize: '16px' }}>Analysing your results...</p>
+    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', padding:'2rem 1rem' }}>
+      <div style={{ maxWidth:'440px', width:'100%', textAlign:'center' }}>
+        <div style={{ width:'52px', height:'52px', borderRadius:'50%', background:'#DCFCE7', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 1.25rem' }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#15803D" strokeWidth="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2 style={{ fontSize:'20px', fontWeight:500, marginBottom:'0.5rem' }}>{SKILL_LABELS[info?.skill]} complete</h2>
+        <p style={{ color:'var(--text-secondary)', fontSize:'14px', lineHeight:1.75, marginBottom:'1.5rem' }}>
+          Next: <strong>{SKILL_LABELS[info?.next]}</strong> — {SKILL_DESCRIPTIONS[info?.next]}
+        </p>
+        <button onClick={onContinue} className="btn btn-primary btn-lg" style={{ width:'100%' }}>Continue →</button>
+      </div>
     </div>
   );
 }
 
-function QuestionSkeleton() {
+function Completing() {
   return (
-    <div style={{ ...styles.questionCard }}>
-      <div className="skeleton" style={{ height: '16px', width: '40%', marginBottom: '1.5rem' }} />
-      <div className="skeleton" style={{ height: '20px', width: '85%', marginBottom: '0.75rem' }} />
-      <div className="skeleton" style={{ height: '80px', marginBottom: '1.5rem', borderRadius: 'var(--radius-md)' }} />
-      <div className="skeleton" style={{ height: '44px', marginBottom: '0.75rem' }} />
-      <div className="skeleton" style={{ height: '44px', width: '60%' }} />
+    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', flexDirection:'column', gap:'1rem' }}>
+      <div className="spinner" style={{ width:'28px', height:'28px', borderWidth:'2.5px' }} />
+      <p style={{ color:'var(--text-secondary)', fontSize:'15px' }}>Analysing your results...</p>
+      <p style={{ color:'var(--text-tertiary)', fontSize:'13px' }}>This takes about 15 seconds</p>
     </div>
   );
 }
 
-const styles = {
-  page: {
-    minHeight: '100vh',
-    background: 'var(--color-bg)',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    padding: '1.5rem 1rem 3rem'
-  },
-  container: {
-    width: '100%',
-    maxWidth: '640px'
-  },
-  topBar: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: '1.5rem',
-    gap: '1rem'
-  },
-  skillPills: {
-    display: 'flex',
-    gap: '6px',
-    flexWrap: 'wrap'
-  },
-  skillPill: {
-    padding: '4px 10px',
-    borderRadius: 'var(--radius-full)',
-    fontSize: '12px',
-    fontWeight: 400,
-    border: '1px solid',
-    transition: 'all 0.2s'
-  },
-  exitBtn: {
-    background: 'none',
-    border: 'none',
-    fontSize: '13px',
-    color: 'var(--color-text-tertiary)',
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    fontFamily: 'var(--font-sans)',
-    padding: '4px 8px',
-    borderRadius: 'var(--radius-md)'
-  },
-  questionCard: {
-    background: 'var(--color-surface)',
-    border: '1px solid var(--color-border)',
-    borderRadius: 'var(--radius-xl)',
-    padding: '2rem',
-    boxShadow: 'var(--shadow-md)'
-  },
-  encouragement: {
-    background: 'var(--amber-50)',
-    border: '1px solid var(--amber-100)',
-    borderRadius: 'var(--radius-md)',
-    padding: '10px 14px',
-    fontSize: '13px',
-    color: 'var(--amber-600)',
-    marginBottom: '1.25rem'
-  },
-  instruction: {
-    fontSize: '15px',
-    fontWeight: 500,
-    color: 'var(--color-text)',
-    marginBottom: '1rem'
-  },
-  passage: {
-    background: 'var(--gray-50)',
-    border: '1px solid var(--color-border)',
-    borderRadius: 'var(--radius-md)',
-    padding: '1rem 1.25rem',
-    fontSize: '15px',
-    lineHeight: 1.8,
-    color: 'var(--color-text)',
-    marginBottom: '1.25rem',
-    whiteSpace: 'pre-line'
-  },
-  questionPrompt: {
-    fontSize: '16px',
-    fontWeight: 500,
-    color: 'var(--color-text)',
-    marginTop: '0.75rem'
-  },
-  errorSentence: {
-    background: 'var(--red-50)',
-    border: '1px solid var(--red-100)',
-    borderRadius: 'var(--radius-md)',
-    padding: '12px 16px',
-    marginBottom: '0.5rem'
-  },
-  wordHighlight: {
-    background: 'var(--color-primary-light)',
-    border: '1px solid var(--blue-200)',
-    borderRadius: 'var(--radius-md)',
-    padding: '12px 20px',
-    marginBottom: '0.5rem',
-    textAlign: 'center'
-  },
-  optionsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-    gap: '10px'
-  },
-  optionBtn: {
-    padding: '0.65rem 1rem',
-    border: '1.5px solid',
-    borderRadius: 'var(--radius-md)',
-    fontSize: '15px',
-    cursor: 'pointer',
-    fontFamily: 'var(--font-sans)',
-    transition: 'all 0.15s',
-    textAlign: 'center'
-  },
-  hintBox: {
-    background: 'var(--amber-50)',
-    border: '1px solid var(--amber-100)',
-    borderRadius: 'var(--radius-md)',
-    padding: '10px 14px'
-  },
-  hintBtn: {
-    background: 'none',
-    border: 'none',
-    fontSize: '13px',
-    color: 'var(--color-primary)',
-    cursor: 'pointer',
-    fontFamily: 'var(--font-sans)',
-    padding: 0,
-    textDecoration: 'underline'
-  },
-  feedbackBox: {
-    border: '1.5px solid',
-    borderRadius: 'var(--radius-lg)',
-    padding: '1.25rem',
-    transition: 'all 0.2s'
-  },
-  questionText: {
-    outline: 'none'
-  }
+function Skeleton() {
+  return (
+    <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--radius-xl)', padding:'2rem' }}>
+      <div className="skeleton" style={{ height:'12px', width:'40%', marginBottom:'1.5rem' }} />
+      <div className="skeleton" style={{ height:'16px', width:'75%', marginBottom:'1rem' }} />
+      <div className="skeleton" style={{ height:'80px', marginBottom:'1.5rem' }} />
+      <div className="skeleton" style={{ height:'40px', width:'55%' }} />
+    </div>
+  );
+}
+
+const S = {
+  page: { minHeight:'100vh', background:'var(--bg)', display:'flex', flexDirection:'column', alignItems:'center', padding:'1.5rem 1rem 3rem' },
+  container: { width:'100%', maxWidth:'620px' },
+  skillBar: { display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap', marginBottom:'1.25rem' },
+  skillChip: { padding:'3px 10px', borderRadius:'var(--radius-full)', fontSize:'12px', border:'1px solid', transition:'all 0.15s' },
+  exitBtn: { marginLeft:'auto', background:'none', border:'none', fontSize:'12px', color:'var(--text-tertiary)', cursor:'pointer', fontFamily:'var(--font-sans)', padding:'3px 6px' },
+  card: { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--radius-xl)', padding:'2rem', boxShadow:'var(--shadow-md)' },
+  passage: { background:'var(--bg)', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', padding:'1rem 1.125rem', fontSize:'14px', lineHeight:1.85, color:'var(--text)', marginBottom:'1rem', whiteSpace:'pre-line' }
 };

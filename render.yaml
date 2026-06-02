@@ -1,24 +1,29 @@
 services:
   - type: web
-    name: engrow-backend
+    name: engrow
     env: node
+    rootDir: backend
     buildCommand: npm install
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        fromDatabase:
-          name: engrow-db
-          property: connectionString
+        sync: false
       - key: JWT_SECRET
-        generateValue: true
+        sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: FRONTEND_URL
         sync: false
 
-databases:
-  - name: engrow-db
-    databaseName: engrow
-    plan: free
+  - type: web
+    name: engrow-1
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

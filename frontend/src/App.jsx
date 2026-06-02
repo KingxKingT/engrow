@@ -12,43 +12,33 @@ import Lesson from './pages/Lesson';
 import Progress from './pages/Progress';
 import Settings from './pages/Settings';
 
-function ProtectedRoute({ children }) {
+function Protected({ children }) {
   const { user, loading, needsPlacementTest } = useAuth();
-  if (loading) return <LoadingScreen />;
+  if (loading) return <Loader />;
   if (!user) return <Navigate to="/auth" replace />;
   if (needsPlacementTest) return <Navigate to="/placement-test" replace />;
   return children;
 }
 
-function PublicRoute({ children }) {
+function Public({ children }) {
   const { user, loading, needsPlacementTest } = useAuth();
-  if (loading) return <LoadingScreen />;
-  if (user) {
-    if (needsPlacementTest) return <Navigate to="/placement-test" replace />;
-    return <Navigate to="/dashboard" replace />;
-  }
+  if (loading) return <Loader />;
+  if (user) return <Navigate to={needsPlacementTest ? '/placement-test' : '/dashboard'} replace />;
   return children;
 }
 
-function LoadingScreen() {
+function TestRoute({ children }) {
+  // Placement test: requires auth but not completed test
+  const { user, loading } = useAuth();
+  if (loading) return <Loader />;
+  if (!user) return <Navigate to="/auth" replace />;
+  return children;
+}
+
+function Loader() {
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexDirection: 'column',
-      gap: '1rem',
-      background: 'var(--color-bg)'
-    }}>
-      <div style={{
-        fontFamily: 'var(--font-serif)',
-        fontSize: '24px',
-        color: 'var(--color-primary)',
-        letterSpacing: '-0.02em'
-      }}>
-        Engrow
-      </div>
+    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:'1rem', background:'var(--bg)' }}>
+      <div style={{ fontFamily:'var(--font-serif)', fontSize:'24px', color:'var(--blue-primary)', letterSpacing:'-0.02em' }}>Engrow</div>
       <div className="spinner" />
     </div>
   );
@@ -57,15 +47,15 @@ function LoadingScreen() {
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
-      <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
-      <Route path="/placement-test" element={<PlacementTest />} />
-      <Route path="/placement-results" element={<PlacementResults />} />
-      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/lessons" element={<ProtectedRoute><Lessons /></ProtectedRoute>} />
-      <Route path="/lesson/:id" element={<ProtectedRoute><Lesson /></ProtectedRoute>} />
-      <Route path="/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+      <Route path="/" element={<Public><Landing /></Public>} />
+      <Route path="/auth" element={<Public><Auth /></Public>} />
+      <Route path="/placement-test" element={<TestRoute><PlacementTest /></TestRoute>} />
+      <Route path="/placement-results" element={<TestRoute><PlacementResults /></TestRoute>} />
+      <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
+      <Route path="/lessons" element={<Protected><Lessons /></Protected>} />
+      <Route path="/lesson/:id" element={<Protected><Lesson /></Protected>} />
+      <Route path="/progress" element={<Protected><Progress /></Protected>} />
+      <Route path="/settings" element={<Protected><Settings /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
