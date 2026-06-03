@@ -265,18 +265,6 @@ export default function PlacementTest() {
                     autoFocus aria-label="Your answer" style={{ fontSize:'15px' }} />
                 )}
 
-                {/* Hint */}
-                {question.hint && !showHint && (
-                  <button onClick={() => setShowHint(true)} style={{ background:'none', border:'none', fontSize:'13px', color:'var(--blue-primary)', cursor:'pointer', fontFamily:'var(--font-sans)', marginTop:'0.75rem', padding:0, textDecoration:'underline' }}>
-                    Need a hint?
-                  </button>
-                )}
-                {showHint && question.hint && (
-                  <div style={{ background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'var(--radius-md)', padding:'0.65rem 0.875rem', marginTop:'0.75rem', fontSize:'13px', color:'#92400E' }}>
-                    <strong>Hint: </strong>{question.hint}
-                  </div>
-                )}
-
                 {/* Submit */}
                 <button onClick={submitAnswer} disabled={!answer.trim() || submitting} className="btn btn-primary"
                   style={{ width:'100%', marginTop:'1.125rem', padding:'0.7rem' }} aria-busy={submitting}>

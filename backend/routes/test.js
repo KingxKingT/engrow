@@ -5,6 +5,18 @@ const authMiddleware = require('../middleware/auth');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+const SYSTEM_INSTRUCTION = `You are an empathetic English language coach inside a learning app. Your users may struggle with traditional grammar rules and algebraic formulas — including people with dyslexia, ADHD, or dyscalculia.
+
+CRITICAL RULES — follow every one of these on every single response:
+1. NEVER use algebraic grammar formulas. Never write things like "Subject + Aux + Verb + Object". These are confusing and harmful for your users.
+2. NEVER write walls of text. Break everything into short, scannable pieces.
+3. Use physical, spatial metaphors instead of rules. Words "swap places", "jump to the front", "move around", "get pushed back". Make grammar feel like movement, not maths.
+4. Keep your tone warm and peer-to-peer. You are a helpful friend who happens to know English well — not a rigid school examiner.
+5. When something is wrong, name the SPECIFIC word or phrase that was wrong. Never give a vague "your grammar needs work" response.
+6. Accept valid paraphrases and alternative phrasings. Be a real teacher, not a spelling-bee judge.
+7. Keep all explanations under 3 sentences. Shorter is better.`;
+
 const SKILL_ORDER = ['grammar', 'vocabulary', 'reading', 'writing', 'dialogue'];
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
@@ -49,9 +61,9 @@ const QUESTION_BANK = {
       },
       {
         id: 'g-a1-5', type: 'write_sentence',
-        instruction: 'Write ONE sentence about yourself. Use "I am" or "I have".',
-        evaluationCriteria: 'correct use of "I am" or "I have", basic subject-verb-object, no major spelling errors',
-        hint: 'Example: "I am from Tunisia." or "I have a brother."'
+        instruction: 'Write ONE sentence using "I have" to describe something you own or a person in your family.',
+        evaluationCriteria: 'correct use of "I have" as the main verb, followed by a noun, makes sense as a sentence',
+        hint: ''
       },
       {
         id: 'g-a1-6', type: 'fill_blank',
@@ -98,9 +110,9 @@ const QUESTION_BANK = {
       },
       {
         id: 'g-a2-5', type: 'write_sentence',
-        instruction: 'Write ONE sentence about something you did last week. Use the past simple tense.',
-        evaluationCriteria: 'correct past simple tense, regular or irregular verb, time expression',
-        hint: 'Example: "Last week I ate pizza with my friends." Try writing about something you really did.'
+        instruction: 'Write ONE sentence about something you did last week. The sentence must use a past simple verb.',
+        evaluationCriteria: 'past simple verb correctly formed (regular -ed or irregular), sentence describes a past action',
+        hint: ''
       },
       {
         id: 'g-a2-6', type: 'fix_error',
@@ -147,9 +159,9 @@ const QUESTION_BANK = {
       },
       {
         id: 'g-b1-5', type: 'write_sentence',
-        instruction: 'Write ONE sentence using the present perfect to describe something you have done in your life.',
-        evaluationCriteria: 'correct present perfect (have/has + past participle), life experience context',
-        hint: 'Example: "I have visited three countries." or "She has never eaten sushi."'
+        instruction: 'Write ONE sentence using "have" or "has" + a past participle verb to describe an experience in your life. For example: visited, tried, lived, worked, seen.',
+        evaluationCriteria: 'present perfect structure: have/has + past participle, describes a life experience, past participle is correctly formed',
+        hint: ''
       },
       {
         id: 'g-b1-6', type: 'fix_error',
@@ -196,9 +208,9 @@ const QUESTION_BANK = {
       },
       {
         id: 'g-b2-5', type: 'write_sentence',
-        instruction: 'Write a third conditional sentence about something that did NOT happen in the past and its imaginary result.',
-        evaluationCriteria: 'correct third conditional: if + past perfect, would have + past participle',
-        hint: 'Example: "If I had studied harder, I would have passed the exam." Think of a real past moment.'
+        instruction: 'Write ONE sentence using this exact structure: "If I had [verb]..." to describe something that did not happen and what would have been different. Example structure only — write your own sentence.',
+        evaluationCriteria: 'if + past perfect (had + past participle) in first clause, would have + past participle in second clause',
+        hint: ''
       },
       {
         id: 'g-b2-6', type: 'fix_error',
@@ -245,9 +257,9 @@ const QUESTION_BANK = {
       },
       {
         id: 'g-c1-5', type: 'write_sentence',
-        instruction: 'Rewrite this sentence using passive voice with the correct tense: "The government will announce the new policy tomorrow."',
-        evaluationCriteria: 'correct future passive: will be + past participle, no agent needed',
-        hint: 'Move "the new policy" to subject position. Use "will be + announced".'
+        instruction: 'Rewrite this sentence so that "the new policy" is the subject. Keep the same meaning and tense. Original: "The government will announce the new policy tomorrow."',
+        evaluationCriteria: 'the new policy becomes the subject, will be + announced (future passive), grammatically correct',
+        hint: ''
       },
       {
         id: 'g-c1-6', type: 'fix_error',
@@ -292,10 +304,10 @@ const QUESTION_BANK = {
       },
       {
         id: 'v-a1-5', type: 'use_in_sentence',
-        instruction: 'Write a sentence using the word:',
+        instruction: 'Write ONE sentence that shows you know what this word means. Use the word naturally — not just "I know the word happy."',
         word: 'happy',
-        evaluationCriteria: 'correct use showing understanding of the word as an emotion meaning pleased/joyful',
-        hint: 'Example: "I am happy when I see my family." Write your own sentence.'
+        evaluationCriteria: 'the word happy is used correctly in context, the sentence shows understanding of its meaning as a positive emotion',
+        hint: ''
       }
     ],
 
@@ -330,10 +342,10 @@ const QUESTION_BANK = {
       },
       {
         id: 'v-a2-5', type: 'use_in_sentence',
-        instruction: 'Write a sentence using the word:',
+        instruction: 'Write ONE sentence using this word at the START of the sentence to introduce some bad news or a disappointing result.',
         word: 'unfortunately',
-        evaluationCriteria: 'used as a linking adverb showing a negative or disappointing outcome',
-        hint: 'Example: "Unfortunately, I missed the bus and was late." It introduces bad news.'
+        evaluationCriteria: 'unfortunately used as a sentence adverb introducing a negative or disappointing outcome, grammatically correct sentence follows',
+        hint: ''
       }
     ],
 
@@ -361,10 +373,10 @@ const QUESTION_BANK = {
       },
       {
         id: 'v-b1-4', type: 'use_in_sentence',
-        instruction: 'Write a sentence using the word:',
+        instruction: 'Write ONE sentence where something happens BECAUSE of something else. Use this word to connect the cause and the result.',
         word: 'consequently',
-        evaluationCriteria: 'used correctly as a linking adverb showing cause and effect',
-        hint: '"Consequently" connects a cause to its result. Example: "It rained all day; consequently, the match was cancelled."'
+        evaluationCriteria: 'consequently used correctly as a cause-effect connector, the sentence has a clear cause and a clear result',
+        hint: ''
       },
       {
         id: 'v-b1-5', type: 'define_word',
@@ -392,10 +404,10 @@ const QUESTION_BANK = {
       },
       {
         id: 'v-b2-3', type: 'use_in_sentence',
-        instruction: 'Write a sentence using the word:',
+        instruction: 'Write ONE sentence where you describe something positively, but immediately add a small contrast or qualification using this word.',
         word: 'albeit',
-        evaluationCriteria: 'used correctly as a concessive conjunction meaning "although" or "even though", typically before an adjective or noun phrase',
-        hint: '"Albeit" is a formal word meaning "although". Example: "It was a good result, albeit a surprising one."'
+        evaluationCriteria: 'albeit used as a concessive connector (meaning "although" or "even though"), placed before an adjective, adverb, or noun phrase that contrasts with the main statement',
+        hint: ''
       },
       {
         id: 'v-b2-4', type: 'choose_correct',
@@ -430,10 +442,10 @@ const QUESTION_BANK = {
       },
       {
         id: 'v-c1-3', type: 'use_in_sentence',
-        instruction: 'Write a sentence using the word:',
+        instruction: 'Write ONE sentence where something makes a problem or bad situation WORSE. Use this word as the main verb.',
         word: 'exacerbate',
-        evaluationCriteria: 'used correctly to mean "make something worse" — typically a problem, situation, or condition',
-        hint: '"Exacerbate" means to make a bad situation even worse. Example: "Poor sleep can exacerbate anxiety."'
+        evaluationCriteria: 'exacerbate used as a verb meaning to make something worse, applied to a problem, condition, or negative situation',
+        hint: ''
       },
       {
         id: 'v-c1-4', type: 'choose_correct',
@@ -884,13 +896,15 @@ router.post('/:testId/answer', authMiddleware, async (req, res) => {
     let correction = '';
     let rule = questionData?.rule || null;
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      systemInstruction: SYSTEM_INSTRUCTION
+    });
 
     if (questionType === 'free_write') {
-      // Writing evaluation
       const wordCount = answer.trim().split(/\s+/).filter(Boolean).length;
       if (wordCount < 40) {
-        return res.json({ correct: false, feedback: 'Please write more — aim for at least 80 words to show your real level.', correction: null, rule: null, tooShort: true });
+        return res.json({ correct: false, feedback: 'Keep going — a bit more writing helps us understand your real level better.', correction: null, rule: null, tooShort: true });
       }
       const prompt = QUESTION_BANK.writing.universal.evaluationPrompt.replace('{writing}', answer);
       try {
@@ -908,12 +922,27 @@ router.post('/:testId/answer', authMiddleware, async (req, res) => {
         isCorrect = true; feedback = 'Your writing has been recorded.';
       }
     } else if (questionType === 'write_sentence' || questionType === 'use_in_sentence') {
-      const prompt = `You are an English language examiner. Evaluate this student answer strictly.
-Question: ${JSON.stringify(questionData)}
-Student answer: "${answer}"
-Criteria: ${questionData.evaluationCriteria || 'correct English usage at level ' + level}
+      const prompt = `A student wrote a sentence. Check if it works correctly.
+
+Task they were given: "${questionData.instruction || ''}"
+Word or topic: "${questionData.word || ''}"
+What to check for: ${questionData.evaluationCriteria || 'correct English sentence'}
+
+Student wrote: "${answer}"
+
+CHECK THESE IN ORDER:
+1. Is the sentence real English — not random words? If not → WRONG
+2. Is the required word "${questionData.word || 'target word'}" actually in the sentence and used correctly? If not → WRONG  
+3. Does the sentence demonstrate the grammar/usage described in the criteria? If not → WRONG
+4. Is there a grammar error that would confuse a native speaker? If yes → WRONG
+
+If ALL checks pass → CORRECT.
+
+Be strict about whether the right thing is demonstrated. Be generous about exact wording.
+Feedback: one sentence, name the specific issue if wrong. No grammar codes.
+
 Respond ONLY in JSON (no markdown):
-{"correct": true/false, "feedback": "One sentence starting with Good/Almost/Not quite", "issue": "specific error if wrong or null", "correction": "corrected version or null", "rule": "one-sentence rule or null"}`;
+{"correct": true/false, "feedback": "One plain sentence. Specific about what worked or what slipped.", "correction": "an improved version if wrong, or null if correct", "rule": "one short plain tip — no formulas, plain everyday language"}`;
       try {
         const result = await model.generateContent(prompt);
         const text = result.response.text().replace(/```json|```/g, '').trim();
@@ -922,36 +951,33 @@ Respond ONLY in JSON (no markdown):
         feedback = ev.feedback;
         correction = ev.correction;
         rule = ev.rule || rule;
-      } catch { isCorrect = answer.trim().split(' ').length >= 3; feedback = isCorrect ? 'Good attempt!' : 'Please write a complete sentence.'; }
+      } catch { isCorrect = answer.trim().split(' ').length >= 3; feedback = isCorrect ? 'Good — that works!' : 'Try writing a full sentence.'; }
     } else if (questionType === 'fix_error') {
       // AI evaluation — string comparison is NOT reliable for sentence corrections.
       // The student must fix the CORRECT error, not just change something else.
-      const prompt = `You are a strict English language examiner.
+      // Step 1: find what word/phrase changed between BROKEN and FIXED
+      // Step 2: check if the student changed THAT SAME word/phrase
+      const prompt = `You are checking if a student fixed the right word in a sentence.
 
-The student was asked to fix ONE specific grammatical error in this sentence.
+ORIGINAL (broken): "${questionData.text}"
+CORRECT (fixed):   "${questionData.correct}"
 
-ORIGINAL SENTENCE: "${questionData.text}"
-CORRECT VERSION: "${questionData.correct}"
-THE GRAMMAR RULE: ${questionData.rule || 'See correct version'}
+Look at those two sentences. Find the SPECIFIC word or phrase that is different between them. That is the broken part.
 
-STUDENT'S ANSWER: "${answer}"
+Now look at the student's answer: "${answer}"
 
-Be STRICT. Ask yourself:
-1. Did the student fix the SAME error that was in the original sentence?
-2. Is the student's answer grammatically correct for this specific rule?
+Did the student change THAT SAME word/phrase — yes or no?
 
-Mark as WRONG if:
-- The student changed a DIFFERENT part of the sentence while leaving the original error
-- The student's version still contains the original grammatical error
-- The student just copied the original without fixing it
-- The student's version introduces a new grammatical error
+CORRECT = student fixed the exact same word/phrase that differs between original and correct version
+WRONG = student changed something else, or didn't change anything, or the broken word/phrase is still there unchanged
 
-Mark as CORRECT only if:
-- The specific grammatical error from the original has been fixed
-- The sentence is now grammatically acceptable
+Do not accept answers where the broken word/phrase is still present unchanged.
+Accept small variations in how they fixed it as long as the broken part is gone.
 
-Respond ONLY in JSON (no markdown, no text outside JSON):
-{"correct": true/false, "feedback": "One sentence — if wrong, name EXACTLY what the student changed vs what they SHOULD have changed", "correction": "${questionData.correct}", "rule": "${(questionData.rule || '').replace(/"/g, "'")}"}`
+Feedback: one short sentence. Name the specific word they needed to change. Talk like a friend.
+
+Respond ONLY in valid JSON (no markdown, nothing outside the JSON):
+{"correct": true/false, "feedback": "Short plain sentence naming the specific word.", "correction": "${questionData.correct}", "rule": "${(questionData.rule || '').replace(/"/g, "'")}"}`;
       ;
       try {
         const result = await model.generateContent(prompt);
@@ -977,11 +1003,25 @@ Respond ONLY in JSON (no markdown, no text outside JSON):
       feedback = isCorrect ? 'Correct!' : `Not quite. The correct answer is: "${questionData.correct}"`;
       correction = isCorrect ? null : questionData.correct;
     } else if (questionType === 'define_word') {
-      const prompt = `English examiner: does this student definition show understanding of the word "${questionData.word}"?
-Student answer: "${answer}"
-Acceptable answers include: ${JSON.stringify(questionData.acceptableAnswers)}
-Accept any reasonable paraphrase. Reject blank, random, or completely wrong answers.
-Respond ONLY in JSON: {"correct": true/false, "feedback": "one sentence", "correction": "what a good answer would include"}`;
+      const prompt = `The student was asked what the word "${questionData.word}" means.
+
+Student's answer: "${answer}"
+
+The word "${questionData.word}" means: ${JSON.stringify(questionData.acceptableAnswers)}
+
+Is the student's answer capturing the CORE MEANING — even partially, even in simple words?
+
+CORRECT if: the student shows they understand the general idea, even with different words
+WRONG if: the student described something completely different, or clearly has no idea, or left it blank
+
+Accept native-language thinking expressed in simple English.
+Accept "kind of like X" descriptions.
+Reject answers that describe a different concept entirely.
+
+Feedback: one sentence. If wrong, describe what the word actually means in simple everyday language — like explaining it to a friend.
+
+Respond ONLY in JSON (no markdown):
+{"correct": true/false, "feedback": "One plain warm sentence.", "correction": "what the word means in simple everyday language"}`;
       try {
         const result = await model.generateContent(prompt);
         const text = result.response.text().replace(/```json|```/g, '').trim();
@@ -989,14 +1029,28 @@ Respond ONLY in JSON: {"correct": true/false, "feedback": "one sentence", "corre
         isCorrect = ev.correct;
         feedback = ev.feedback;
         correction = ev.correction;
-      } catch { isCorrect = false; feedback = 'Please give a clear definition.'; }
+      } catch { isCorrect = false; feedback = 'Can you describe it in other words?'; }
     } else if (questionType === 'read_comprehension' || questionType === 'dialogue_comprehension') {
-      const prompt = `English examiner: does this student answer correctly address this comprehension question?
-Question: "${questionData.question}"
-Expected answer includes: "${questionData.correct}"
-Student answer: "${answer}"
-Accept paraphrases. Require the key idea to be present.
-Respond ONLY in JSON: {"correct": true/false, "feedback": "one sentence starting with Good/Almost/Not quite", "correction": "what a complete correct answer would say"}`;
+      const prompt = `A student answered a comprehension question about a text they read.
+
+The question: "${questionData.question}"
+A complete answer needs this idea: "${questionData.correct}"
+Student wrote: "${answer}"
+
+The CORE IDEA they need to show: extract the 1-2 key facts from the correct answer above.
+Does the student's answer contain that core idea — even if said differently?
+
+CORRECT if: the key idea is present, even partially, even with different words
+WRONG if: the student missed the key idea entirely, or wrote about something unrelated, or was too vague to show understanding
+
+Grammar mistakes in the student's answer do NOT make it wrong.
+Wrong language but right idea → CORRECT.
+Right language but wrong idea → WRONG.
+
+Feedback: one sentence. If wrong, say what key idea was missing in plain words.
+
+Respond ONLY in JSON (no markdown):
+{"correct": true/false, "feedback": "One short plain sentence. What idea was missing, or confirm what they got right.", "correction": "the key idea they needed to express, in simple words"}`;
       try {
         const result = await model.generateContent(prompt);
         const text = result.response.text().replace(/```json|```/g, '').trim();
@@ -1015,7 +1069,7 @@ Respond ONLY in JSON: {"correct": true/false, "feedback": "one sentence starting
     const newAnswer = { skill, level, questionType, answer: answer.substring(0, 300), correct: isCorrect, questionId: questionData?.id, timestamp: new Date().toISOString() };
     await pool.query('UPDATE placement_tests SET answers = $1 WHERE id = $2', [JSON.stringify([...currentAnswers, newAnswer]), req.params.testId]);
 
-    res.json({ correct: isCorrect, feedback, correction, rule, hint: !isCorrect ? questionData?.hint : null });
+    res.json({ correct: isCorrect, feedback, correction, rule });
   } catch (err) { console.error('Answer error:', err); res.status(500).json({ error: 'Something went wrong.' }); }
 });
 
@@ -1027,7 +1081,10 @@ router.post('/:testId/complete', authMiddleware, async (req, res) => {
     const answers = testResult.rows[0].answers || [];
     const results = {};
     const explanations = {};
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      systemInstruction: SYSTEM_INSTRUCTION
+    });
 
     for (const skill of SKILL_ORDER) {
       const skillAnswers = answers.filter(a => a.skill === skill);
@@ -1043,15 +1100,18 @@ router.post('/:testId/complete', authMiddleware, async (req, res) => {
       results[skill] = detectedLevel;
 
       const wrongAnswers = skillAnswers.filter(a => !a.correct);
-      const prompt = `You are a warm English teacher explaining test results to a student.
+      const prompt = `You are telling a friend their results from an English test — warmly, in plain everyday words.
+
 Skill: ${skill}
-Detected CEFR level: ${detectedLevel}
-Questions answered: ${skillAnswers.length}
-Incorrect answers: ${wrongAnswers.length}
-Write exactly 2 sentences in ${detectedLevel}-level English:
-1. What their ${detectedLevel} level means in real, practical terms (not CEFR jargon)
-2. One specific area to focus on first
-Be honest, warm, and specific. No bullet points. No lists.`;
+Their level: ${detectedLevel}
+Questions tried: ${skillAnswers.length}
+Got wrong: ${wrongAnswers.length}
+
+Write exactly 2 short sentences:
+1. What this level means in real life — a concrete everyday example (what they can do / struggle with). No CEFR codes, no "upper-intermediate" jargon.
+2. The ONE specific thing that will help them most right now. Name the exact thing, not a general category.
+
+Write at a level this person can understand. Warm, direct, human. No bullet points. No formulas.`;
 
       try {
         const r = await model.generateContent(prompt);
