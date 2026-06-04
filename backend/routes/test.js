@@ -863,6 +863,15 @@ router.get('/:testId/question', authMiddleware, async (req, res) => {
 
     // Special case: writing skill — just return the writing task
     if (skill === 'writing') {
+      if (skillAnswers.length > 0) {
+        const skillIndex = SKILL_ORDER.indexOf(skill);
+        if (skillIndex === SKILL_ORDER.length - 1) {
+          return res.json({ completed: true, results: test.results });
+        }
+        const nextSkill = SKILL_ORDER[skillIndex + 1];
+        await pool.query('UPDATE placement_tests SET current_skill = $1 WHERE id = $2', [nextSkill, req.params.testId]);
+        return res.json({ skillComplete: true, completedSkill: skill, completedLevel: getFinalLevel(skillAnswers), nextSkill, allComplete: false });
+      }
       const writingQ = QUESTION_BANK.writing.universal;
       return res.json({
         question: { ...writingQ, skill, level: 'universal' },

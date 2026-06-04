@@ -88,10 +88,7 @@ export default function PlacementTest() {
 
   async function submitAnswer() {
     if (!answer.trim()) return;
-    if (question?.type === 'free_write') {
-      const wc = answer.trim().split(/\s+/).filter(Boolean).length;
-      if (wc < 60) { setError('Please write more — aim for at least 80 words to show your real level.'); return; }
-    }
+
     setError('');
     setSubmitting(true);
     wakeTimerRef.current = setTimeout(() => setServerWaking(true), 4000);
@@ -245,16 +242,16 @@ export default function PlacementTest() {
                 ) : question.type === 'free_write' ? (
                   <div>
                     <div style={{ background:'var(--blue-light)', border:'1px solid var(--blue-medium)', borderRadius:'var(--radius-md)', padding:'0.75rem 1rem', marginBottom:'0.875rem', fontSize:'13px', color:'var(--blue-primary)', lineHeight:1.6 }}>
-                      Write between <strong>80 and 150 words</strong>. Write about a real experience — the more genuine, the more accurate your result will be.
+                      Write about a real experience — the more genuine, the more accurate your result will be. Aim for at least a paragraph.
                     </div>
                     <textarea className="form-input" value={answer} onChange={e => { setAnswer(e.target.value); setError(''); }}
                       placeholder="Write your answer here..." rows={8} aria-label="Your written answer"
                       style={{ fontSize:'15px', lineHeight:1.8 }} />
                     <div style={{ display:'flex', justifyContent:'space-between', marginTop:'5px' }}>
-                      <span style={{ fontSize:'12px', color: wordCount < 60 ? 'var(--amber-error)' : wordCount >= 80 ? 'var(--green-accent)' : 'var(--text-tertiary)' }}>
-                        {wordCount} words {wordCount < 60 ? '— keep writing' : wordCount >= 80 && wordCount <= 150 ? '— good ✓' : wordCount > 150 ? '— slightly over' : ''}
+                      <span style={{ fontSize:'12px', color:'var(--text-tertiary)' }}>
+                        {wordCount} words
                       </span>
-                      <span style={{ fontSize:'12px', color:'var(--text-tertiary)' }}>Target: 80–150 words</span>
+                      <span style={{ fontSize:'12px', color:'var(--text-tertiary)' }}>Suggested: 80–150 words</span>
                     </div>
                   </div>
                 ) : (
