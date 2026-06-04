@@ -534,6 +534,15 @@ const QUESTION_BANK = {
         correct: 'Recycling alone is too simple / insufficient — the problem needs more radical solutions',
         inferenceLevel: 'inference',
         hint: 'The author uses this phrase to contrast with a "complete rethink". What does that contrast imply?'
+      },
+      {
+        id: 'r-b1-3', type: 'read_comprehension',
+        instruction: 'Read the same text again, then answer this question.',
+        text: 'Despite widespread concern about plastic pollution, global plastic production has continued to rise every year for the past decade. Critics argue that recycling campaigns give consumers a false sense that the problem is being managed. In reality, less than ten percent of all plastic ever produced has actually been recycled. Most ends up in landfill, or worse, in the ocean. Some scientists are now calling for a complete rethink of packaging design — moving away from single-use materials entirely rather than simply asking people to sort their bins more carefully.',
+        question: 'What percentage of all plastic ever produced has actually been recycled?',
+        correct: 'Less than ten percent / under 10%',
+        inferenceLevel: 'literal',
+        hint: 'Scan for the exact number mentioned.'
       }
     ],
 
@@ -555,6 +564,15 @@ const QUESTION_BANK = {
         correct: 'The author believes the harm is proven, but doubts governments/regulators will take meaningful action',
         inferenceLevel: 'critical',
         hint: 'The phrase "regulatory will" implies doubt about whether action will be taken. What does this tell us about the author\'s tone?'
+      },
+      {
+        id: 'r-b2-3', type: 'read_comprehension',
+        instruction: 'Read the same text again, then answer this question.',
+        text: 'The paradox at the heart of social media is this: platforms designed to connect people appear, in many cases, to be making them feel more isolated. Longitudinal studies suggest a correlation between heavy social media use and increased rates of anxiety and depression, particularly among adolescents. Yet the relationship is not straightforward. Some researchers argue that social media merely amplifies pre-existing conditions rather than creating them. Others point to the deliberately addictive design of these platforms — infinite scroll, variable reward mechanisms — as an engineered source of psychological dependency. The question is no longer whether these platforms affect mental health, but whether society has the regulatory will to act.',
+        question: 'What two explanations do researchers give for the link between social media and mental health?',
+        correct: 'Social media amplifies pre-existing conditions AND platforms are designed to be psychologically addictive',
+        inferenceLevel: 'analysis',
+        hint: 'The text presents two different researcher viewpoints — identify both.'
       }
     ],
 
@@ -576,63 +594,15 @@ const QUESTION_BANK = {
         correct: 'The author is balanced / agnostic — they reject both extreme pessimism and complacency, accepting genuine uncertainty',
         inferenceLevel: 'critical',
         hint: 'The author rejects two opposite positions. What are those two positions, and where does the author stand?'
-      }
-    ]
-  },
-
-  writing: {
-    universal: {
-      id: 'w-universal',
-      type: 'free_write',
-      instruction: 'Think of an important decision you made in your life. It can be a small or a big decision. Write between 80 and 150 words. Include: what the decision was, why you made it, and what happened as a result.',
-      minWords: 60,
-      maxWords: 180,
-      evaluationPrompt: `You are a real English teacher reading a student's writing. Read it the way a real person would — not like a machine.
-
-The student was asked: "Think of an important decision you made in your life. What was it, why did you make it, and what happened?"
-
-They wrote:
-"{writing}"
-
-Read it carefully. Think about:
-- How well do they express ideas? Can you understand them easily?
-- What grammar patterns do they use? What slips up?
-- How wide is their vocabulary — basic everyday words only, or do they reach for more?
-- Do their sentences connect smoothly or feel choppy and disconnected?
-- Did they actually answer all three parts of the question?
-
-Now assign a level. Be honest — not too generous, not too harsh:
-- A1: barely connected sentences, many basic errors, very limited words
-- A2: simple sentences that connect, some errors, everyday vocabulary only
-- B1: clear writing with some errors, decent vocabulary, some varied sentences
-- B2: good writing, occasional errors, solid vocabulary range, well organised
-- C1: sophisticated writing, rare errors, precise vocabulary, complex ideas expressed naturally
-- C2: near-native, exceptional precision, everything flows
-
-Write your response like a real teacher talking to a student — warm, honest, specific. Two or three sentences. Name something specific they did well and one specific thing to work on. No grammar codes, no formulas, no bullet points.
-
-Then on the very last lines add the JSON data (this is just for the app to read — the student sees your written feedback):
-LEVEL_DATA: {"level": "B1", "sublevel": "mid", "evidence": "your feedback text here", "strengths": ["one specific strength"], "specific_errors": ["one specific error with correction"], "priority_improvement": "the one most important thing to work on"}`
-    }
-  },
-
-  dialogue: {
-    A1: [
-      {
-        id: 'd-a1-1', type: 'dialogue_comprehension',
-        instruction: 'Read this conversation, then answer the question.',
-        text: 'Lucy: Hi! Are you new here?\nJames: Yes, I started today. My name is James.\nLucy: Nice to meet you, James. I am Lucy. Do you need help?\nJames: Yes, please. Where is the bathroom?\nLucy: It is on the second floor, next to the stairs.',
-        question: 'Where is the bathroom?',
-        correct: 'On the second floor / next to the stairs',
-        hint: 'Lucy gives James the answer directly.'
       },
       {
-        id: 'd-a1-2', type: 'dialogue_comprehension',
-        instruction: 'Read the same conversation again.',
-        text: 'Lucy: Hi! Are you new here?\nJames: Yes, I started today. My name is James.\nLucy: Nice to meet you, James. I am Lucy. Do you need help?\nJames: Yes, please. Where is the bathroom?\nLucy: It is on the second floor, next to the stairs.',
-        question: 'Why does James need help?',
-        correct: 'He is new and does not know where things are / he needs to find the bathroom',
-        hint: 'What does James say when Lucy asks if he needs help?'
+        id: 'r-c1-3', type: 'read_comprehension',
+        instruction: 'Read the same text again, then answer this question.',
+        text: 'Proponents of universal basic income often cite automation-driven unemployment as their central justification. Yet this framing contains an uncomfortable assumption: that technological displacement of labour is a novel threat rather than a recurring feature of economic development that markets have historically absorbed. The weavers displaced by the Industrial Revolution did not permanently swell the ranks of the unemployed; they, or their children, found work in industries that did not yet exist. Whether the same will prove true in an era of artificial intelligence remains genuinely uncertain — but certainty of catastrophe is no more defensible than complacency.',
+        question: 'What historical example does the author use to challenge the assumption in the pro-UBI argument, and what point does it illustrate?',
+        correct: 'Industrial Revolution weavers who lost jobs but later found work in new industries — it illustrates that technological displacement is not new and economies adapt over time',
+        inferenceLevel: 'critical',
+        hint: 'The author uses a specific historical comparison. Why did the author choose this particular example?'
       }
     ],
 
@@ -671,6 +641,14 @@ LEVEL_DATA: {"level": "B1", "sublevel": "mid", "evidence": "your feedback text h
         question: 'What does the manager\'s response tell us about their management style?',
         correct: 'They are flexible and solution-focused rather than punishing / they listen and try to find practical answers',
         hint: 'Look at how the manager responds to the employee\'s suggestion. Are they strict or understanding?'
+      },
+      {
+        id: 'd-b1-3', type: 'dialogue_comprehension',
+        instruction: 'Read the same conversation again.',
+        text: 'Manager: I noticed you have been late three times this week.\nEmployee: I know, I apologise. The bus has been delayed because of the roadworks near the station.\nManager: I understand, but it is affecting your team. Can we find a solution?\nEmployee: I could work from home on Mondays and Fridays when the traffic is worst.\nManager: That sounds reasonable. Let\'s try it for a month and see how it goes.',
+        question: 'What solution do the manager and employee agree on?',
+        correct: 'Working from home on Mondays and Fridays for a trial month',
+        hint: 'Look at the employee\'s suggestion and the manager\'s final response.'
       }
     ],
 
@@ -690,6 +668,14 @@ LEVEL_DATA: {"level": "B1", "sublevel": "mid", "evidence": "your feedback text h
         question: 'Why does the interviewer ask "When you say independently, do you mean in your own time?" What does this question reveal?',
         correct: 'The interviewer wants to clarify whether the candidate is being vague or precise — they are checking whether "independently" means formally/professionally or just privately',
         hint: 'The interviewer is not sure exactly what "independently" means. What might they be checking or questioning?'
+      },
+      {
+        id: 'd-b2-3', type: 'dialogue_comprehension',
+        instruction: 'Read the same conversation again.',
+        text: 'Interviewer: Your CV shows three years at Deloitte, but you left without another role lined up. Can you explain that?\nCandidate: I wanted to reflect on my direction. I completed a part-time analytics course and volunteered with a local charity.\nInterviewer: That sounds constructive. What drew you specifically to this role?\nCandidate: Your company\'s work on ethical AI aligns with research I have been doing independently.\nInterviewer: When you say independently, do you mean in your own time?\nCandidate: Yes — reading widely, attending conferences, building small projects.',
+        question: 'How does the candidate\'s reason for being drawn to the role connect to their earlier actions?',
+        correct: 'Their independent research on ethical AI connects to the volunteer work and personal development during their career gap — it shows intentional direction',
+        hint: 'Look at what the candidate did during their career gap and what they say attracted them to the role. Is there a pattern?'
       }
     ],
 
@@ -709,6 +695,14 @@ LEVEL_DATA: {"level": "B1", "sublevel": "mid", "evidence": "your feedback text h
         question: 'What does the minister\'s final answer reveal about their actual position?',
         correct: 'They do not have guaranteed support — "confident" was an overstatement, and the journalist forced them to admit they cannot guarantee the votes',
         hint: 'Compare what the minister says at the end with what they said just before. Did the journalist successfully reveal something?'
+      },
+      {
+        id: 'd-c1-3', type: 'dialogue_comprehension',
+        instruction: 'Read the same conversation again.',
+        text: 'Journalist: Your housing policy promises 50,000 new homes by 2027. The previous target of 40,000 by 2025 was missed by over 60%. Why should the public believe this commitment is different?\nMinister: We have learned from past mistakes. Our planning reforms will cut approval times significantly.\nJournalist: Those reforms were blocked in committee last year by your own party. Have you actually secured the votes?\nMinister: We are confident we have the support we need.\nJournalist: Confident, or certain?\nMinister: These things are never certain in politics.',
+        question: 'What does the journalist achieve by pressing the minister from "confident" to "certain"?',
+        correct: 'The journalist exposes the gap between the minister\'s public confidence and the political reality — by refusing to accept vague reassurance, they force the minister to admit uncertainty',
+        hint: 'Why did the journalist ask for a stronger word than "confident"? What did pressing for "certain" reveal?'
       }
     ]
   }
@@ -798,7 +792,7 @@ function getFinalLevel(skillAnswers) {
   return 'A1';
 }
 
-function getNextQuestion(skill, currentLevel, usedIds, questionType) {
+function getNextQuestion(skill, currentLevel, usedIds) {
   const bank = QUESTION_BANK[skill];
   if (!bank) return null;
   if (skill === 'writing') return { ...QUESTION_BANK.writing.universal, skill, level: currentLevel };
@@ -916,7 +910,7 @@ router.get('/:testId/question', authMiddleware, async (req, res) => {
       return res.json({ skillComplete: true, completedSkill: skill, completedLevel: getFinalLevel(skillAnswers), nextSkill, allComplete: false });
     }
 
-    const question = getNextQuestion(skill, currentLevel, usedIds, null);
+    const question = getNextQuestion(skill, currentLevel, usedIds);
     if (!question) {
       const skillIndex = SKILL_ORDER.indexOf(skill);
       if (skillIndex === SKILL_ORDER.length - 1) return res.json({ skillComplete: true, allComplete: true });
@@ -941,6 +935,19 @@ router.post('/:testId/answer', authMiddleware, async (req, res) => {
 
     // ── Writing: special evaluation ──────────────────────────────────────
     if (questionType === 'free_write') {
+      // Save answer first so it persists even if AI fails
+      const currentAnswers = testResult.rows[0].answers || [];
+      const baseAnswer = {
+        skill, level: 'pending', questionType,
+        answer: answer.substring(0, 500), correct: true,
+        questionId: questionData?.id,
+        timestamp: new Date().toISOString()
+      };
+      await pool.query(
+        'UPDATE placement_tests SET answers = $1 WHERE id = $2',
+        [JSON.stringify([...currentAnswers, baseAnswer]), req.params.testId]
+      );
+
       try {
         const prompt = QUESTION_BANK.writing.universal.evaluationPrompt.replace('{writing}', answer);
         const result = await model.generateContent(prompt);
@@ -961,23 +968,17 @@ router.post('/:testId/answer', authMiddleware, async (req, res) => {
               specific_errors: parsed.specific_errors || [],
               improvement: parsed.priority_improvement || ''
             };
-            // Everything before LEVEL_DATA is the human feedback
             humanFeedback = rawText.split('LEVEL_DATA:')[0].trim();
           } catch { /* keep defaults */ }
         }
 
-        const currentAnswers = testResult.rows[0].answers || [];
-        const newAnswer = {
-          skill, level: levelData.detectedLevel, questionType,
-          answer: answer.substring(0, 500), correct: true,
-          questionId: questionData?.id,
-          timestamp: new Date().toISOString(),
-          writingEvaluation: levelData
-        };
+        // Update the saved answer with evaluation data
+        const updatedAnswers = [...currentAnswers, { ...baseAnswer, level: levelData.detectedLevel, writingEvaluation: levelData }];
         await pool.query(
           'UPDATE placement_tests SET answers = $1 WHERE id = $2',
-          [JSON.stringify([...currentAnswers, newAnswer]), req.params.testId]
+          [JSON.stringify(updatedAnswers), req.params.testId]
         );
+
         return res.json({
           correct: true,
           feedback: humanFeedback,
@@ -1106,6 +1107,16 @@ or
 VERDICT: WRONG`;
     }
 
+    // ── fix_error: exact match wins (skip AI if answer matches expected) ──
+    if (questionType === 'fix_error' && questionData.correct && answer.trim().toLowerCase() === questionData.correct.toLowerCase()) {
+      const cAnswers = testResult.rows[0].answers || [];
+      await pool.query(
+        'UPDATE placement_tests SET answers = $1 WHERE id = $2',
+        [JSON.stringify([...cAnswers, { skill, level, questionType, answer, correct: true, questionId: questionData?.id, timestamp: new Date().toISOString() }]), req.params.testId]
+      );
+      return res.json({ correct: true, feedback: 'Perfect — you fixed it exactly right.', correction: null, rule: questionData.rule });
+    }
+
     // Run the prompt and extract verdict
     let isCorrect = false;
     let feedback = '';
@@ -1115,25 +1126,35 @@ VERDICT: WRONG`;
       const result = await model.generateContent(prompt);
       const rawText = result.response.text().trim();
 
-      // Extract verdict from last line
+      // Extract verdict from last line (case-insensitive)
       const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
       const lastLine = lines[lines.length - 1];
-      isCorrect = lastLine.includes('VERDICT: CORRECT');
+      isCorrect = lastLine.toUpperCase().includes('VERDICT: CORRECT');
 
       // Everything before the verdict line is the natural feedback
-      const feedbackLines = lines.filter(l => !l.startsWith('VERDICT:'));
+      const feedbackLines = lines.filter(l => !l.toUpperCase().startsWith('VERDICT:'));
       feedback = feedbackLines.join(' ').trim();
 
-      if (!isCorrect) correction = questionType === 'define_word' ? questionData.acceptableAnswers?.[0] || questionData.word : (questionData.correct || null);
+      if (!isCorrect) {
+        const typeCorrection = questionType === 'define_word' ? (questionData.acceptableAnswers?.[0] || questionData.word)
+          : (questionType === 'write_sentence' || questionType === 'use_in_sentence') ? questionData.evaluationCriteria
+          : questionData.correct;
+        correction = typeCorrection || null;
+      }
     } catch (err) {
       console.error('AI evaluation error:', err?.message || err);
       // Fallback: simple keyword matching when AI is unavailable
       const lower = answer.toLowerCase();
-      const keywords = (questionType === 'define_word' ? questionData.acceptableAnswers || [] : [questionData.correct || ''])
+      const answerSource = questionType === 'define_word' ? (questionData.acceptableAnswers || [])
+        : (questionType === 'write_sentence' || questionType === 'use_in_sentence') ? [questionData.evaluationCriteria || '']
+        : [questionData.correct || ''];
+      const keywords = answerSource
         .flatMap(k => k.toLowerCase().split(/[\s,./()]+/)).filter(w => w.length > 3);
       const matched = keywords.filter(k => lower.includes(k));
       isCorrect = matched.length >= Math.min(2, keywords.length);
-      const fallbackAnswer = questionType === 'define_word' ? (questionData.acceptableAnswers?.[0] || questionData.word) : questionData.correct;
+      const fallbackAnswer = questionType === 'define_word' ? (questionData.acceptableAnswers?.[0] || questionData.word)
+        : (questionType === 'write_sentence' || questionType === 'use_in_sentence') ? questionData.evaluationCriteria
+        : questionData.correct;
       feedback = isCorrect
         ? 'That captures the key idea — well done.'
         : `Not quite — the key point is: ${fallbackAnswer}`;
