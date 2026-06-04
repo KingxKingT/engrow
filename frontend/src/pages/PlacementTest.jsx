@@ -8,7 +8,7 @@ const SKILL_DESCRIPTIONS = { grammar:'Grammar rules and sentence structure', voc
 const SKILL_ORDER = ['grammar','vocabulary','reading','writing','dialogue'];
 
 export default function PlacementTest() {
-  const { getToken } = useAuth();
+  const { getToken, markTestComplete } = useAuth();
   const navigate = useNavigate();
   const [phase, setPhase] = useState('welcome');
   const [testId, setTestId] = useState(null);
@@ -120,6 +120,7 @@ export default function PlacementTest() {
       const res = await fetch(`${API}/test/${tid}/complete`, { method:'POST', headers:{ Authorization:`Bearer ${getToken()}` } });
       if (!res.ok) throw new Error();
       const data = await res.json();
+      markTestComplete();
       localStorage.removeItem('engrow_test_id');
       navigate('/placement-results', { state:{ results:data } });
     } catch {

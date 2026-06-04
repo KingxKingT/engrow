@@ -794,8 +794,9 @@ function getNextQuestion(skill, currentLevel, usedIds, questionType) {
   }
   const available = levelBank.filter(q => !usedIds.includes(q.id));
   if (available.length === 0) {
-    const fallbackLevel = currentLevel === 'C1' ? 'B2' : currentLevel === 'A1' ? 'A2' : 'B1';
-    const fallback = bank[fallbackLevel];
+    const levelIndex = CEFR_LEVELS.indexOf(currentLevel);
+    const fallbackIdx = levelIndex > 0 ? levelIndex - 1 : 1;
+    const fallback = bank[CEFR_LEVELS[fallbackIdx]];
     if (!fallback) return null;
     const fallbackAvailable = fallback.filter(q => !usedIds.includes(q.id));
     return fallbackAvailable.length > 0 ? { ...fallbackAvailable[0], skill, level: currentLevel } : null;
@@ -971,14 +972,23 @@ router.post('/:testId/answer', authMiddleware, async (req, res) => {
       }
     }
 
-    // ── fill_blank and choose_correct: exact match, no AI needed ─────────
+    // ── fill_blank and choose_correct: exact match + AI natural feedback ──
     if (questionType === 'fill_blank' || questionType === 'choose_correct') {
       const correct = (questionData.correct || '').toLowerCase().trim();
       const given = answer.toLowerCase().trim();
       const isCorrect = given === correct;
-      const feedback = isCorrect
-        ? 'Correct!'
-        : `Not quite — the answer is "${questionData.correct}"`;
+      let feedback = isCorrect ? 'Correct!' : `Not quite — the answer is "${questionData.correct}"`;
+      try {
+        const aiPrompt = `You are a warm English teacher. The student answered a ${questionType === 'fill_blank' ? 'fill-in-the-blank' : 'multiple choice'} question.
+Question: "${questionData.question || questionData.instruction}"
+Correct answer: "${questionData.correct}"
+Student's answer: "${answer}"
+The student was ${isCorrect ? '' : 'not '}correct.
+
+Write ONE short, friendly sentence explaining why in plain language. If wrong, say what the right answer is simply. No verdict line needed.`;
+        const r = await model.generateContent(aiPrompt);
+        feedback = r.response.text().trim().split('\n')[0];
+      } catch {}
       const currentAnswers = testResult.rows[0].answers || [];
       await pool.query(
         'UPDATE placement_tests SET answers = $1 WHERE id = $2',

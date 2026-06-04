@@ -81,9 +81,10 @@ export function AuthProvider({ children }) {
 
   function getToken() { return localStorage.getItem('engrow_token'); }
   function updateSettings(s) { setUser(prev => ({ ...prev, settings: { ...prev?.settings, ...s } })); }
+  function markTestComplete() { setNeedsPlacementTest(false); }
 
   return (
-    <AuthContext.Provider value={{ user, skills, streak, loading, needsPlacementTest, login, signup, logout, getToken, updateSettings, fetchMe: () => fetchMe(getToken()) }}>
+    <AuthContext.Provider value={{ user, skills, streak, loading, needsPlacementTest, login, signup, logout, getToken, updateSettings, fetchMe: () => fetchMe(getToken()), markTestComplete }}>
       {children}
     </AuthContext.Provider>
   );
