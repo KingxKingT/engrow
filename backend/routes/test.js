@@ -1083,20 +1083,21 @@ or
 VERDICT: WRONG`;
 
     } else if (questionType === 'define_word') {
-      prompt = `You are an English teacher checking if a student understands a word.
+      prompt = `You are a strict-but-kind English teacher checking if a student knows a word's meaning.
 
 Word: "${questionData.word}"
-What this word actually means: ${JSON.stringify(questionData.acceptableAnswers)}
+Acceptable meanings: ${JSON.stringify(questionData.acceptableAnswers)}
 
 The student's definition: "${answer}"
 
-Think like a real teacher:
-— Does their answer capture the core meaning, even in their own words?
-— Accept simple descriptions, paraphrases, and everyday language.
-— Accept if they described it slightly differently but got the right idea.
-— Only mark wrong if they described something completely different or clearly have no idea.
+CRITICAL — be strict about wrong answers:
+— If the student's answer has nothing to do with the word's actual meaning, mark WRONG.
+— "I love" is NOT a definition of "inevitable" — that is WRONG.
+— Accept paraphrases and imperfect grammar only if the core definition is recognisable.
+— Do NOT give credit for answers that describe a completely different concept.
+— If in doubt, lean WRONG rather than incorrectly passing.
 
-Respond in 1-2 sentences like a helpful friend. If wrong, explain what the word actually means simply — no dictionary language. Then on the very last line write either:
+Respond in 1-2 short sentences. If wrong, explain what the word actually means in simple terms. Then on the very last line write either:
 VERDICT: CORRECT
 or
 VERDICT: WRONG`;
@@ -1140,18 +1141,20 @@ VERDICT: WRONG`;
       const feedbackLines = lines.filter(l => !l.startsWith('VERDICT:'));
       feedback = feedbackLines.join(' ').trim();
 
-      if (!isCorrect) correction = questionData.correct || null;
+      if (!isCorrect) correction = questionType === 'define_word' ? questionData.acceptableAnswers?.[0] || questionData.word : (questionData.correct || null);
     } catch (err) {
       console.error('AI evaluation error:', err?.message || err);
       // Fallback: simple keyword matching when AI is unavailable
       const lower = answer.toLowerCase();
-      const keywords = (questionData.correct || '').toLowerCase().split(/[\s,./()]+/).filter(w => w.length > 3);
+      const keywords = (questionType === 'define_word' ? questionData.acceptableAnswers || [] : [questionData.correct || ''])
+        .flatMap(k => k.toLowerCase().split(/[\s,./()]+/)).filter(w => w.length > 3);
       const matched = keywords.filter(k => lower.includes(k));
       isCorrect = matched.length >= Math.min(2, keywords.length);
+      const fallbackAnswer = questionType === 'define_word' ? (questionData.acceptableAnswers?.[0] || questionData.word) : questionData.correct;
       feedback = isCorrect
         ? 'That captures the key idea — well done.'
-        : `Not quite — the key point is: ${questionData.correct}`;
-      if (!isCorrect) correction = questionData.correct || null;
+        : `Not quite — the key point is: ${fallbackAnswer}`;
+      if (!isCorrect) correction = fallbackAnswer;
     }
 
     // Save answer to database
