@@ -605,6 +605,63 @@ const QUESTION_BANK = {
         hint: 'The author uses a specific historical comparison. Why did the author choose this particular example?'
       }
     ],
+  },
+
+  writing: {
+    universal: {
+      id: 'w-universal',
+      type: 'free_write',
+      instruction: 'Think of an important decision you made in your life. It can be a small or a big decision. Write between 80 and 150 words. Include: what the decision was, why you made it, and what happened as a result.',
+      minWords: 60,
+      maxWords: 180,
+      evaluationPrompt: `You are a real English teacher reading a student's writing. Read it the way a real person would — not like a machine.
+
+The student was asked: "Think of an important decision you made in your life. What was it, why did you make it, and what happened?"
+
+They wrote:
+"{writing}"
+
+Read it carefully. Think about:
+- How well do they express ideas? Can you understand them easily?
+- What grammar patterns do they use? What slips up?
+- How wide is their vocabulary — basic everyday words only, or do they reach for more?
+- Do their sentences connect smoothly or feel choppy and disconnected?
+- Did they actually answer all three parts of the question?
+
+Now assign a level. Be honest — not too generous, not too harsh:
+- A1: barely connected sentences, many basic errors, very limited words
+- A2: simple sentences that connect, some errors, everyday vocabulary only
+- B1: clear writing with some errors, decent vocabulary, some varied sentences
+- B2: good writing, occasional errors, solid vocabulary range, well organised
+- C1: sophisticated writing, rare errors, precise vocabulary, complex ideas expressed naturally
+- C2: near-native, exceptional precision, everything flows
+
+Write your response like a real teacher talking to a student — warm, honest, specific. Two or three sentences. Name something specific they did well and one specific thing to work on. No grammar codes, no formulas, no bullet points.
+
+Then on the very last lines add the JSON data (this is just for the app to read — the student sees your written feedback):
+LEVEL_DATA: {"level": "B1", "sublevel": "mid", "evidence": "your feedback text here", "strengths": ["one specific strength"], "specific_errors": ["one specific error with correction"], "priority_improvement": "the one most important thing to work on"}`
+    }
+  },
+
+  dialogue: {
+    A1: [
+      {
+        id: 'd-a1-1', type: 'dialogue_comprehension',
+        instruction: 'Read this conversation, then answer the question.',
+        text: 'Lucy: Hi! Are you new here?\nJames: Yes, I started today. My name is James.\nLucy: Nice to meet you, James. I am Lucy. Do you need help?\nJames: Yes, please. Where is the bathroom?\nLucy: It is on the second floor, next to the stairs.',
+        question: 'Where is the bathroom?',
+        correct: 'On the second floor / next to the stairs',
+        hint: 'Lucy gives James the answer directly.'
+      },
+      {
+        id: 'd-a1-2', type: 'dialogue_comprehension',
+        instruction: 'Read the same conversation again.',
+        text: 'Lucy: Hi! Are you new here?\nJames: Yes, I started today. My name is James.\nLucy: Nice to meet you, James. I am Lucy. Do you need help?\nJames: Yes, please. Where is the bathroom?\nLucy: It is on the second floor, next to the stairs.',
+        question: 'Why does James need help?',
+        correct: 'He is new and does not know where things are / he needs to find the bathroom',
+        hint: 'What does James say when Lucy asks if he needs help?'
+      }
+    ],
 
     A2: [
       {
