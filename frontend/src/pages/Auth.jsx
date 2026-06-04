@@ -121,9 +121,7 @@ export default function Auth() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <label htmlFor="password" className="form-label">Password</label>
               {tab === 'signin' && (
-                <a href="/forgot-password" style={{ fontSize: '13px', color: 'var(--color-primary)' }}>
-                  Forgot password?
-                </a>
+                <span style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>Forgot password?</span>
               )}
             </div>
             <div style={{ position: 'relative' }}>
@@ -170,10 +168,10 @@ export default function Auth() {
                       flex: 1,
                       borderRadius: '999px',
                       background: i < passwordStrength
-                        ? passwordStrength === 1 ? 'var(--color-error)'
-                          : passwordStrength === 2 ? 'var(--amber-500)'
-                            : 'var(--color-success)'
-                        : 'var(--color-border)',
+                        ? passwordStrength === 1 ? 'var(--amber-error)'
+                          : passwordStrength === 2 ? 'var(--amber-error)'
+                            : 'var(--green-accent)'
+                        : 'var(--border)',
                       transition: 'background 0.2s'
                     }} />
                   ))}
@@ -185,7 +183,7 @@ export default function Auth() {
                       alignItems: 'center',
                       gap: '6px',
                       fontSize: '12px',
-                      color: rule.test(form.password) ? 'var(--color-success)' : 'var(--color-text-tertiary)'
+                      color: rule.test(form.password) ? 'var(--green-accent)' : 'var(--text-tertiary)'
                     }}>
                       {rule.test(form.password) ? (
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
@@ -204,8 +202,8 @@ export default function Auth() {
 
           {tab === 'signup' && (
             <label style={styles.remember}>
-              <input type="checkbox" style={{ accentColor: 'var(--color-primary)' }} />
-              <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+              <input type="checkbox" style={{ accentColor: 'var(--blue-primary)' }} />
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
                 Remember me on this device
               </span>
             </label>
@@ -242,13 +240,13 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '2rem 1rem',
-    background: 'var(--color-bg)'
+    background: 'var(--bg)'
   },
   card: {
     width: '100%',
     maxWidth: '420px',
-    background: 'var(--color-surface)',
-    border: '1px solid var(--color-border)',
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
     borderRadius: 'var(--radius-xl)',
     padding: '2.5rem',
     boxShadow: 'var(--shadow-md)'
@@ -257,19 +255,19 @@ const styles = {
     display: 'block',
     fontFamily: 'var(--font-serif)',
     fontSize: '26px',
-    color: 'var(--color-primary)',
+    color: 'var(--blue-primary)',
     letterSpacing: '-0.02em',
     marginBottom: '0.25rem',
     textDecoration: 'none'
   },
   tagline: {
     fontSize: '15px',
-    color: 'var(--color-text-secondary)',
+    color: 'var(--text-secondary)',
     marginBottom: '1.75rem'
   },
   tabs: {
     display: 'flex',
-    background: 'var(--gray-100)',
+    background: 'var(--surface-2)',
     borderRadius: 'var(--radius-md)',
     padding: '3px',
     marginBottom: '1.5rem',
@@ -283,14 +281,14 @@ const styles = {
     border: 'none',
     borderRadius: 'calc(var(--radius-md) - 2px)',
     background: 'transparent',
-    color: 'var(--color-text-secondary)',
+    color: 'var(--text-secondary)',
     cursor: 'pointer',
     transition: 'all var(--transition)',
     fontFamily: 'var(--font-sans)'
   },
   tabActive: {
     background: 'white',
-    color: 'var(--color-text)',
+    color: 'var(--text)',
     boxShadow: 'var(--shadow-sm)'
   },
   form: {
@@ -306,7 +304,7 @@ const styles = {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    color: 'var(--color-text-tertiary)',
+    color: 'var(--text-tertiary)',
     display: 'flex',
     alignItems: 'center',
     padding: '4px'
@@ -320,9 +318,9 @@ const styles = {
   note: {
     marginTop: '1.5rem',
     fontSize: '12px',
-    color: 'var(--color-text-tertiary)',
+    color: 'var(--text-tertiary)',
     textAlign: 'center',
-    borderTop: '1px solid var(--color-border)',
+    borderTop: '1px solid var(--border)',
     paddingTop: '1rem'
   }
 };

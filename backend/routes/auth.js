@@ -68,8 +68,7 @@ router.post('/signup', async (req, res) => {
     res.status(201).json({
       token,
       user: { id: user.id, name: user.name, email: user.email, emailVerified: user.email_verified },
-      needsPlacementTest: true,
-      verifyToken
+      needsPlacementTest: true
     });
   } catch (err) {
     console.error('Signup error:', err);
@@ -162,7 +161,7 @@ router.post('/resend-verification', authMiddleware, async (req, res) => {
       [verifyToken, verifyExpires, req.user.userId]
     );
 
-    res.json({ message: 'Verification email sent', verifyToken });
+    res.json({ message: 'Verification email sent' });
   } catch (err) {
     console.error('Resend verification error:', err);
     res.status(500).json({ error: 'Something went wrong. Please try again.' });
@@ -189,7 +188,7 @@ router.post('/forgot-password', async (req, res) => {
       [resetToken, resetExpires, result.rows[0].id]
     );
 
-    res.json({ message: 'If an account exists, a reset link has been sent', resetToken });
+    res.json({ message: 'If an account exists, a reset link has been sent' });
   } catch (err) {
     console.error('Forgot password error:', err);
     res.status(500).json({ error: 'Something went wrong. Please try again.' });
@@ -283,16 +282,16 @@ router.get('/me', authMiddleware, async (req, res) => {
   }
 });
 
-module.exports = router;
-
 // PATCH /api/auth/settings
 router.patch('/settings', authMiddleware, async (req, res) => {
   try {
     const { dyslexiaFont, highContrast, simplifiedFirst, fontSize, weeklyGoal, dailyReminder, reminderTime } = req.body;
     await pool.query(
       `UPDATE users SET dyslexia_font=$1, high_contrast=$2, simplified_first=$3, font_size=$4, weekly_goal=$5, daily_reminder=$6, reminder_time=$7, updated_at=NOW() WHERE id=$8`,
-      [dyslexiaFont||false, highContrast||false, simplifiedFirst||false, fontSize||'100', weeklyGoal||2, dailyReminder||false, reminderTime||'09:00', req.user.userId]
+      [dyslexiaFont??false, highContrast??false, simplifiedFirst??false, fontSize??'100', weeklyGoal??2, dailyReminder??false, reminderTime??'09:00', req.user.userId]
     );
     res.json({ message: 'Settings saved' });
   } catch (err) { console.error('Settings error:', err); res.status(500).json({ error: 'Something went wrong.' }); }
 });
+
+module.exports = router;

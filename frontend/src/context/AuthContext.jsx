@@ -69,10 +69,8 @@ export function AuthProvider({ children }) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Signup failed');
     localStorage.setItem('engrow_token', data.token);
-    setUser(data.user);
-    setSkills([]);
     setNeedsPlacementTest(true); // new user always needs test
-    setLoading(false);
+    await fetchMe(data.token);
     return data;
   }
 

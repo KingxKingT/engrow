@@ -4,6 +4,10 @@ const pool = require('../db/pool');
 const authMiddleware = require('../middleware/auth');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
+if (!process.env.GEMINI_API_KEY) {
+  console.error('GEMINI_API_KEY is not set — AI features will fail');
+}
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const SYSTEM_INSTRUCTION = `You are a real English teacher — warm, smart, and human. You are helping people learn English inside an app. Some of your users struggle with dyslexia, ADHD, or dyscalculia, so you keep things simple and human.
@@ -16,6 +20,11 @@ How you think and respond:
 - You never use grammar formulas like Subject + Verb + Object. You describe grammar the way a person would — using movement and plain language. Words "move", "swap", "jump to the front", "get pushed back."
 - You keep responses short. 1-3 sentences maximum. Never a wall of text.
 - You end every evaluation with either VERDICT: CORRECT or VERDICT: WRONG on its own line.`;
+
+const model = genAI.getGenerativeModel({
+  model: 'gemini-1.5-flash',
+  systemInstruction: SYSTEM_INSTRUCTION
+});
 
 const SKILL_ORDER = ['grammar', 'vocabulary', 'reading', 'writing', 'dialogue'];
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
@@ -719,7 +728,7 @@ function getNextLevel(skillAnswers, currentLevel) {
   const levelIndex = CEFR_LEVELS.indexOf(currentLevel);
   if (last3.length >= 3) {
     if (correctCount >= 2) {
-      if (levelIndex < CEFR_LEVELS.length - 2) return { action: 'up', level: CEFR_LEVELS[levelIndex + 1] };
+      if (levelIndex < CEFR_LEVELS.length - 1) return { action: 'up', level: CEFR_LEVELS[levelIndex + 1] };
       return { action: 'confirm', level: currentLevel };
     }
     if (correctCount <= 1) {
@@ -728,7 +737,7 @@ function getNextLevel(skillAnswers, currentLevel) {
     }
   }
   if (last3.length === 2) {
-    if (correctCount === 2 && levelIndex < CEFR_LEVELS.length - 2) return { action: 'up', level: CEFR_LEVELS[levelIndex + 1] };
+    if (correctCount === 2 && levelIndex < CEFR_LEVELS.length - 1) return { action: 'up', level: CEFR_LEVELS[levelIndex + 1] };
     if (correctCount === 0 && levelIndex > 0) return { action: 'down', level: CEFR_LEVELS[levelIndex - 1] };
   }
   return { action: 'continue', level: currentLevel };
@@ -785,8 +794,11 @@ function getNextQuestion(skill, currentLevel, usedIds, questionType) {
   }
   const available = levelBank.filter(q => !usedIds.includes(q.id));
   if (available.length === 0) {
-    const allUsed = levelBank[levelBank.length - 1];
-    return allUsed ? { ...allUsed, skill, level: currentLevel } : null;
+    const fallbackLevel = currentLevel === 'C1' ? 'B2' : currentLevel === 'A1' ? 'A2' : 'B1';
+    const fallback = bank[fallbackLevel];
+    if (!fallback) return null;
+    const fallbackAvailable = fallback.filter(q => !usedIds.includes(q.id));
+    return fallbackAvailable.length > 0 ? { ...fallbackAvailable[0], skill, level: currentLevel } : null;
   }
   return { ...available[0], skill, level: currentLevel };
 }
@@ -816,6 +828,19 @@ router.post('/start', authMiddleware, async (req, res) => {
       [req.user.userId]
     );
     if (existing.rows.length > 0) return res.json({ testId: existing.rows[0].id, resumed: true });
+
+    // Check retake eligibility
+    const completed = await pool.query(
+      `SELECT retake_eligible_at FROM placement_tests WHERE user_id = $1 AND status = 'completed' ORDER BY started_at DESC LIMIT 1`,
+      [req.user.userId]
+    );
+    if (completed.rows.length > 0) {
+      const retakeAt = completed.rows[0].retake_eligible_at;
+      if (retakeAt && new Date() < new Date(retakeAt)) {
+        return res.status(403).json({ error: 'Please wait before retaking the test.' });
+      }
+    }
+
     const result = await pool.query(
       `INSERT INTO placement_tests (user_id, status, current_skill, current_question) VALUES ($1, 'in_progress', 'grammar', 0) RETURNING id`,
       [req.user.userId]
@@ -853,13 +878,13 @@ router.get('/:testId/question', authMiddleware, async (req, res) => {
       currentLevel = nextDecision.level;
     }
 
-    if (isSkillConfirmed(skillAnswers, currentLevel) || skillAnswers.length >= 10) {
+    if (isSkillConfirmed(skillAnswers, currentLevel)) {
       const skillIndex = SKILL_ORDER.indexOf(skill);
       if (skillIndex === SKILL_ORDER.length - 1) {
         return res.json({ skillComplete: true, allComplete: true });
       }
       const nextSkill = SKILL_ORDER[skillIndex + 1];
-      await pool.query('UPDATE placement_tests SET current_skill = $1, current_question = 0 WHERE id = $2', [nextSkill, req.params.testId]);
+      await pool.query('UPDATE placement_tests SET current_skill = $1 WHERE id = $2', [nextSkill, req.params.testId]);
       return res.json({ skillComplete: true, completedSkill: skill, completedLevel: getFinalLevel(skillAnswers), nextSkill, allComplete: false });
     }
 
@@ -868,7 +893,7 @@ router.get('/:testId/question', authMiddleware, async (req, res) => {
       const skillIndex = SKILL_ORDER.indexOf(skill);
       if (skillIndex === SKILL_ORDER.length - 1) return res.json({ skillComplete: true, allComplete: true });
       const nextSkill = SKILL_ORDER[skillIndex + 1];
-      await pool.query('UPDATE placement_tests SET current_skill = $1, current_question = 0 WHERE id = $2', [nextSkill, req.params.testId]);
+      await pool.query('UPDATE placement_tests SET current_skill = $1 WHERE id = $2', [nextSkill, req.params.testId]);
       return res.json({ skillComplete: true, completedSkill: skill, completedLevel: getFinalLevel(skillAnswers), nextSkill, allComplete: false });
     }
 
@@ -886,21 +911,8 @@ router.post('/:testId/answer', authMiddleware, async (req, res) => {
     );
     if (testResult.rows.length === 0) return res.status(404).json({ error: 'Test not found' });
 
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      systemInstruction: SYSTEM_INSTRUCTION
-    });
-
     // ── Writing: special evaluation ──────────────────────────────────────
     if (questionType === 'free_write') {
-      const wordCount = answer.trim().split(/\s+/).filter(Boolean).length;
-      if (wordCount < 40) {
-        return res.json({
-          correct: false,
-          feedback: 'Keep going — a bit more writing helps us understand your real level better.',
-          correction: null, rule: null, tooShort: true
-        });
-      }
       try {
         const prompt = QUESTION_BANK.writing.universal.evaluationPrompt.replace('{writing}', answer);
         const result = await model.generateContent(prompt);
@@ -1111,11 +1123,6 @@ router.post('/:testId/complete', authMiddleware, async (req, res) => {
     const answers = testResult.rows[0].answers || [];
     const results = {};
     const explanations = {};
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      systemInstruction: SYSTEM_INSTRUCTION
-    });
-
     for (const skill of SKILL_ORDER) {
       const skillAnswers = answers.filter(a => a.skill === skill);
       let detectedLevel = 'A1';
