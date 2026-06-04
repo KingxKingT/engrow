@@ -67,7 +67,10 @@ export default function PlacementTest() {
     setError('');
     try {
       const res = await fetch(`${API}/test/${tid}/question`, { headers:{ Authorization:`Bearer ${getToken()}` } });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error || `Server returned ${res.status}`);
+      }
       const data = await res.json();
       if (data.completed || (data.skillComplete && data.allComplete)) {
         await completeTest(tid); return;

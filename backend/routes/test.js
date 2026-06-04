@@ -921,7 +921,7 @@ router.get('/:testId/question', authMiddleware, async (req, res) => {
 
     const wrongInRow = skillAnswers.length >= 3 && skillAnswers.slice(-3).every(a => !a.correct);
     res.json({ question, progress: { currentSkill: skill, skillIndex: SKILL_ORDER.indexOf(skill), totalSkills: SKILL_ORDER.length, questionsInSkill: skillAnswers.length, showEncouragement: wrongInRow } });
-  } catch (err) { console.error('Get question error:', err); res.status(500).json({ error: 'Something went wrong.' }); }
+  } catch (err) { console.error('Get question error:', err); res.status(500).json({ error: err?.message || 'Something went wrong.' }); }
 });
 
 router.post('/:testId/answer', authMiddleware, async (req, res) => {
