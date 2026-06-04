@@ -898,7 +898,8 @@ router.post('/:testId/answer', authMiddleware, async (req, res) => {
 
     const model = genAI.getGenerativeModel({
       model: 'gemini-1.5-flash',
-      systemInstruction: SYSTEM_INSTRUCTION
+      systemInstruction: SYSTEM_INSTRUCTION,
+      generationConfig: { responseMimeType: "application/json" }
     });
 
     if (questionType === 'free_write') {
@@ -919,6 +920,7 @@ router.post('/:testId/answer', authMiddleware, async (req, res) => {
         await pool.query('UPDATE placement_tests SET answers = $1 WHERE id = $2', [JSON.stringify([...currentAnswers, newAnswer]), req.params.testId]);
         return res.json({ correct: true, feedback, writingLevel: evaluation.level, writingData: levelData, correction: null, rule: null });
       } catch (e) {
+        console.error("Gemini free_write error:", e);
         isCorrect = true; feedback = 'Your writing has been recorded.';
       }
     } else if (questionType === 'write_sentence' || questionType === 'use_in_sentence') {
@@ -951,7 +953,10 @@ Respond ONLY in JSON (no markdown):
         feedback = ev.feedback;
         correction = ev.correction;
         rule = ev.rule || rule;
-      } catch { isCorrect = answer.trim().split(' ').length >= 3; feedback = isCorrect ? 'Good — that works!' : 'Try writing a full sentence.'; }
+      } catch (e) {
+        console.error("Gemini write_sentence error:", e);
+        isCorrect = answer.trim().split(' ').length >= 3; feedback = isCorrect ? 'Good — that works!' : 'Try writing a full sentence.';
+      }
     } else if (questionType === 'fix_error') {
       // AI evaluation — string comparison is NOT reliable for sentence corrections.
       // The student must fix the CORRECT error, not just change something else.
@@ -987,7 +992,8 @@ Respond ONLY in valid JSON (no markdown, nothing outside the JSON):
         feedback = ev.feedback;
         correction = ev.correct ? null : questionData.correct;
         rule = ev.rule || rule;
-      } catch {
+      } catch (e) {
+        console.error("Gemini fix_error error:", e);
         // Fallback: strict exact match only
         const correct = (questionData.correct || '').toLowerCase().trim();
         const given = answer.toLowerCase().trim();
@@ -1029,7 +1035,10 @@ Respond ONLY in JSON (no markdown):
         isCorrect = ev.correct;
         feedback = ev.feedback;
         correction = ev.correction;
-      } catch { isCorrect = false; feedback = 'Can you describe it in other words?'; }
+      } catch (e) {
+        console.error("Gemini define_word error:", e);
+        isCorrect = false; feedback = 'Can you describe it in other words?';
+      }
     } else if (questionType === 'read_comprehension' || questionType === 'dialogue_comprehension') {
       const prompt = `A student answered a comprehension question about a text they read.
 
@@ -1058,7 +1067,10 @@ Respond ONLY in JSON (no markdown):
         isCorrect = ev.correct;
         feedback = ev.feedback;
         correction = ev.correction;
-      } catch { isCorrect = false; feedback = 'Please answer in more detail.'; }
+      } catch (e) {
+        console.error("Gemini comprehension error:", e);
+        isCorrect = false; feedback = 'Please answer in more detail.';
+      }
     } else if (questionType === 'choose_correct') {
       isCorrect = answer === questionData.correct;
       feedback = isCorrect ? 'Correct!' : `Not quite. The correct answer is: "${questionData.correct}"`;
@@ -1116,7 +1128,10 @@ Write at a level this person can understand. Warm, direct, human. No bullet poin
       try {
         const r = await model.generateContent(prompt);
         explanations[skill] = r.response.text().trim();
-      } catch { explanations[skill] = `Your ${skill} level is ${detectedLevel}.`; }
+      } catch (e) {
+        console.error("Gemini complete explanation error:", e);
+        explanations[skill] = `Your ${skill} level is ${detectedLevel}.`;
+      }
 
       await pool.query(
         `INSERT INTO user_skill_levels (user_id, skill, cefr_level) VALUES ($1, $2, $3) ON CONFLICT (user_id, skill) DO UPDATE SET cefr_level = $3, last_updated = NOW()`,
