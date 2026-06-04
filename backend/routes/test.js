@@ -22,7 +22,7 @@ How you think and respond:
 - You end every evaluation with either VERDICT: CORRECT or VERDICT: WRONG on its own line.`;
 
 const model = genAI.getGenerativeModel({
-  model: 'gemini-1.5-flash',
+  model: 'gemini-2.0-flash',
   systemInstruction: SYSTEM_INSTRUCTION
 });
 
@@ -1096,10 +1096,17 @@ VERDICT: WRONG`;
       feedback = feedbackLines.join(' ').trim();
 
       if (!isCorrect) correction = questionData.correct || null;
-    } catch {
-      // Fallback: conservative — mark wrong so it does not inflate level
-      isCorrect = false;
-      feedback = 'Something went wrong checking that. Try the next question.';
+    } catch (err) {
+      console.error('AI evaluation error:', err?.message || err);
+      // Fallback: simple keyword matching when AI is unavailable
+      const lower = answer.toLowerCase();
+      const keywords = (questionData.correct || '').toLowerCase().split(/[\s,./()]+/).filter(w => w.length > 3);
+      const matched = keywords.filter(k => lower.includes(k));
+      isCorrect = matched.length >= Math.min(2, keywords.length);
+      feedback = isCorrect
+        ? 'That captures the key idea — well done.'
+        : `Not quite — the key point is: ${questionData.correct}`;
+      if (!isCorrect) correction = questionData.correct || null;
     }
 
     // Save answer to database
