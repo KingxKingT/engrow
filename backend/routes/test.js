@@ -724,17 +724,11 @@ function getNextLevel(skillAnswers, currentLevel) {
   const atCurrentLevel = skillAnswers.filter(a => a.level === currentLevel);
   const levelIndex = CEFR_LEVELS.indexOf(currentLevel);
 
-  // Climbing phase (A1, A2): 1 question, go up if correct
+  // Climbing phase (A1, A2): 1 question, always go forward (no punishment for wrong)
   if (levelIndex <= 1) {
     if (atCurrentLevel.length === 0) return { action: 'continue', level: currentLevel };
-    const lastAnswer = atCurrentLevel[atCurrentLevel.length - 1];
-    if (lastAnswer.correct) {
-      if (levelIndex < CEFR_LEVELS.length - 1) return { action: 'up', level: CEFR_LEVELS[levelIndex + 1] };
-      return { action: 'confirm', level: currentLevel };
-    }
-    // Wrong at climb level — confirm one level down
-    if (levelIndex === 0) return { action: 'confirm', level: 'A1' };
-    return { action: 'down', level: CEFR_LEVELS[levelIndex - 1] };
+    if (levelIndex < CEFR_LEVELS.length - 1) return { action: 'up', level: CEFR_LEVELS[levelIndex + 1] };
+    return { action: 'confirm', level: currentLevel };
   }
 
   // Confirmation phase (B1+): 3 questions to confirm
@@ -757,15 +751,8 @@ function isSkillConfirmed(skillAnswers, currentLevel) {
   const atLevel = skillAnswers.filter(a => a.level === currentLevel);
   const levelIndex = CEFR_LEVELS.indexOf(currentLevel);
 
-  // Climbing levels: confirmed when we moved past or hit a wrong answer
-  if (levelIndex <= 1) {
-    if (levelIndex < CEFR_LEVELS.length - 1) {
-      const nextAnswers = skillAnswers.filter(a => a.level === CEFR_LEVELS[levelIndex + 1]);
-      if (nextAnswers.length > 0) return true;
-    }
-    if (atLevel.length > 0 && !atLevel[atLevel.length - 1].correct) return true;
-    return false;
-  }
+  // Climbing levels (A1, A2): never confirm the skill here — let it flow to B1+
+  if (levelIndex <= 1) return false;
 
   // Confirmation levels: 3+ answers
   if (atLevel.length < 3) return false;
@@ -774,7 +761,6 @@ function isSkillConfirmed(skillAnswers, currentLevel) {
   const correctCount = last3.filter(a => a.correct).length;
 
   if (correctCount >= 2) {
-    // Passed — check if we've already failed at the next level
     if (levelIndex < CEFR_LEVELS.length - 1) {
       const nextAnswers = skillAnswers.filter(a => a.level === CEFR_LEVELS[levelIndex + 1]);
       if (nextAnswers.length >= 3) {
@@ -786,7 +772,6 @@ function isSkillConfirmed(skillAnswers, currentLevel) {
     return true;
   }
 
-  // Failed — confirmed at this ceiling
   return true;
 }
 
@@ -800,19 +785,17 @@ function getFinalLevel(skillAnswers) {
       if (a.correct) levelScores[a.level].correct++;
     }
   });
-  let confirmedLevel = 'A1';
-  for (const level of CEFR_LEVELS) {
+  // Walk from highest level down — find first level that was clearly passed
+  for (let i = CEFR_LEVELS.length - 1; i >= 0; i--) {
+    const level = CEFR_LEVELS[i];
     const s = levelScores[level];
-    const idx = CEFR_LEVELS.indexOf(level);
-    // Climb levels: 1 correct answer means passed
-    if (idx <= 1) {
-      if (s.correct >= 1) confirmedLevel = level;
+    if (i <= 1) {
+      if (s.total >= 1 && s.correct >= 1) return level;
     } else {
-      // Confirm levels: 3+ answers with ≥2/3 correct
-      if (s.total >= 3 && s.correct >= 2) confirmedLevel = level;
+      if (s.total >= 3 && s.correct >= 2) return level;
     }
   }
-  return confirmedLevel;
+  return 'A1';
 }
 
 function getNextQuestion(skill, currentLevel, usedIds, questionType) {
