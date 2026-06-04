@@ -82,8 +82,8 @@ export default function PlacementTest() {
       setQuestion(data.question);
       setProgress(data.progress);
       setTimeout(() => topRef.current?.scrollIntoView({ behavior:'smooth', block:'start' }), 100);
-    } catch {
-      setError('Could not load question. Please try refreshing the page.');
+    } catch (e) {
+      setError(e?.message || 'Could not load question. Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
