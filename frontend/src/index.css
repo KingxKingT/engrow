@@ -36,17 +36,6 @@
 
   --sidebar-width: 210px;
   --transition: 140ms ease;
-
-  /* Compatibility aliases for legacy var(--color-*) variables */
-  --color-bg: var(--bg);
-  --color-surface: var(--surface);
-  --color-border: var(--border);
-  --color-primary: var(--blue-primary);
-  --color-text: var(--text);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-tertiary: var(--text-tertiary);
-  --color-error: var(--amber-error);
-  --color-success: var(--green-accent);
 }
 
 body.dyslexia-mode, body.dyslexia-mode * { font-family: var(--font-dyslexic) !important; letter-spacing: 0.05em; word-spacing: 0.1em; line-height: 1.9 !important; }

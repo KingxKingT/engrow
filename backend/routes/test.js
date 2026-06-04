@@ -6,16 +6,16 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const SYSTEM_INSTRUCTION = `You are an empathetic English language coach inside a learning app. Your users may struggle with traditional grammar rules and algebraic formulas — including people with dyslexia, ADHD, or dyscalculia.
+const SYSTEM_INSTRUCTION = `You are a real English teacher — warm, smart, and human. You are helping people learn English inside an app. Some of your users struggle with dyslexia, ADHD, or dyscalculia, so you keep things simple and human.
 
-CRITICAL RULES — follow every one of these on every single response:
-1. NEVER use algebraic grammar formulas. Never write things like "Subject + Aux + Verb + Object". These are confusing and harmful for your users.
-2. NEVER write walls of text. Break everything into short, scannable pieces.
-3. Use physical, spatial metaphors instead of rules. Words "swap places", "jump to the front", "move around", "get pushed back". Make grammar feel like movement, not maths.
-4. Keep your tone warm and peer-to-peer. You are a helpful friend who happens to know English well — not a rigid school examiner.
-5. When something is wrong, name the SPECIFIC word or phrase that was wrong. Never give a vague "your grammar needs work" response.
-6. Accept valid paraphrases and alternative phrasings. Be a real teacher, not a spelling-bee judge.
-7. Keep all explanations under 3 sentences. Shorter is better.`;
+How you think and respond:
+- You read the student's answer and think about it the way a real person would — not like a machine running a checklist.
+- You understand MEANING, not just spelling. If someone said it right but with slightly different words, that counts.
+- You are honest. If something is wrong, you say so clearly — but kindly, like a friend who wants them to improve.
+- You are specific. You never say "your grammar needs work." You say "the word 'is' needs to be 'are' here because you're talking about more than one thing."
+- You never use grammar formulas like Subject + Verb + Object. You describe grammar the way a person would — using movement and plain language. Words "move", "swap", "jump to the front", "get pushed back."
+- You keep responses short. 1-3 sentences maximum. Never a wall of text.
+- You end every evaluation with either VERDICT: CORRECT or VERDICT: WRONG on its own line.`;
 
 const SKILL_ORDER = ['grammar', 'vocabulary', 'reading', 'writing', 'dialogue'];
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
@@ -578,40 +578,32 @@ const QUESTION_BANK = {
       instruction: 'Think of an important decision you made in your life. It can be a small or a big decision. Write between 80 and 150 words. Include: what the decision was, why you made it, and what happened as a result.',
       minWords: 60,
       maxWords: 180,
-      evaluationPrompt: `You are an expert English language examiner with 20 years of experience assessing writing according to CEFR standards.
+      evaluationPrompt: `You are a real English teacher reading a student's writing. Read it the way a real person would — not like a machine.
 
-Read this writing sample carefully.
+The student was asked: "Think of an important decision you made in your life. What was it, why did you make it, and what happened?"
 
-PROMPT: "Think of an important decision you made in your life. Describe what the decision was, why you made it, and what happened as a result."
-
-STUDENT WRITING:
+They wrote:
 "{writing}"
 
-Assess the writing on five dimensions:
-1. GRAMMAR ACCURACY: What structures are used correctly? What errors appear and how frequently?
-2. VOCABULARY RANGE: How wide and accurate is the vocabulary? Is word choice varied or repetitive?
-3. SENTENCE COMPLEXITY: Only simple sentences, or does the writer vary structure with clauses and connectors?
-4. COHERENCE: Is the writing organised? Do ideas connect logically?
-5. TASK COMPLETION: Did they address all three parts of the prompt?
+Read it carefully. Think about:
+- How well do they express ideas? Can you understand them easily?
+- What grammar patterns do they use? What slips up?
+- How wide is their vocabulary — basic everyday words only, or do they reach for more?
+- Do their sentences connect smoothly or feel choppy and disconnected?
+- Did they actually answer all three parts of the question?
 
-Assign ONE of these CEFR levels:
-- A1: Only very basic isolated sentences, severe errors throughout, almost no connectors, vocabulary extremely limited
-- A2: Simple connected sentences, frequent errors in basic structures, basic vocabulary (common words only), limited connectors (and, but, because)
-- B1: Clear text with some errors, adequate vocabulary, some varied sentence structures, connectors used (however, although, as a result)
-- B2: Complex text, occasional errors, good vocabulary range, varied sentence structures, cohesive paragraph structure
-- C1: Sophisticated text, rare and minor errors only, wide and precise vocabulary, complex clause structures, nuanced expression
-- C2: Near-native accuracy, exceptional vocabulary precision, complex and varied structures, sophisticated ideas
+Now assign a level. Be honest — not too generous, not too harsh:
+- A1: barely connected sentences, many basic errors, very limited words
+- A2: simple sentences that connect, some errors, everyday vocabulary only
+- B1: clear writing with some errors, decent vocabulary, some varied sentences
+- B2: good writing, occasional errors, solid vocabulary range, well organised
+- C1: sophisticated writing, rare errors, precise vocabulary, complex ideas expressed naturally
+- C2: near-native, exceptional precision, everything flows
 
-Respond ONLY with valid JSON (no markdown, no text outside the JSON):
-{
-  "level": "B1",
-  "sublevel": "mid",
-  "confidence": 0.85,
-  "evidence": "Two-sentence explanation of why this level was assigned, citing specific examples from the text",
-  "specific_errors": ["exact quote from text: correction", "exact quote: correction"],
-  "strengths": ["specific strength 1", "specific strength 2"],
-  "priority_improvement": "The single most important thing to work on"
-}`
+Write your response like a real teacher talking to a student — warm, honest, specific. Two or three sentences. Name something specific they did well and one specific thing to work on. No grammar codes, no formulas, no bullet points.
+
+Then on the very last lines add the JSON data (this is just for the app to read — the student sees your written feedback):
+LEVEL_DATA: {"level": "B1", "sublevel": "mid", "evidence": "your feedback text here", "strengths": ["one specific strength"], "specific_errors": ["one specific error with correction"], "priority_improvement": "the one most important thing to work on"}`
     }
   },
 
@@ -888,201 +880,227 @@ router.get('/:testId/question', authMiddleware, async (req, res) => {
 router.post('/:testId/answer', authMiddleware, async (req, res) => {
   try {
     const { answer, skill, level, questionType, questionData } = req.body;
-    const testResult = await pool.query('SELECT * FROM placement_tests WHERE id = $1 AND user_id = $2', [req.params.testId, req.user.userId]);
+    const testResult = await pool.query(
+      'SELECT * FROM placement_tests WHERE id = $1 AND user_id = $2',
+      [req.params.testId, req.user.userId]
+    );
     if (testResult.rows.length === 0) return res.status(404).json({ error: 'Test not found' });
 
-    let isCorrect = false;
-    let feedback = '';
-    let correction = '';
-    let rule = questionData?.rule || null;
-
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
-      systemInstruction: SYSTEM_INSTRUCTION,
-      generationConfig: { responseMimeType: "application/json" }
+      model: 'gemini-1.5-flash',
+      systemInstruction: SYSTEM_INSTRUCTION
     });
 
+    // ── Writing: special evaluation ──────────────────────────────────────
     if (questionType === 'free_write') {
       const wordCount = answer.trim().split(/\s+/).filter(Boolean).length;
       if (wordCount < 40) {
-        return res.json({ correct: false, feedback: 'Keep going — a bit more writing helps us understand your real level better.', correction: null, rule: null, tooShort: true });
+        return res.json({
+          correct: false,
+          feedback: 'Keep going — a bit more writing helps us understand your real level better.',
+          correction: null, rule: null, tooShort: true
+        });
       }
-      const prompt = QUESTION_BANK.writing.universal.evaluationPrompt.replace('{writing}', answer);
       try {
+        const prompt = QUESTION_BANK.writing.universal.evaluationPrompt.replace('{writing}', answer);
         const result = await model.generateContent(prompt);
-        const text = result.response.text().replace(/```json|```/g, '').trim();
-        const evaluation = JSON.parse(text);
-        isCorrect = true;
-        feedback = evaluation.evidence;
-        const levelData = { detectedLevel: evaluation.level, sublevel: evaluation.sublevel, strengths: evaluation.strengths, improvement: evaluation.priority_improvement, errors: evaluation.specific_errors };
+        const rawText = result.response.text().trim();
+
+        // Extract the LEVEL_DATA JSON from the end
+        const levelDataMatch = rawText.match(/LEVEL_DATA:\s*(\{[\s\S]+\})/);
+        let levelData = { detectedLevel: 'B1', sublevel: 'mid', strengths: [], specific_errors: [], improvement: '' };
+        let humanFeedback = rawText;
+
+        if (levelDataMatch) {
+          try {
+            const parsed = JSON.parse(levelDataMatch[1]);
+            levelData = {
+              detectedLevel: parsed.level || 'B1',
+              sublevel: parsed.sublevel || 'mid',
+              strengths: parsed.strengths || [],
+              specific_errors: parsed.specific_errors || [],
+              improvement: parsed.priority_improvement || ''
+            };
+            // Everything before LEVEL_DATA is the human feedback
+            humanFeedback = rawText.split('LEVEL_DATA:')[0].trim();
+          } catch { /* keep defaults */ }
+        }
+
         const currentAnswers = testResult.rows[0].answers || [];
-        const newAnswer = { skill, level: evaluation.level, questionType, answer: answer.substring(0, 500), correct: true, questionId: questionData?.id, timestamp: new Date().toISOString(), writingEvaluation: levelData };
-        await pool.query('UPDATE placement_tests SET answers = $1 WHERE id = $2', [JSON.stringify([...currentAnswers, newAnswer]), req.params.testId]);
-        return res.json({ correct: true, feedback, writingLevel: evaluation.level, writingData: levelData, correction: null, rule: null });
-      } catch (e) {
-        console.error("Gemini free_write error:", e);
-        isCorrect = true; feedback = 'Your writing has been recorded.';
+        const newAnswer = {
+          skill, level: levelData.detectedLevel, questionType,
+          answer: answer.substring(0, 500), correct: true,
+          questionId: questionData?.id,
+          timestamp: new Date().toISOString(),
+          writingEvaluation: levelData
+        };
+        await pool.query(
+          'UPDATE placement_tests SET answers = $1 WHERE id = $2',
+          [JSON.stringify([...currentAnswers, newAnswer]), req.params.testId]
+        );
+        return res.json({
+          correct: true,
+          feedback: humanFeedback,
+          writingLevel: levelData.detectedLevel,
+          writingData: levelData,
+          correction: null, rule: null
+        });
+      } catch {
+        return res.json({ correct: true, feedback: 'Your writing has been saved — good effort.', correction: null, rule: null });
       }
-    } else if (questionType === 'write_sentence' || questionType === 'use_in_sentence') {
-      const prompt = `A student wrote a sentence. Check if it works correctly.
-
-Task they were given: "${questionData.instruction || ''}"
-Word or topic: "${questionData.word || ''}"
-What to check for: ${questionData.evaluationCriteria || 'correct English sentence'}
-
-Student wrote: "${answer}"
-
-CHECK THESE IN ORDER:
-1. Is the sentence real English — not random words? If not → WRONG
-2. Is the required word "${questionData.word || 'target word'}" actually in the sentence and used correctly? If not → WRONG  
-3. Does the sentence demonstrate the grammar/usage described in the criteria? If not → WRONG
-4. Is there a grammar error that would confuse a native speaker? If yes → WRONG
-
-If ALL checks pass → CORRECT.
-
-Be strict about whether the right thing is demonstrated. Be generous about exact wording.
-Feedback: one sentence, name the specific issue if wrong. No grammar codes.
-
-Respond ONLY in JSON (no markdown):
-{"correct": true/false, "feedback": "One plain sentence. Specific about what worked or what slipped.", "correction": "an improved version if wrong, or null if correct", "rule": "one short plain tip — no formulas, plain everyday language"}`;
-      try {
-        const result = await model.generateContent(prompt);
-        const text = result.response.text().replace(/```json|```/g, '').trim();
-        const ev = JSON.parse(text);
-        isCorrect = ev.correct;
-        feedback = ev.feedback;
-        correction = ev.correction;
-        rule = ev.rule || rule;
-      } catch (e) {
-        console.error("Gemini write_sentence error:", e);
-        isCorrect = answer.trim().split(' ').length >= 3; feedback = isCorrect ? 'Good — that works!' : 'Try writing a full sentence.';
-      }
-    } else if (questionType === 'fix_error') {
-      // AI evaluation — string comparison is NOT reliable for sentence corrections.
-      // The student must fix the CORRECT error, not just change something else.
-      // Step 1: find what word/phrase changed between BROKEN and FIXED
-      // Step 2: check if the student changed THAT SAME word/phrase
-      const prompt = `You are checking if a student fixed the right word in a sentence.
-
-ORIGINAL (broken): "${questionData.text}"
-CORRECT (fixed):   "${questionData.correct}"
-
-Look at those two sentences. Find the SPECIFIC word or phrase that is different between them. That is the broken part.
-
-Now look at the student's answer: "${answer}"
-
-Did the student change THAT SAME word/phrase — yes or no?
-
-CORRECT = student fixed the exact same word/phrase that differs between original and correct version
-WRONG = student changed something else, or didn't change anything, or the broken word/phrase is still there unchanged
-
-Do not accept answers where the broken word/phrase is still present unchanged.
-Accept small variations in how they fixed it as long as the broken part is gone.
-
-Feedback: one short sentence. Name the specific word they needed to change. Talk like a friend.
-
-Respond ONLY in valid JSON (no markdown, nothing outside the JSON):
-{"correct": true/false, "feedback": "Short plain sentence naming the specific word.", "correction": "${questionData.correct}", "rule": "${(questionData.rule || '').replace(/"/g, "'")}"}`;
-      ;
-      try {
-        const result = await model.generateContent(prompt);
-        const text = result.response.text().replace(/```json|```/g, '').trim();
-        const ev = JSON.parse(text);
-        isCorrect = ev.correct;
-        feedback = ev.feedback;
-        correction = ev.correct ? null : questionData.correct;
-        rule = ev.rule || rule;
-      } catch (e) {
-        console.error("Gemini fix_error error:", e);
-        // Fallback: strict exact match only
-        const correct = (questionData.correct || '').toLowerCase().trim();
-        const given = answer.toLowerCase().trim();
-        isCorrect = given === correct;
-        feedback = isCorrect ? 'Correct!' : `Not quite. The correct answer is: "${questionData.correct}"`;
-        correction = isCorrect ? null : questionData.correct;
-      }
-    } else if (questionType === 'fill_blank') {
-      // Exact match — fill in blank has one specific correct word
-      const correct = (questionData.correct || '').toLowerCase().trim();
-      const given = answer.toLowerCase().trim();
-      isCorrect = given === correct;
-      feedback = isCorrect ? 'Correct!' : `Not quite. The correct answer is: "${questionData.correct}"`;
-      correction = isCorrect ? null : questionData.correct;
-    } else if (questionType === 'define_word') {
-      const prompt = `The student was asked what the word "${questionData.word}" means.
-
-Student's answer: "${answer}"
-
-The word "${questionData.word}" means: ${JSON.stringify(questionData.acceptableAnswers)}
-
-Is the student's answer capturing the CORE MEANING — even partially, even in simple words?
-
-CORRECT if: the student shows they understand the general idea, even with different words
-WRONG if: the student described something completely different, or clearly has no idea, or left it blank
-
-Accept native-language thinking expressed in simple English.
-Accept "kind of like X" descriptions.
-Reject answers that describe a different concept entirely.
-
-Feedback: one sentence. If wrong, describe what the word actually means in simple everyday language — like explaining it to a friend.
-
-Respond ONLY in JSON (no markdown):
-{"correct": true/false, "feedback": "One plain warm sentence.", "correction": "what the word means in simple everyday language"}`;
-      try {
-        const result = await model.generateContent(prompt);
-        const text = result.response.text().replace(/```json|```/g, '').trim();
-        const ev = JSON.parse(text);
-        isCorrect = ev.correct;
-        feedback = ev.feedback;
-        correction = ev.correction;
-      } catch (e) {
-        console.error("Gemini define_word error:", e);
-        isCorrect = false; feedback = 'Can you describe it in other words?';
-      }
-    } else if (questionType === 'read_comprehension' || questionType === 'dialogue_comprehension') {
-      const prompt = `A student answered a comprehension question about a text they read.
-
-The question: "${questionData.question}"
-A complete answer needs this idea: "${questionData.correct}"
-Student wrote: "${answer}"
-
-The CORE IDEA they need to show: extract the 1-2 key facts from the correct answer above.
-Does the student's answer contain that core idea — even if said differently?
-
-CORRECT if: the key idea is present, even partially, even with different words
-WRONG if: the student missed the key idea entirely, or wrote about something unrelated, or was too vague to show understanding
-
-Grammar mistakes in the student's answer do NOT make it wrong.
-Wrong language but right idea → CORRECT.
-Right language but wrong idea → WRONG.
-
-Feedback: one sentence. If wrong, say what key idea was missing in plain words.
-
-Respond ONLY in JSON (no markdown):
-{"correct": true/false, "feedback": "One short plain sentence. What idea was missing, or confirm what they got right.", "correction": "the key idea they needed to express, in simple words"}`;
-      try {
-        const result = await model.generateContent(prompt);
-        const text = result.response.text().replace(/```json|```/g, '').trim();
-        const ev = JSON.parse(text);
-        isCorrect = ev.correct;
-        feedback = ev.feedback;
-        correction = ev.correction;
-      } catch (e) {
-        console.error("Gemini comprehension error:", e);
-        isCorrect = false; feedback = 'Please answer in more detail.';
-      }
-    } else if (questionType === 'choose_correct') {
-      isCorrect = answer === questionData.correct;
-      feedback = isCorrect ? 'Correct!' : `Not quite. The correct answer is: "${questionData.correct}"`;
-      correction = isCorrect ? null : questionData.correct;
     }
 
-    const currentAnswers = testResult.rows[0].answers || [];
-    const newAnswer = { skill, level, questionType, answer: answer.substring(0, 300), correct: isCorrect, questionId: questionData?.id, timestamp: new Date().toISOString() };
-    await pool.query('UPDATE placement_tests SET answers = $1 WHERE id = $2', [JSON.stringify([...currentAnswers, newAnswer]), req.params.testId]);
+    // ── fill_blank and choose_correct: exact match, no AI needed ─────────
+    if (questionType === 'fill_blank' || questionType === 'choose_correct') {
+      const correct = (questionData.correct || '').toLowerCase().trim();
+      const given = answer.toLowerCase().trim();
+      const isCorrect = given === correct;
+      const feedback = isCorrect
+        ? 'Correct!'
+        : `Not quite — the answer is "${questionData.correct}"`;
+      const currentAnswers = testResult.rows[0].answers || [];
+      await pool.query(
+        'UPDATE placement_tests SET answers = $1 WHERE id = $2',
+        [JSON.stringify([...currentAnswers, { skill, level, questionType, answer, correct: isCorrect, questionId: questionData?.id, timestamp: new Date().toISOString() }]), req.params.testId]
+      );
+      return res.json({
+        correct: isCorrect,
+        feedback,
+        correction: isCorrect ? null : questionData.correct,
+        rule: isCorrect ? null : questionData.rule
+      });
+    }
 
-    res.json({ correct: isCorrect, feedback, correction, rule });
-  } catch (err) { console.error('Answer error:', err); res.status(500).json({ error: 'Something went wrong.' }); }
+    // ── Everything else: AI thinks freely, verdict extracted ─────────────
+    // Build a context-aware prompt based on question type
+    let prompt = '';
+
+    if (questionType === 'fix_error') {
+      prompt = `You are an English teacher checking a student's work.
+
+The student was shown this broken sentence and asked to fix the ONE mistake in it:
+BROKEN: "${questionData.text}"
+CORRECT: "${questionData.correct}"
+
+The specific thing that was wrong: ${questionData.rule || 'see the difference between broken and correct'}
+
+The student wrote this as their fix: "${answer}"
+
+Think through it like a real teacher:
+— What word or phrase is different between BROKEN and CORRECT? That is the mistake.
+— Did the student fix that exact thing? Or did they change something else and leave the mistake in?
+— Is the mistake still sitting there unchanged in the student's answer?
+
+Respond naturally in 2-3 short sentences like a helpful friend. Tell the student what they did right, or name the specific word they needed to change and why. Then on the very last line write either:
+VERDICT: CORRECT
+or
+VERDICT: WRONG`;
+
+    } else if (questionType === 'write_sentence' || questionType === 'use_in_sentence') {
+      prompt = `You are an English teacher checking a student's sentence.
+
+Task the student had: "${questionData.instruction}"
+${questionData.word ? `Word they needed to use: "${questionData.word}"` : ''}
+What makes a good answer: ${questionData.evaluationCriteria}
+
+The student wrote: "${answer}"
+
+Think like a real teacher:
+— Did they actually use the required word correctly?
+— Does the sentence demonstrate what the task asked for?
+— Is it real English a person would naturally say?
+— Be generous with phrasing variations — only mark wrong if the English is genuinely incorrect or the task is clearly not done.
+
+Respond in 1-2 short sentences like a helpful friend. If wrong, name the specific word that slipped. If right, say what they did well. Then on the very last line write either:
+VERDICT: CORRECT
+or
+VERDICT: WRONG`;
+
+    } else if (questionType === 'define_word') {
+      prompt = `You are an English teacher checking if a student understands a word.
+
+Word: "${questionData.word}"
+What this word actually means: ${JSON.stringify(questionData.acceptableAnswers)}
+
+The student's definition: "${answer}"
+
+Think like a real teacher:
+— Does their answer capture the core meaning, even in their own words?
+— Accept simple descriptions, paraphrases, and everyday language.
+— Accept if they described it slightly differently but got the right idea.
+— Only mark wrong if they described something completely different or clearly have no idea.
+
+Respond in 1-2 sentences like a helpful friend. If wrong, explain what the word actually means simply — no dictionary language. Then on the very last line write either:
+VERDICT: CORRECT
+or
+VERDICT: WRONG`;
+
+    } else if (questionType === 'read_comprehension' || questionType === 'dialogue_comprehension') {
+      prompt = `You are an English teacher checking a student's comprehension answer.
+
+The question: "${questionData.question}"
+The key idea a correct answer needs: "${questionData.correct}"
+The student answered: "${answer}"
+
+CRITICAL RULES — read these before deciding:
+— Short answers are completely valid. "To find work" is just as correct as "She moved to London to find work." Never penalise for being brief.
+— Grammar mistakes do not make a comprehension answer wrong. Only the IDEA matters.
+— If the student's answer captures the key idea — even briefly, even differently — CORRECT.
+— Only WRONG if the student answered something completely different or missed the key idea entirely.
+
+Does "${answer}" capture the idea from "${questionData.correct}"?
+
+One short sentence response like a friendly teacher. Then on the very last line write either:
+VERDICT: CORRECT
+or
+VERDICT: WRONG`;
+    }
+
+    // Run the prompt and extract verdict
+    let isCorrect = false;
+    let feedback = '';
+    let correction = null;
+
+    try {
+      const result = await model.generateContent(prompt);
+      const rawText = result.response.text().trim();
+
+      // Extract verdict from last line
+      const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+      const lastLine = lines[lines.length - 1];
+      isCorrect = lastLine.includes('VERDICT: CORRECT');
+
+      // Everything before the verdict line is the natural feedback
+      const feedbackLines = lines.filter(l => !l.startsWith('VERDICT:'));
+      feedback = feedbackLines.join(' ').trim();
+
+      if (!isCorrect) correction = questionData.correct || null;
+    } catch {
+      // Fallback: conservative — mark wrong so it does not inflate level
+      isCorrect = false;
+      feedback = 'Something went wrong checking that. Try the next question.';
+    }
+
+    // Save answer to database
+    const currentAnswers = testResult.rows[0].answers || [];
+    const newAnswer = {
+      skill, level, questionType,
+      answer: answer.substring(0, 300),
+      correct: isCorrect,
+      questionId: questionData?.id,
+      timestamp: new Date().toISOString()
+    };
+    await pool.query(
+      'UPDATE placement_tests SET answers = $1 WHERE id = $2',
+      [JSON.stringify([...currentAnswers, newAnswer]), req.params.testId]
+    );
+
+    res.json({ correct: isCorrect, feedback, correction, rule: isCorrect ? null : questionData?.rule });
+
+  } catch (err) {
+    console.error('Answer error:', err);
+    res.status(500).json({ error: 'Something went wrong.' });
+  }
 });
 
 router.post('/:testId/complete', authMiddleware, async (req, res) => {
@@ -1094,7 +1112,7 @@ router.post('/:testId/complete', authMiddleware, async (req, res) => {
     const results = {};
     const explanations = {};
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-1.5-flash',
       systemInstruction: SYSTEM_INSTRUCTION
     });
 
@@ -1128,10 +1146,7 @@ Write at a level this person can understand. Warm, direct, human. No bullet poin
       try {
         const r = await model.generateContent(prompt);
         explanations[skill] = r.response.text().trim();
-      } catch (e) {
-        console.error("Gemini complete explanation error:", e);
-        explanations[skill] = `Your ${skill} level is ${detectedLevel}.`;
-      }
+      } catch { explanations[skill] = `Your ${skill} level is ${detectedLevel}.`; }
 
       await pool.query(
         `INSERT INTO user_skill_levels (user_id, skill, cefr_level) VALUES ($1, $2, $3) ON CONFLICT (user_id, skill) DO UPDATE SET cefr_level = $3, last_updated = NOW()`,

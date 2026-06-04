@@ -299,20 +299,17 @@ export default function PlacementTest() {
                     borderColor:feedback.correct?'#86EFAC':'#FECACA',
                     background:feedback.correct?'#F0FDF4':'#FFF1F2'
                   }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'8px' }}>
-                      <div style={{ width:'20px', height:'20px', borderRadius:'50%', background:feedback.correct?'var(--green-accent)':'#EF4444', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <div style={{ display:'flex', alignItems:'flex-start', gap:'10px' }}>
+                      <div style={{ width:'20px', height:'20px', borderRadius:'50%', background:feedback.correct?'var(--green-accent)':'#EF4444', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:'2px' }}>
                         {feedback.correct
                           ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                           : <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         }
                       </div>
-                      <span style={{ fontSize:'14px', fontWeight:600, color:feedback.correct?'var(--green-accent)':'#DC2626' }}>
-                        {feedback.correct ? 'Correct' : 'Almost there'}
-                      </span>
+                      <p style={{ fontSize:'14px', color:'var(--text)', margin:0, lineHeight:1.65, flex:1 }}>
+                        {feedback.feedback}
+                      </p>
                     </div>
-                    <p style={{ fontSize:'13px', color:'var(--text)', marginBottom:feedback.correction||feedback.rule?'8px':0 }}>
-                      {feedback.feedback}
-                    </p>
                     {feedback.correction && (
                       <div style={{ background:'rgba(255,255,255,0.7)', borderRadius:'var(--radius-md)', padding:'8px 10px', marginTop:'6px' }}>
                         <div style={{ fontSize:'11px', fontWeight:600, color:'var(--text-secondary)', marginBottom:'2px' }}>CORRECT ANSWER</div>
