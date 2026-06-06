@@ -146,3 +146,15 @@ textarea.form-input { resize: vertical; min-height: 110px; line-height: 1.7; }
 .mt-4 { margin-top: 1rem; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+
+/* High contrast mode enhancements */
+@media (prefers-contrast: high) {
+  :root { --border: #6B7280; --border-strong: #4B5563; --text: #000000; --text-secondary: #1F2937; --text-tertiary: #374151; }
+  .btn { border-width: 2px; }
+  .form-input { border-width: 2px; }
+  [aria-pressed="true"] { outline: 3px solid var(--blue-primary); outline-offset: 2px; }
+}
+
+/* Dyscalculia-friendly: avoid relying solely on numbers */
+.progress-bar { position: relative; }
+.progress-bar::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(0,0,0,0.03) 10px, rgba(0,0,0,0.03) 11px); pointer-events: none; }

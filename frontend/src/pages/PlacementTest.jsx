@@ -7,6 +7,63 @@ const SKILL_LABELS = { grammar:'Grammar', vocabulary:'Vocabulary', reading:'Read
 const SKILL_DESCRIPTIONS = { grammar:'Grammar rules and sentence structure', vocabulary:'Word knowledge and usage', reading:'Understanding written English', writing:'Expressing ideas in writing', dialogue:'Understanding real conversations', listening:'Understanding spoken English' };
 const SKILL_ORDER = ['grammar','vocabulary','reading','writing','dialogue','listening'];
 
+function AudioPlayer({ src, label }) {
+  const audioRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [error, setError] = useState(false);
+
+  const toggle = () => {
+    if (!audioRef.current) return;
+    if (playing) { audioRef.current.pause(); setPlaying(false); }
+    else { audioRef.current.play().catch(() => setError(true)); setPlaying(true); }
+  };
+
+  const format = (s) => {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--radius-lg)', padding:'0.875rem 1rem', marginBottom:'1rem' }} role="group" aria-label="Audio player">
+      <audio ref={audioRef} src={src} preload="auto"
+        onLoadedMetadata={() => { setDuration(audioRef.current?.duration || 0); }}
+        onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
+        onEnded={() => setPlaying(false)}
+        onError={() => setError(true)} />
+      <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+        <button onClick={toggle} aria-label={playing ? 'Pause audio' : 'Play audio'} title={playing ? 'Pause' : 'Play'}
+          style={{ width:'44px', height:'44px', borderRadius:'50%', border:'1.5px solid var(--blue-primary)', background:playing?'var(--blue-primary)':'var(--blue-light)', color:playing?'white':'var(--blue-primary)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, transition:'all var(--transition)', fontSize:'18px' }}>
+          {playing ? '⏸' : '▶'}
+        </button>
+        {error ? (
+          <span style={{ fontSize:'13px', color:'var(--amber-error)' }}>Could not load audio. Try refreshing.</span>
+        ) : (
+          <>
+            <div style={{ flex:1, display:'flex', alignItems:'center', gap:'8px' }}>
+              <span style={{ fontSize:'12px', color:'var(--text-tertiary)', minWidth:'32px', fontVariantNumeric:'tabular-nums' }}>{format(currentTime)}</span>
+              <div role="progressbar" aria-valuenow={duration ? Math.round(currentTime / duration * 100) : 0} aria-valuemin={0} aria-valuemax={100} aria-label="Audio progress"
+                style={{ flex:1, height:'6px', background:'var(--border)', borderRadius:'var(--radius-full)', cursor:'pointer', position:'relative' }}
+                onClick={e => { if (audioRef.current && duration) { const rect = e.currentTarget.getBoundingClientRect(); const pct = (e.clientX - rect.left) / rect.width; audioRef.current.currentTime = pct * duration; } }}>
+                <div style={{ height:'100%', width:`${duration ? (currentTime / duration) * 100 : 0}%`, background:'var(--blue-primary)', borderRadius:'var(--radius-full)', transition:'width 0.1s linear' }} />
+              </div>
+              <span style={{ fontSize:'12px', color:'var(--text-tertiary)', minWidth:'32px', fontVariantNumeric:'tabular-nums' }}>{format(duration)}</span>
+            </div>
+            <button onClick={() => { if (audioRef.current) { audioRef.current.currentTime = 0; setCurrentTime(0); }}}
+              aria-label="Restart audio" title="Restart"
+              style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-tertiary)', fontSize:'14px', padding:'6px' }}>
+              ↺
+            </button>
+          </>
+        )}
+      </div>
+      {label && <p style={{ fontSize:'12px', color:'var(--text-tertiary)', marginTop:'8px', marginBottom:0 }}>{label}</p>}
+    </div>
+  );
+}
+
 export default function PlacementTest() {
   const { getToken, markTestComplete } = useAuth();
   const navigate = useNavigate();
@@ -171,25 +228,30 @@ export default function PlacementTest() {
     <div style={S.page}>
       <div ref={topRef} style={S.container}>
 
-        {/* Skill progress pills */}
+        {/* Skill progress pills — visual + label for dyscalculia */}
         {progress && (
-          <div style={S.skillBar}>
+          <div style={S.skillBar} role="list" aria-label="Test progress by skill">
             {SKILL_ORDER.map((s, i) => {
               const done = i < progress.skillIndex;
               const current = s === progress.currentSkill;
+              const colors = ['#1B4FD8','#4A9B7F','#D97706','#7C3AED','#DC2626','#0891B2'];
               return (
-                <div key={s} style={{ ...S.skillChip,
-                  background: done ? '#DCFCE7' : current ? '#EEF2FF' : 'var(--surface)',
-                  borderColor: done ? '#86EFAC' : current ? 'var(--blue-primary)' : 'var(--border)',
-                  color: done ? '#15803D' : current ? 'var(--blue-primary)' : 'var(--text-tertiary)',
-                  fontWeight: current ? 600 : 400
-                }}>
-                  {done && '✓ '}{SKILL_LABELS[s]}
+                <div key={s} role="listitem" aria-label={`${SKILL_LABELS[s]}${done ? ' — completed' : current ? ' — in progress' : ' — upcoming'}`}
+                  style={{ ...S.skillChip,
+                    background: done ? '#DCFCE7' : current ? '#EEF2FF' : 'var(--surface)',
+                    borderColor: done ? '#86EFAC' : current ? colors[i] : 'var(--border)',
+                    color: done ? '#15803D' : current ? colors[i] : 'var(--text-tertiary)',
+                    fontWeight: current ? 600 : 400,
+                    display:'flex', alignItems:'center', gap:'5px'
+                  }}>
+                  <span style={{ width:'8px', height:'8px', borderRadius:'50%', background:colors[i], flexShrink:0 }} aria-hidden="true" />
+                  {done && <span aria-hidden="true" style={{ fontSize:'11px' }}>✓</span>}
+                  <span>{SKILL_LABELS[s]}</span>
                 </div>
               );
             })}
             <button onClick={() => { if(confirm('Leave? Progress is saved — you can continue later.')) navigate('/dashboard'); }} style={S.exitBtn}>
-              Save & exit
+              ✕ <span style={{ fontSize:'11px' }}>Exit</span>
             </button>
           </div>
         )}
@@ -222,19 +284,9 @@ export default function PlacementTest() {
               </div>
             )}
 
-            {/* Audio player for listening skill */}
             {question.audioUrl && (
-              <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', padding:'0.75rem 1rem', marginBottom:'1rem' }}>
-                {(() => {
-                  const audioSrc = `${API.replace(/\/api$/, '')}${question.audioUrl}`;
-                  return <audio controls src={audioSrc} style={{ width:'100%' }}
-                    onError={e => console.error('Audio failed to load:', audioSrc, e)}
-                    aria-label="Listening audio" />;
-                })()}
-                <p style={{ fontSize:'12px', color:'var(--text-tertiary)', marginTop:'6px', marginBottom:0 }}>
-                  Listen carefully, then answer the question. You can replay the audio as many times as you need.
-                </p>
-              </div>
+              <AudioPlayer src={`${API.replace(/\/api$/, '')}${question.audioUrl}`}
+                label="You can replay the audio as many times as you need." />
             )}
 
             <p style={{ fontSize:'15px', fontWeight:500, color:'var(--text)', marginBottom:'1rem', lineHeight:1.5 }}>
@@ -273,14 +325,15 @@ export default function PlacementTest() {
                 {/* Multiple choice: mc, error */}
                 {(question.type === 'fill_blank' || question.type === 'choose_correct' || question.type === 'mc' || question.type === 'error') && question.options ? (
                   <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'1rem' }} role="group" aria-label="Choose your answer">
-                    {question.options.map(opt => (
+                    {question.options.map((opt, oi) => (
                       <button key={opt} onClick={() => setAnswer(opt)} aria-pressed={answer===opt}
-                        style={{ padding:'0.6rem 1.25rem', border:'1.5px solid', borderRadius:'var(--radius-md)', fontSize:'14px', cursor:'pointer', fontFamily:'var(--font-sans)', transition:'all 0.14s',
+                        style={{ padding:'0.7rem 1.375rem', border:'2px solid', borderRadius:'var(--radius-md)', fontSize:'15px', cursor:'pointer', fontFamily:'var(--font-sans)', transition:'all var(--transition)', minHeight:'44px', lineHeight:1.3,
                           borderColor:answer===opt?'var(--blue-primary)':'var(--border)',
                           background:answer===opt?'var(--blue-light)':'white',
                           color:answer===opt?'var(--blue-primary)':'var(--text)',
-                          fontWeight:answer===opt?500:400
+                          fontWeight:answer===opt?600:400
                         }}>
+                        <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:'20px', height:'20px', borderRadius:'50%', border:'1.5px solid', borderColor:answer===opt?'var(--blue-primary)':'var(--border)', marginRight:'8px', fontSize:'11px', fontWeight:600, flexShrink:0, color:answer===opt?'var(--blue-primary)':'var(--text-tertiary)' }} aria-hidden="true">{String.fromCharCode(65+oi)}</span>
                         {opt}
                       </button>
                     ))}
@@ -471,36 +524,38 @@ export default function PlacementTest() {
                     <p style={{ fontSize:'13px', color:'var(--text-secondary)', margin:0, lineHeight:1.7 }}>{feedback.feedback}</p>
                   </div>
                 ) : (
-                  <div style={{ border:'1.5px solid', borderRadius:'var(--radius-lg)', padding:'1.125rem',
+                  <div style={{ border:'2px solid', borderRadius:'var(--radius-lg)', padding:'1.25rem',
                     borderColor:feedback.correct?'#86EFAC':'#FECACA',
                     background:feedback.correct?'#F0FDF4':'#FFF1F2'
-                  }}>
+                  }} role="alert">
                     <div style={{ display:'flex', alignItems:'flex-start', gap:'10px' }}>
-                      <div style={{ width:'20px', height:'20px', borderRadius:'50%', background:feedback.correct?'var(--green-accent)':'#EF4444', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:'2px' }}>
-                        {feedback.correct
-                          ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                          : <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                        }
+                      <div style={{ width:'26px', height:'26px', borderRadius:'50%', background:feedback.correct?'var(--green-accent)':'#EF4444', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:'1px', fontSize:'13px' }} aria-hidden="true">
+                        {feedback.correct ? '✓' : '✗'}
                       </div>
-                      <p style={{ fontSize:'14px', color:'var(--text)', margin:0, lineHeight:1.65, flex:1 }}>
-                        {feedback.feedback}
-                      </p>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:'15px', fontWeight:600, color:feedback.correct?'var(--green-accent)':'#DC2626', marginBottom:'4px' }}>
+                          {feedback.correct ? 'Correct!' : 'Not quite'}
+                        </div>
+                        <p style={{ fontSize:'14px', color:'var(--text)', margin:0, lineHeight:1.65 }}>
+                          {feedback.feedback}
+                        </p>
+                      </div>
                     </div>
                     {feedback.correction && (
-                      <div style={{ background:'rgba(255,255,255,0.7)', borderRadius:'var(--radius-md)', padding:'8px 10px', marginTop:'6px' }}>
-                        <div style={{ fontSize:'11px', fontWeight:600, color:'var(--text-secondary)', marginBottom:'2px' }}>CORRECT ANSWER</div>
-                        <div style={{ fontSize:'14px', fontWeight:500, color:'var(--text)' }}>{feedback.correction}</div>
+                      <div style={{ background:'rgba(255,255,255,0.8)', borderRadius:'var(--radius-md)', padding:'10px 12px', marginTop:'10px', border:'1px solid rgba(0,0,0,0.05)' }}>
+                        <div style={{ fontSize:'11px', fontWeight:600, color:'var(--text-secondary)', marginBottom:'3px', textTransform:'uppercase', letterSpacing:'0.04em' }}>Correct answer</div>
+                        <div style={{ fontSize:'15px', fontWeight:600, color:'var(--text)' }}>{feedback.correction}</div>
                       </div>
                     )}
                     {feedback.rule && (
-                      <div style={{ background:'rgba(255,255,255,0.7)', borderRadius:'var(--radius-md)', padding:'8px 10px', marginTop:'6px' }}>
-                        <div style={{ fontSize:'11px', fontWeight:600, color:'var(--text-secondary)', marginBottom:'2px' }}>THE RULE</div>
+                      <div style={{ background:'rgba(255,255,255,0.8)', borderRadius:'var(--radius-md)', padding:'10px 12px', marginTop:'8px', border:'1px solid rgba(0,0,0,0.05)' }}>
+                        <div style={{ fontSize:'11px', fontWeight:600, color:'var(--text-secondary)', marginBottom:'3px', textTransform:'uppercase', letterSpacing:'0.04em' }}>The rule</div>
                         <div style={{ fontSize:'13px', color:'var(--text-secondary)' }}>{feedback.rule}</div>
                       </div>
                     )}
                   </div>
                 )}
-                <button onClick={() => fetchQuestion()} className="btn btn-primary" style={{ width:'100%', marginTop:'0.875rem', padding:'0.7rem' }}>
+                <button onClick={() => fetchQuestion()} className="btn btn-primary" style={{ width:'100%', marginTop:'0.875rem', padding:'0.7rem' }} aria-label="Next question">
                   Next question →
                 </button>
               </div>
@@ -522,7 +577,7 @@ function Welcome({ onStart, loading, serverWaking, error }) {
           This test checks 6 skills separately. It adapts to your level as you go. Takes about <strong>14–22 minutes</strong>.
         </p>
 
-        <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--radius-lg)', padding:'1.125rem 1.375rem', marginBottom:'1.25rem' }}>
+        <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--radius-lg)', padding:'1.125rem 1.375rem', marginBottom:'1.25rem' }} role="list" aria-label="Skills tested">
           {[
             ['Grammar','Fix errors and write sentences — tests real knowledge'],
             ['Vocabulary','Define words and use them — tests depth, not guessing'],
@@ -530,15 +585,18 @@ function Welcome({ onStart, loading, serverWaking, error }) {
             ['Writing','Write 80–150 words — AI reads and assesses your level'],
             ['Dialogue','Real conversations — tests meaning and tone'],
             ['Listening','Understand spoken English — tests your ear']
-          ].map(([skill, desc], i) => (
-            <div key={skill} style={{ display:'flex', gap:'10px', alignItems:'flex-start', marginBottom: i < 4 ? '10px' : 0 }}>
-              <div style={{ width:'22px', height:'22px', borderRadius:'50%', background:'var(--blue-light)', color:'var(--blue-primary)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:700, flexShrink:0, marginTop:'2px' }}>{i+1}</div>
-              <div>
-                <div style={{ fontSize:'13px', fontWeight:500, color:'var(--text)' }}>{skill}</div>
-                <div style={{ fontSize:'12px', color:'var(--text-tertiary)', marginTop:'1px' }}>{desc}</div>
+          ].map(([skill, desc], i) => {
+            const colors = ['#1B4FD8','#4A9B7F','#D97706','#7C3AED','#DC2626','#0891B2'];
+            return (
+              <div key={skill} role="listitem" style={{ display:'flex', gap:'10px', alignItems:'flex-start', marginBottom: i < 4 ? '10px' : 0 }}>
+                <div style={{ width:'24px', height:'24px', borderRadius:'50%', background:colors[i], color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:700, flexShrink:0, marginTop:'2px' }} aria-hidden="true">{i+1}</div>
+                <div>
+                  <div style={{ fontSize:'13px', fontWeight:500, color:'var(--text)' }}>{skill}</div>
+                  <div style={{ fontSize:'12px', color:'var(--text-tertiary)', marginTop:'1px' }}>{desc}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div style={{ background:'var(--blue-light)', border:'1px solid var(--blue-medium)', borderRadius:'var(--radius-md)', padding:'0.75rem 1rem', marginBottom:'1.25rem', fontSize:'13px', color:'var(--blue-primary)', lineHeight:1.6 }}>
