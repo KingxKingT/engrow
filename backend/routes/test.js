@@ -35,7 +35,7 @@ const DIRECT_CHECK_TYPES = ['mc', 'fill', 'sort', 'match', 'error'];
 // ─────────────────────────────────────────────
 // QUESTION BANK (converted from engrow_test_bank_redesigned.html DATA)
 // ─────────────────────────────────────────────
-const QUESTION_BANK = require('../generated_question_bank.json');
+const QUESTION_BANK = require('../../generated_question_bank.json');
 
 // ─────────────────────────────────────────────
 // ADAPTIVE LOGIC HELPERS
