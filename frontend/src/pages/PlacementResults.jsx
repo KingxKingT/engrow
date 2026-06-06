@@ -45,7 +45,9 @@ export default function PlacementResults() {
 
   if (!results) return null;
 
-  const { levels, explanations } = results;
+  // Handle both shapes: /complete returns { results, explanations }, /status returns { levels, explanations }
+  const levels = results.results || results.levels;
+  const { explanations } = results;
   const skillEntries = Object.entries(levels);
   const weakest = skillEntries.reduce((min, curr) =>
     CEFR_ORDER.indexOf(curr[1]) < CEFR_ORDER.indexOf(min[1]) ? curr : min
