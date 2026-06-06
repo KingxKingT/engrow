@@ -205,7 +205,14 @@ router.post('/start', authMiddleware, async (req, res) => {
 
 function checkDirectAnswer(questionType, questionData, answer) {
   if (questionType === 'mc') {
-    return answer.trim().toLowerCase() === (questionData.correct || '').toLowerCase();
+    const textMatch = answer.trim().toLowerCase() === (questionData.correct || '').toLowerCase();
+    if (textMatch) return true;
+    // Fallback: check by index (belt-and-suspenders)
+    const idx = parseInt(answer, 10);
+    if (!isNaN(idx) && questionData.options && questionData.correctIndex !== undefined) {
+      return idx === questionData.correctIndex;
+    }
+    return false;
   }
   if (questionType === 'fill') {
     return answer.trim().toLowerCase() === (questionData.correct || '').toLowerCase();
