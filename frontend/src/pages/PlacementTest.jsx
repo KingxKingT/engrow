@@ -226,7 +226,7 @@ export default function PlacementTest() {
             {question.audioUrl && (
               <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', padding:'0.75rem 1rem', marginBottom:'1rem' }}>
                 {(() => {
-                  const audioSrc = import.meta.env.DEV ? `http://localhost:5000${question.audioUrl}` : question.audioUrl;
+                  const audioSrc = `${API.replace(/\/api$/, '')}${question.audioUrl}`;
                   return <audio controls src={audioSrc} style={{ width:'100%' }}
                     onError={e => console.error('Audio failed to load:', audioSrc, e)}
                     aria-label="Listening audio" />;
