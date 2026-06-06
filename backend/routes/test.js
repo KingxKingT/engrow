@@ -29,738 +29,178 @@ const model = genAI.getGenerativeModel({
 const SKILL_ORDER = ['grammar', 'vocabulary', 'reading', 'writing', 'dialogue'];
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
+// Question types that can be checked directly (no AI needed for correctness)
+const DIRECT_CHECK_TYPES = ['mc', 'fill', 'sort', 'match', 'error'];
+
 // ─────────────────────────────────────────────
 // QUESTION BANK
 // ─────────────────────────────────────────────
 const QUESTION_BANK = {
-
   grammar: {
     A1: [
-      {
-        id: 'g-a1-1', type: 'fix_error',
-        instruction: 'Fix the mistake in this sentence.',
-        text: 'She don\'t like coffee in the morning.',
-        correct: 'She doesn\'t like coffee in the morning.',
-        rule: 'With he / she / it we use "doesn\'t" — not "don\'t".',
-        hint: 'Look at the subject. Is it I, you, we, they — or he/she/it?'
-      },
-      {
-        id: 'g-a1-2', type: 'fix_error',
-        instruction: 'Fix the mistake in this sentence.',
-        text: 'He have a very big house near the park.',
-        correct: 'He has a very big house near the park.',
-        rule: 'He / She / It uses "has" — not "have".',
-        hint: 'Think about the subject "He" — which form of "have" is correct?'
-      },
-      {
-        id: 'g-a1-3', type: 'fill_blank',
-        instruction: 'Choose the correct word to complete the sentence.',
-        text: 'I ___ a student at this school.',
-        options: ['am', 'is', 'are'], correct: 'am',
-        rule: 'I + am. You/We/They + are. He/She/It + is.',
-        hint: 'The subject is "I". Which form of "to be" goes with "I"?'
-      },
-      {
-        id: 'g-a1-4', type: 'fill_blank',
-        instruction: 'Choose the correct word to complete the sentence.',
-        text: 'They ___ my best friends since school.',
-        options: ['am', 'is', 'are'], correct: 'are',
-        rule: 'They + are.',
-        hint: 'The subject is "They". Which form of "to be" matches?'
-      },
-      {
-        id: 'g-a1-5', type: 'write_sentence',
-        instruction: 'Write ONE sentence using "I have" to describe something you own or a person in your family.',
-        evaluationCriteria: 'correct use of "I have" as the main verb, followed by a noun, makes sense as a sentence',
-        hint: ''
-      },
-      {
-        id: 'g-a1-6', type: 'fill_blank',
-        instruction: 'Choose the correct word.',
-        text: 'My sister ___ a doctor. She works at the hospital.',
-        options: ['am', 'is', 'are'], correct: 'is',
-        rule: 'My sister = she → use "is".',
-        hint: '"My sister" means she — one person who is not you.'
-      }
+      { id: 'g-a1-1', type: 'mc', instruction: 'Choose the correct word to complete the sentence: "She ___ like coffee in the morning."', options: ["don't", "doesn't", "isn't", "didn't"], correct: "doesn't", correctIndex: 1, hint: "Third person singular (she/he/it) uses doesn't in negative." },
+      { id: 'g-a1-2', type: 'fill', instruction: 'Choose the correct word:', parts: ['He ', '[has/have]', ' a very big house near the park.'], blanks: [{ answer: 'has', options: ['has', 'have'] }], correct: 'has', hint: 'He = third person singular → has' },
+      { id: 'g-a1-3', type: 'sort', instruction: 'Put these words in the right order to make a sentence:', words: ['school', 'at', 'I', 'am', 'a', 'student'], correct: 'I am a student at school' },
+      { id: 'g-a1-4', type: 'mc', instruction: 'Choose the correct verb: "They ___ my best friends since school."', options: ['is', 'am', 'are', 'was'], correct: 'are', correctIndex: 2 },
+      { id: 'g-a1-5', type: 'error', instruction: 'Fix the mistake in this sentence:', sentence: 'My sister is a doctor but she work in London.', underline: 'work', options: ['work', 'works', 'working', 'worked'], correct: 'works', correctIndex: 1, hint: 'She = third person singular → works' },
+      { id: 'g-a1-6', type: 'match', instruction: 'Match the subject with the correct verb form:', left: ['I', 'She', 'They', 'He'], right: ['is a teacher', 'are happy', 'am tired', 'has a car'], pairs: { 0: 2, 1: 0, 2: 1, 3: 3 } }
     ],
-
     A2: [
-      {
-        id: 'g-a2-1', type: 'fix_error',
-        instruction: 'Fix the mistake in this sentence.',
-        text: 'Yesterday I go to the market with my mother.',
-        correct: 'Yesterday I went to the market with my mother.',
-        rule: '"Yesterday" tells us this happened in the past. Use past simple: go → went.',
-        hint: 'The word "Yesterday" is a past time marker. Which tense do we use?'
-      },
-      {
-        id: 'g-a2-2', type: 'fix_error',
-        instruction: 'Fix the mistake in this sentence.',
-        text: 'She is very more tall than her brother.',
-        correct: 'She is much taller than her brother.',
-        rule: 'Short adjectives: add -er (tall → taller). Use "much" not "very more".',
-        hint: 'We say "taller" not "more tall". And we use "much" before comparatives, not "very more".'
-      },
-      {
-        id: 'g-a2-3', type: 'fill_blank',
-        instruction: 'Choose the correct word.',
-        text: 'I ___ to Paris last summer and it was incredible.',
-        options: ['go', 'went', 'have gone'], correct: 'went',
-        rule: '"Last summer" is a specific time in the past → use past simple.',
-        hint: '"Last summer" tells you exactly when. Which tense is for specific past times?'
-      },
-      {
-        id: 'g-a2-4', type: 'fill_blank',
-        instruction: 'Choose the correct word.',
-        text: 'She ___ studying when I called her.',
-        options: ['is', 'was', 'were'], correct: 'was',
-        rule: 'Past continuous (was/were + -ing) describes an action in progress in the past.',
-        hint: 'This happened in the past and was in progress when I called. Which past form of "be" matches "she"?'
-      },
-      {
-        id: 'g-a2-5', type: 'write_sentence',
-        instruction: 'Write ONE sentence about something you did last week. The sentence must use a past simple verb.',
-        evaluationCriteria: 'past simple verb correctly formed (regular -ed or irregular), sentence describes a past action',
-        hint: ''
-      },
-      {
-        id: 'g-a2-6', type: 'fix_error',
-        instruction: 'Fix the mistake in this sentence.',
-        text: 'I buyed a new phone last month. It is very fast.',
-        correct: 'I bought a new phone last month. It is very fast.',
-        rule: '"Buy" is irregular in the past: buy → bought.',
-        hint: 'Some past simple verbs are irregular. "Buy" does not become "buyed".'
-      }
+      { id: 'g-a2-1', type: 'error', instruction: 'Fix the mistake:', sentence: 'Yesterday I go to the market with my mother.', underline: 'go', options: ['go', 'gone', 'went', 'goes'], correct: 'went', correctIndex: 2 },
+      { id: 'g-a2-2', type: 'mc', instruction: 'Which sentence is grammatically correct?', options: ['She is very more tall than her brother.', 'She is much more tall than her brother.', 'She is much taller than her brother.', 'She is very taller than her brother.'], correct: 'She is much taller than her brother.', correctIndex: 2 },
+      { id: 'g-a2-3', type: 'fill', instruction: 'Choose the correct word:', parts: ['I ', '[went/go/gone]', ' to Paris last summer and it was incredible.'], blanks: [{ answer: 'went', options: ['went', 'go', 'gone'] }], correct: 'went' },
+      { id: 'g-a2-4', type: 'fill', instruction: 'Choose the correct word:', parts: ['She ', '[was/is/has]', ' studying when I called her.'], blanks: [{ answer: 'was', options: ['was', 'is', 'has'] }], correct: 'was' },
+      { id: 'g-a2-5', type: 'sort', instruction: 'Make a correct past simple sentence:', words: ['bought', 'a', 'last', 'I', 'phone', 'month', 'new'], correct: 'I bought a new phone last month' },
+      { id: 'g-a2-6', type: 'match', instruction: 'Match the time expression with the correct tense:', left: ['Yesterday I ...', 'Right now I ...', 'Every day I ...', 'Last year I ...'], right: ['Past simple', 'Past simple', 'Present simple', 'Present continuous'], pairs: { 0: 0, 1: 3, 2: 2, 3: 1 } }
     ],
-
     B1: [
-      {
-        id: 'g-b1-1', type: 'fix_error',
-        instruction: 'Fix the mistake in this sentence.',
-        text: 'I have seen that film last night. It was brilliant.',
-        correct: 'I saw that film last night. It was brilliant.',
-        rule: '"Last night" is a specific past time → use past simple, not present perfect.',
-        hint: 'Present perfect cannot be used with specific past times like "last night", "yesterday", "in 2020".'
-      },
-      {
-        id: 'g-b1-2', type: 'fix_error',
-        instruction: 'Fix the mistake in this sentence.',
-        text: 'If I will have more money, I will travel the world.',
-        correct: 'If I have more money, I will travel the world.',
-        rule: 'First conditional: If + present simple (NOT future), will + infinitive.',
-        hint: 'In the "if" part of a first conditional, we do NOT use "will". We use present simple.'
-      },
-      {
-        id: 'g-b1-3', type: 'fill_blank',
-        instruction: 'Choose the correct word.',
-        text: 'If I ___ more time, I would definitely travel more.',
-        options: ['had', 'have', 'will have'], correct: 'had',
-        rule: 'Second conditional (imaginary): If + past simple, would + infinitive.',
-        hint: 'This is imaginary — you don\'t have time. Use past simple in the "if" part.'
-      },
-      {
-        id: 'g-b1-4', type: 'fill_blank',
-        instruction: 'Choose the correct word.',
-        text: 'She ___ lived in this city since she was born.',
-        options: ['has', 'have', 'had'], correct: 'has',
-        rule: 'Present perfect + "since" → has/have + past participle.',
-        hint: '"Since she was born" connects the past to now. Which tense connects past to now?'
-      },
-      {
-        id: 'g-b1-5', type: 'write_sentence',
-        instruction: 'Write ONE sentence using "have" or "has" + a past participle verb to describe an experience in your life. For example: visited, tried, lived, worked, seen.',
-        evaluationCriteria: 'present perfect structure: have/has + past participle, describes a life experience, past participle is correctly formed',
-        hint: ''
-      },
-      {
-        id: 'g-b1-6', type: 'fix_error',
-        instruction: 'Fix the mistake in this sentence.',
-        text: 'The book was wrote by a famous French author in 1985.',
-        correct: 'The book was written by a famous French author in 1985.',
-        rule: 'Passive voice: was/were + past participle. "Write" → past participle is "written", not "wrote".',
-        hint: '"Wrote" is past simple. The passive needs the past participle — which is different for irregular verbs.'
-      }
+      { id: 'g-b1-1', type: 'error', instruction: 'Fix the mistake:', sentence: 'I have seen that film last night.', underline: 'have seen', options: ['have seen', 'had seen', 'saw', 'was seeing'], correct: 'saw', correctIndex: 2 },
+      { id: 'g-b1-2', type: 'mc', instruction: 'Which sentence is grammatically correct?', options: ['If I will have more money, I will travel.', 'If I have more money, I will travel.', 'If I would have more money, I will travel.', 'If I had more money, I will travel.'], correct: 'If I have more money, I will travel.', correctIndex: 1 },
+      { id: 'g-b1-3', type: 'fill', instruction: 'Choose the correct word:', parts: ['If I ', '[had/have/would have]', ' more time, I would definitely travel more.'], blanks: [{ answer: 'had', options: ['had', 'have', 'would have'] }], correct: 'had' },
+      { id: 'g-b1-4', type: 'fill', instruction: 'Choose the correct word:', parts: ['She ', '[has/have/had]', ' lived in this city since she was born.'], blanks: [{ answer: 'has', options: ['has', 'have', 'had'] }], correct: 'has' },
+      { id: 'g-b1-5', type: 'sort', instruction: 'Arrange into a correct passive sentence:', words: ['written', 'was', 'The book', 'a', 'French', 'by', 'famous', 'author'], correct: 'The book was written by a famous French author' },
+      { id: 'g-b1-6', type: 'match', instruction: 'Match each sentence to the correct tense or structure:', left: ['She has lived here for ten years.', 'I saw him yesterday.', 'If I were rich, I would travel.', 'They were watching TV when I arrived.'], right: ['Past continuous + past simple', 'Present perfect + for', 'Second conditional', 'Past simple'], pairs: { 0: 1, 1: 3, 2: 2, 3: 0 } }
     ],
-
     B2: [
-      {
-        id: 'g-b2-1', type: 'fix_error',
-        instruction: 'Fix the mistake in this sentence.',
-        text: 'The deadline must be submitted until Friday without exception.',
-        correct: 'The deadline must be met by Friday without exception.',
-        rule: '"By" means "no later than". "Until" means "continuously up to that point". Use "by" for deadlines.',
-        hint: 'Deadlines use "by" — e.g. "submit by Friday". "Until Friday" would mean you do it continuously until Friday.'
-      },
-      {
-        id: 'g-b2-2', type: 'fix_error',
-        instruction: 'Fix the mistake in this sentence.',
-        text: 'Despite of the heavy rain, the match continued.',
-        correct: 'Despite the heavy rain, the match continued.',
-        rule: '"Despite" is never followed by "of". "Despite + noun" or "In spite of + noun".',
-        hint: 'Compare: "Despite the rain" (correct) vs "In spite of the rain" (also correct). Never "Despite of".'
-      },
-      {
-        id: 'g-b2-3', type: 'fill_blank',
-        instruction: 'Choose the correct modal verb.',
-        text: 'She ___ have taken the promotion — she seems so much happier now.',
-        options: ['must', 'should', 'could'], correct: 'must',
-        rule: '"Must have" = logical deduction about the past (we are almost certain it happened).',
-        hint: 'We\'re not guessing — the evidence (she seems happier) makes us almost certain. Which modal expresses certainty?'
-      },
-      {
-        id: 'g-b2-4', type: 'fill_blank',
-        instruction: 'Choose the correct form.',
-        text: 'By the time we arrived at the cinema, the film ___ already started.',
-        options: ['has', 'had', 'was'], correct: 'had',
-        rule: 'Past perfect (had + past participle) for an action completed before another past action.',
-        hint: 'Two past events: we arrived (past), the film started (even earlier). The earlier event uses past perfect.'
-      },
-      {
-        id: 'g-b2-5', type: 'write_sentence',
-        instruction: 'Write ONE sentence using this exact structure: "If I had [verb]..." to describe something that did not happen and what would have been different. Example structure only — write your own sentence.',
-        evaluationCriteria: 'if + past perfect (had + past participle) in first clause, would have + past participle in second clause',
-        hint: ''
-      },
-      {
-        id: 'g-b2-6', type: 'fix_error',
-        instruction: 'Fix the mistake in this sentence.',
-        text: 'She wishes she would study medicine instead of law.',
-        correct: 'She wishes she had studied medicine instead of law.',
-        rule: 'Wish + past perfect expresses regret about the past. "Would" cannot follow "wish" about the past.',
-        hint: 'This is a regret about the past — she studied law and now regrets it. Which form follows "wish" for past regrets?'
-      }
+      { id: 'g-b2-1', type: 'error', instruction: 'Fix the mistake:', sentence: 'The deadline must be submitted until Friday.', underline: 'until', options: ['until', 'by', 'for', 'before of'], correct: 'by', correctIndex: 1 },
+      { id: 'g-b2-2', type: 'error', instruction: 'Fix the mistake:', sentence: 'Despite of the heavy rain, the match continued.', underline: 'Despite of', options: ['Despite of', 'Although', 'Despite', 'Even so'], correct: 'Despite', correctIndex: 2 },
+      { id: 'g-b2-3', type: 'fill', instruction: 'Choose the correct word:', parts: ['She ', '[must/should/would]', ' have taken the promotion — she seems so much happier now.'], blanks: [{ answer: 'must', options: ['must', 'should', 'would'] }], correct: 'must' },
+      { id: 'g-b2-4', type: 'fill', instruction: 'Choose the correct word:', parts: ['By the time we arrived, the film ', '[has/had/would]', ' already started.'], blanks: [{ answer: 'had', options: ['has', 'had', 'would'] }], correct: 'had' },
+      { id: 'g-b2-5', type: 'sort', instruction: 'Build a third conditional sentence:', words: ['I', 'had', 'If', 'the', 'job', 'accepted', 'would', 'have', 'I', 'regretted', 'it'], correct: 'If I had accepted the job I would have regretted it' },
+      { id: 'g-b2-6', type: 'mc', instruction: 'Choose the correct form: "She wishes she ___ medicine instead of law."', options: ['would study', 'studies', 'had studied', 'was studying'], correct: 'had studied', correctIndex: 2 }
     ],
-
     C1: [
-      {
-        id: 'g-c1-1', type: 'fix_error',
-        instruction: 'Fix the mistake in this sentence.',
-        text: 'The committee recommended that the funding is distributed equally among all departments.',
-        correct: 'The committee recommended that the funding be distributed equally among all departments.',
-        rule: 'Subjunctive: after verbs like "recommend", "suggest", "insist", "require" — use bare infinitive (no -s, no "is/was").',
-        hint: 'After "recommended that", the subjunctive uses the base form of the verb. Not "is" — just "be".'
-      },
-      {
-        id: 'g-c1-2', type: 'fix_error',
-        instruction: 'Fix the mistake in this sentence.',
-        text: 'No sooner she had sat down than the phone rang.',
-        correct: 'No sooner had she sat down than the phone rang.',
-        rule: '"No sooner...than" requires inverted word order: No sooner + had/did + subject + verb.',
-        hint: 'After "No sooner", the auxiliary comes BEFORE the subject, like a question structure.'
-      },
-      {
-        id: 'g-c1-3', type: 'fill_blank',
-        instruction: 'Choose the correct form.',
-        text: 'It is essential that every student ___ the form before the deadline.',
-        options: ['submits', 'submit', 'submitted'], correct: 'submit',
-        rule: 'Subjunctive after expressions of necessity (it is essential/vital/important that): use bare infinitive.',
-        hint: 'After "it is essential that", we use the bare infinitive — no -s even for he/she/it.'
-      },
-      {
-        id: 'g-c1-4', type: 'fill_blank',
-        instruction: 'Choose the correct word for this inverted conditional.',
-        text: '___ I known about the problem earlier, I could have prevented it.',
-        options: ['Had', 'If', 'Should'], correct: 'Had',
-        rule: 'Inverted third conditional: Had + subject + past participle (drops "If", inverts auxiliary).',
-        hint: 'This is a formal alternative to "If I had known..." — the auxiliary "had" moves to the front.'
-      },
-      {
-        id: 'g-c1-5', type: 'write_sentence',
-        instruction: 'Rewrite this sentence so that "the new policy" is the subject. Keep the same meaning and tense. Original: "The government will announce the new policy tomorrow."',
-        evaluationCriteria: 'the new policy becomes the subject, will be + announced (future passive), grammatically correct',
-        hint: ''
-      },
-      {
-        id: 'g-c1-6', type: 'fix_error',
-        instruction: 'Fix the mistake in this sentence.',
-        text: 'The suspect was said to have being involved in the incident.',
-        correct: 'The suspect was said to have been involved in the incident.',
-        rule: '"To have been" — not "to have being". After "to have", use past participle: be → been.',
-        hint: '"Been" is the past participle of "be". "Being" is the present participle — wrong here.'
-      }
+      { id: 'g-c1-1', type: 'mc', instruction: 'Choose the correct form for formal recommendation: "The committee recommended that the funding ___ distributed equally."', options: ['is', 'was', 'be', 'will be'], correct: 'be', correctIndex: 2 },
+      { id: 'g-c1-2', type: 'error', instruction: 'Fix the mistake:', sentence: 'No sooner she had sat down than the phone rang.', underline: 'she had sat', options: ['she had sat', 'had she sat', 'she sat', 'had sat she'], correct: 'had she sat', correctIndex: 1 },
+      { id: 'g-c1-3', type: 'fill', instruction: 'Choose the correct word:', parts: ['It is essential that every student ', '[submits/submit/submitted]', ' the form before the deadline.'], blanks: [{ answer: 'submit', options: ['submits', 'submit', 'submitted'] }], correct: 'submit' },
+      { id: 'g-c1-4', type: 'fill', instruction: 'Choose the correct word:', parts: ['', '[Had/If I had/Should]', ' I known about the problem earlier, I could have prevented it.'], blanks: [{ answer: 'Had', options: ['Had', 'If I had', 'Should'] }], correct: 'Had' },
+      { id: 'g-c1-5', type: 'sort', instruction: 'Rewrite in passive, keeping "The new policy" as subject:', words: ['The', 'new', 'policy', 'has', 'been', 'implemented', 'the', 'by', 'government'], correct: 'The new policy has been implemented by the government' },
+      { id: 'g-c1-6', type: 'error', instruction: 'Fix the mistake:', sentence: 'The suspect was said to have being involved in the fraud.', underline: 'being', options: ['being', 'be', 'been', 'have been'], correct: 'been', correctIndex: 2 }
+    ],
+    C2: [
+      { id: 'g-c2-1', type: 'mc', instruction: 'Which sentence correctly uses an inverted conditional with a distancing modal?', options: ['Should it be the case that the board refuses, the offer would lapse.', 'Should the board would refuse, the offer lapses.', 'Were the board to refuses, the offer would lapse.', 'Had the board refused, the offer will lapse.'], correct: 'Should it be the case that the board refuses, the offer would lapse.', correctIndex: 0 },
+      { id: 'g-c2-2', type: 'error', instruction: 'Fix the mistake:', sentence: 'The legislation, for all its flaws, have been broadly welcomed by industry.', underline: 'have', options: ['have', 'has', 'having', 'had'], correct: 'has', correctIndex: 1 },
+      { id: 'g-c2-3', type: 'fill', instruction: 'Choose the correct word:', parts: ['Not until the results were published ', '[did the committee realise / the committee realised / the committee did realise]', ' the scale of the problem.'], blanks: [{ answer: 'did the committee realise', options: ['did the committee realise', 'the committee realised', 'the committee did realise'] }], correct: 'did the committee realise' },
+      { id: 'g-c2-4', type: 'sort', instruction: 'Build a formally inverted concessive clause:', words: ['be', 'may', 'however', 'the', 'circumstances', 'difficult'], correct: 'However difficult the circumstances may be' },
+      { id: 'g-c2-5', type: 'mc', instruction: 'Which option uses the correct subjunctive in a formal register?', options: ['It is vital that the report is submitted on time.', 'It is vital that the report be submitted on time.', 'It is vital that the report would be submitted on time.', 'It is vital that the report should submitted on time.'], correct: 'It is vital that the report be submitted on time.', correctIndex: 1 },
+      { id: 'g-c2-6', type: 'write', instruction: 'Rewrite this sentence using nominalization and a passive voice: "The engineers quickly solved the problem."', evaluationCriteria: 'Uses nominalization (e.g., "resolution" instead of "solved"), passive voice correctly formed, meaning preserved', ai: true }
     ]
   },
 
   vocabulary: {
     A1: [
-      {
-        id: 'v-a1-1', type: 'define_word',
-        instruction: 'In your own words, what does this word mean?',
-        word: 'hungry',
-        acceptableAnswers: ['want to eat', 'need food', 'need to eat', 'empty stomach', 'feeling of needing food'],
-        hint: 'Think about how you feel when you have not eaten for several hours.'
-      },
-      {
-        id: 'v-a1-2', type: 'define_word',
-        instruction: 'In your own words, what does this word mean?',
-        word: 'angry',
-        acceptableAnswers: ['very unhappy with someone', 'mad', 'feeling strong displeasure', 'upset and wanting to shout', 'furious'],
-        hint: 'Think about how you feel when someone does something unfair to you.'
-      },
-      {
-        id: 'v-a1-3', type: 'choose_correct',
-        instruction: 'Choose the correct word to complete the sentence.',
-        text: 'I ___ a big mistake on my exam and I failed.',
-        options: ['made', 'did', 'had'], correct: 'made',
-        hint: 'In English we say "make a mistake" — not "do a mistake".'
-      },
-      {
-        id: 'v-a1-4', type: 'choose_correct',
-        instruction: 'Choose the correct word.',
-        text: 'I ___ a shower every morning before school.',
-        options: ['make', 'take', 'do'], correct: 'take',
-        hint: 'In English we "take" a shower or a bath — not "make" or "do".'
-      },
-      {
-        id: 'v-a1-5', type: 'use_in_sentence',
-        instruction: 'Write ONE sentence that shows you know what this word means. Use the word naturally — not just "I know the word happy."',
-        word: 'happy',
-        evaluationCriteria: 'the word happy is used correctly in context, the sentence shows understanding of its meaning as a positive emotion',
-        hint: ''
-      }
+      { id: 'v-a1-1', type: 'mc', instruction: 'What does "hungry" mean?', options: ['wanting to sleep', 'wanting to eat', 'feeling cold', 'feeling sick'], correct: 'wanting to eat', correctIndex: 1 },
+      { id: 'v-a1-2', type: 'mc', instruction: 'What does "angry" mean?', options: ['very happy', 'very tired', 'very upset', 'very excited'], correct: 'very upset', correctIndex: 2 },
+      { id: 'v-a1-3', type: 'fill', instruction: 'Choose the correct word:', parts: ['I ', '[made/did/had]', ' a big mistake at work today.'], blanks: [{ answer: 'made', options: ['made', 'did', 'had'] }], correct: 'made' },
+      { id: 'v-a1-4', type: 'mc', instruction: 'Complete: "I ___ a shower every morning."', options: ['make', 'take', 'do', 'have'], correct: 'take', correctIndex: 1 },
+      { id: 'v-a1-5', type: 'write', instruction: 'Write ONE sentence using the word "happy". Describe a moment or feeling.', evaluationCriteria: 'happy used correctly as an adjective describing a positive emotional state', ai: true }
     ],
-
     A2: [
-      {
-        id: 'v-a2-1', type: 'define_word',
-        instruction: 'In your own words, what does this word mean?',
-        word: 'exhausted',
-        acceptableAnswers: ['very tired', 'extremely tired', 'very sleepy', 'no energy at all', 'completely tired'],
-        hint: 'This word means more than just "tired" — it is an extreme level of tiredness.'
-      },
-      {
-        id: 'v-a2-2', type: 'define_word',
-        instruction: 'In your own words, what does this word mean?',
-        word: 'nervous',
-        acceptableAnswers: ['worried', 'anxious', 'scared about something', 'feeling worry before an event', 'not calm', 'afraid'],
-        hint: 'How do you feel before an important exam or a job interview?'
-      },
-      {
-        id: 'v-a2-3', type: 'choose_correct',
-        instruction: 'Choose the correct word.',
-        text: 'Can you ___ me a favour? I need help moving this table.',
-        options: ['make', 'do', 'give'], correct: 'do',
-        hint: 'In English we "do" a favour — not "make" or "give" a favour.'
-      },
-      {
-        id: 'v-a2-4', type: 'choose_correct',
-        instruction: 'Choose the word that fits the sentence.',
-        text: 'The weather was so ___. We could not see more than ten metres ahead.',
-        options: ['misty', 'sunny', 'breezy', 'warm'], correct: 'misty',
-        hint: 'Which word describes weather with very low visibility — where fog or mist makes it hard to see?'
-      },
-      {
-        id: 'v-a2-5', type: 'use_in_sentence',
-        instruction: 'Write ONE sentence using this word at the START of the sentence to introduce some bad news or a disappointing result.',
-        word: 'unfortunately',
-        evaluationCriteria: 'unfortunately used as a sentence adverb introducing a negative or disappointing outcome, grammatically correct sentence follows',
-        hint: ''
-      }
+      { id: 'v-a2-1', type: 'mc', instruction: 'What does "exhausted" mean?', options: ['slightly tired', 'very angry', 'extremely tired', 'a bit bored'], correct: 'extremely tired', correctIndex: 2 },
+      { id: 'v-a2-2', type: 'mc', instruction: 'What does "nervous" mean?', options: ['excited and happy', 'worried and anxious', 'angry and upset', 'tired and bored'], correct: 'worried and anxious', correctIndex: 1 },
+      { id: 'v-a2-3', type: 'fill', instruction: 'Choose the correct word:', parts: ['Can you ', '[make/do/give]', ' me a favour?'], blanks: [{ answer: 'do', options: ['make', 'do', 'give'] }], correct: 'do' },
+      { id: 'v-a2-4', type: 'mc', instruction: 'The weather that day was quite grey and damp. Which word best describes it?', options: ['sunny', 'breezy', 'misty', 'warm'], correct: 'misty', correctIndex: 2 },
+      { id: 'v-a2-5', type: 'write', instruction: 'Write ONE sentence using the word "unfortunately". It should describe something that went wrong.', evaluationCriteria: 'unfortunately used as a sentence adverb introducing a negative outcome', ai: true }
     ],
-
     B1: [
-      {
-        id: 'v-b1-1', type: 'define_word',
-        instruction: 'In your own words, what does this word mean?',
-        word: 'reluctant',
-        acceptableAnswers: ['not wanting to do something', 'unwilling', 'hesitant', 'not eager', 'doing something against your wish'],
-        hint: 'If you are reluctant to do something, how do you feel about doing it?'
-      },
-      {
-        id: 'v-b1-2', type: 'define_word',
-        instruction: 'In your own words, what does this word mean?',
-        word: 'significant',
-        acceptableAnswers: ['important', 'meaning a lot', 'worth noticing', 'large or noticeable', 'having real meaning or effect'],
-        hint: 'A "significant" change is not a tiny one — how would you describe its importance?'
-      },
-      {
-        id: 'v-b1-3', type: 'choose_correct',
-        instruction: 'Choose the correct word.',
-        text: 'The new prime minister ___ a speech that was broadcast live across the country.',
-        options: ['made', 'gave', 'said', 'told'], correct: 'gave',
-        hint: 'In English we "give" a speech — not "make", "say" or "tell".'
-      },
-      {
-        id: 'v-b1-4', type: 'use_in_sentence',
-        instruction: 'Write ONE sentence where something happens BECAUSE of something else. Use this word to connect the cause and the result.',
-        word: 'consequently',
-        evaluationCriteria: 'consequently used correctly as a cause-effect connector, the sentence has a clear cause and a clear result',
-        hint: ''
-      },
-      {
-        id: 'v-b1-5', type: 'define_word',
-        instruction: 'In your own words, what does this word mean?',
-        word: 'flexible',
-        acceptableAnswers: ['able to change', 'not rigid', 'able to adapt', 'open to different situations', 'willing to adjust'],
-        hint: 'If your schedule is "flexible", can it be changed easily or is it completely fixed?'
-      }
+      { id: 'v-b1-1', type: 'mc', instruction: 'What does "reluctant" mean?', options: ['very willing and eager', 'unwilling or hesitant to do something', 'confused about what to do', 'unable to do something'], correct: 'unwilling or hesitant to do something', correctIndex: 1 },
+      { id: 'v-b1-2', type: 'mc', instruction: 'What does "significant" mean?', options: ['very small and unimportant', 'secret and hidden', 'large and important enough to notice', 'old-fashioned'], correct: 'large and important enough to notice', correctIndex: 2 },
+      { id: 'v-b1-3', type: 'fill', instruction: 'Choose the correct word:', parts: ['The Prime Minister ', '[made/gave/said/told]', ' a speech to the nation last night.'], blanks: [{ answer: 'gave', options: ['made', 'gave', 'said', 'told'] }], correct: 'gave' },
+      { id: 'v-b1-4', type: 'write', instruction: 'Write ONE sentence using the word "consequently". Show cause and effect.', evaluationCriteria: 'consequently used as a cause-effect connector between two clauses', ai: true },
+      { id: 'v-b1-5', type: 'mc', instruction: 'What does "flexible" mean in a work context?', options: ['very strict about rules', 'able to change or adapt easily', 'very experienced', 'physically strong'], correct: 'able to change or adapt easily', correctIndex: 1 }
     ],
-
     B2: [
-      {
-        id: 'v-b2-1', type: 'define_word',
-        instruction: 'In your own words, what does this word mean?',
-        word: 'ambiguous',
-        acceptableAnswers: ['unclear', 'can mean two things', 'open to different interpretations', 'not clear', 'having more than one meaning'],
-        hint: 'If a statement is "ambiguous", can one person understand it differently from another?'
-      },
-      {
-        id: 'v-b2-2', type: 'define_word',
-        instruction: 'In your own words, what does this word mean?',
-        word: 'inevitable',
-        acceptableAnswers: ['certain to happen', 'cannot be avoided', 'sure to occur', 'impossible to prevent'],
-        hint: 'If something is "inevitable", can anything stop it from happening?'
-      },
-      {
-        id: 'v-b2-3', type: 'use_in_sentence',
-        instruction: 'Write ONE sentence where you describe something positively, but immediately add a small contrast or qualification using this word.',
-        word: 'albeit',
-        evaluationCriteria: 'albeit used as a concessive connector (meaning "although" or "even though"), placed before an adjective, adverb, or noun phrase that contrasts with the main statement',
-        hint: ''
-      },
-      {
-        id: 'v-b2-4', type: 'choose_correct',
-        instruction: 'Choose the correct word.',
-        text: 'The new law came ___ effect on the first of January.',
-        options: ['into', 'in', 'to', 'onto'], correct: 'into',
-        hint: 'The fixed phrase is "come into effect" — meaning a law or rule starts to apply.'
-      },
-      {
-        id: 'v-b2-5', type: 'define_word',
-        instruction: 'In your own words, what does this word mean?',
-        word: 'arbitrary',
-        acceptableAnswers: ['random', 'with no clear reason', 'not based on logic', 'chosen without a real system', 'without fair reasoning'],
-        hint: 'If a decision is "arbitrary", was it based on careful reasoning or just made randomly?'
-      }
+      { id: 'v-b2-1', type: 'mc', instruction: 'What does "ambiguous" mean?', options: ['very clear and easy to understand', 'having more than one possible meaning', 'completely wrong', 'very formal in tone'], correct: 'having more than one possible meaning', correctIndex: 1 },
+      { id: 'v-b2-2', type: 'mc', instruction: 'What does "inevitable" mean?', options: ['something that can be prevented', 'something that might happen', 'something that will certainly happen', 'something that already happened'], correct: 'something that will certainly happen', correctIndex: 2 },
+      { id: 'v-b2-3', type: 'write', instruction: 'Write a sentence using "albeit" to show a contrast within the same idea.', evaluationCriteria: 'albeit used as a concessive connector before an adjective or noun phrase', ai: true },
+      { id: 'v-b2-4', type: 'fill', instruction: 'Choose the correct word:', parts: ['The new law came ', '[into/in/to/onto]', ' effect last January.'], blanks: [{ answer: 'into', options: ['into', 'in', 'to', 'onto'] }], correct: 'into' },
+      { id: 'v-b2-5', type: 'mc', instruction: 'What does "arbitrary" mean?', options: ['based on careful evidence', 'based on skill and practice', 'decided by random chance or personal whim', 'decided by a group of experts'], correct: 'decided by random chance or personal whim', correctIndex: 2 }
     ],
-
     C1: [
-      {
-        id: 'v-c1-1', type: 'define_word',
-        instruction: 'In your own words, what does this word mean?',
-        word: 'mitigate',
-        acceptableAnswers: ['reduce the severity of', 'make less bad', 'lessen the impact of', 'reduce harm', 'minimise the effect'],
-        hint: 'If you "mitigate" a problem, do you make it worse or less serious?'
-      },
-      {
-        id: 'v-c1-2', type: 'define_word',
-        instruction: 'In your own words, what does this word mean?',
-        word: 'sycophantic',
-        acceptableAnswers: ['excessively flattering', 'insincere praise', 'telling powerful people what they want to hear', 'fake compliments to gain favour', 'servile praise'],
-        hint: 'Think of someone who constantly praises their boss, not because they mean it, but to get benefits.'
-      },
-      {
-        id: 'v-c1-3', type: 'use_in_sentence',
-        instruction: 'Write ONE sentence where something makes a problem or bad situation WORSE. Use this word as the main verb.',
-        word: 'exacerbate',
-        evaluationCriteria: 'exacerbate used as a verb meaning to make something worse, applied to a problem, condition, or negative situation',
-        hint: ''
-      },
-      {
-        id: 'v-c1-4', type: 'choose_correct',
-        instruction: 'Choose the word that best fits the formal context.',
-        text: 'The politician\'s address was full of ___; she made grand claims but offered nothing concrete.',
-        options: ['platitudes', 'attitudes', 'magnitudes', 'latitudes'], correct: 'platitudes',
-        hint: '"Platitudes" are empty, overused statements that sound meaningful but say nothing real.'
-      },
-      {
-        id: 'v-c1-5', type: 'define_word',
-        instruction: 'In your own words, what does this word mean?',
-        word: 'equivocal',
-        acceptableAnswers: ['deliberately unclear', 'ambiguous on purpose', 'avoiding a clear answer', 'can be understood in different ways', 'intentionally vague'],
-        hint: 'An "equivocal" answer is one that a politician might give — it sounds like an answer but actually isn\'t clear.'
-      }
+      { id: 'v-c1-1', type: 'mc', instruction: 'What does "mitigate" mean?', options: ['to make a problem worse', 'to ignore a problem completely', 'to make a problem less severe', 'to fully solve a problem'], correct: 'to make a problem less severe', correctIndex: 2 },
+      { id: 'v-c1-2', type: 'mc', instruction: 'What does "sycophantic" mean?', options: ['genuinely admiring and respectful', 'excessively flattering to gain personal advantage', 'critically honest and direct', 'emotionally detached and cold'], correct: 'excessively flattering to gain personal advantage', correctIndex: 1 },
+      { id: 'v-c1-3', type: 'write', instruction: 'Write ONE sentence using "exacerbate" in an academic or formal context.', evaluationCriteria: 'exacerbate used as a verb meaning to make a bad situation worse', ai: true },
+      { id: 'v-c1-4', type: 'mc', instruction: 'Choose the word that fits: "His speech was full of ___, hollow phrases that said nothing new."', options: ['platitudes', 'attitudes', 'magnitudes', 'latitudes'], correct: 'platitudes', correctIndex: 0 },
+      { id: 'v-c1-5', type: 'mc', instruction: 'What does "equivocal" mean?', options: ['very clear and decisive', 'having a double or uncertain meaning', 'morally wrong', 'technically accurate'], correct: 'having a double or uncertain meaning', correctIndex: 1 }
+    ],
+    C2: [
+      { id: 'v-c2-1', type: 'mc', instruction: 'What does "tendentious" mean?', options: ['balanced and objective', 'promoting a particular cause or point of view', 'academic and formal in style', 'obscure and difficult to understand'], correct: 'promoting a particular cause or point of view', correctIndex: 1 },
+      { id: 'v-c2-2', type: 'mc', instruction: 'What does "pellucid" mean?', options: ['extremely obscure and unclear', 'translucently clear, in style or thought', 'emotionally intense', 'logically contradictory'], correct: 'translucently clear, in style or thought', correctIndex: 1 },
+      { id: 'v-c2-3', type: 'write', instruction: 'Use "ineluctable" in a sentence to describe something unavoidable in a formal or literary register.', evaluationCriteria: 'ineluctable used correctly as an adjective meaning unavoidable, in a formal register', ai: true },
+      { id: 'v-c2-4', type: 'mc', instruction: 'Choose the word that most precisely fits: "His argument, while superficially coherent, rested on a fundamental ___."', options: ['paradox', 'tautology', 'syllogism', 'polemic'], correct: 'tautology', correctIndex: 1 },
+      { id: 'v-c2-5', type: 'mc', instruction: 'What is the best definition of "peripatetic"?', options: ['tending to argue and debate', 'moving or travelling from place to place', 'overly cautious and hesitant', 'formally educated and academic'], correct: 'moving or travelling from place to place', correctIndex: 1 },
+      { id: 'v-c2-6', type: 'spot_fake', instruction: 'Click any word you think is a fake English word. It must look like real English but not exist in any dictionary. There are exactly 10.', passage: 'The relentless proliferation of digital media has precipitated a profound shift in our collective psychology, ostensibly designed to foster unprecedented global connectivity. However, beneath this veneer of limitless interaction lies a pervasive ephemerance, where substantive discourse is rapidly supplanted by fleeting, superficial engagements. We are frequently confronted by the ostentatiary displays of curated personas, which only serve to exacerbate the latent cognitive dissonance experienced by the average individual. Despite concerted efforts to achieve some ameliorance of this digital fatigue, the sheer vociferity of the online ecosystem drowns out nuanced contemplation. In our pursuit of serendipital discoveries within the algorithmic expanse, we often find ourselves entangled in an ineffablistic web of data that defies logical categorization. This relentless bombardment demands a high degree of cognitancy just to navigate the daily barrage of information, yet the inherent obfuscity of platform algorithms ensures that true clarity remains elusive. Consequently, what initially sparked a sense of global ebulliment has, for many, devolved into a stubborn intransigism, leaving society fundamentally fragmented despite its illusion of absolute cohesion.', pseudoWords: ['ephemerance', 'ostentatiary', 'ameliorance', 'vociferity', 'serendipital', 'ineffablistic', 'cognitancy', 'obfuscity', 'ebulliment', 'intransigism'], timer: 600 }
     ]
   },
 
   reading: {
     A1: [
-      {
-        id: 'r-a1-1', type: 'read_comprehension',
-        instruction: 'Read this text carefully, then answer the question.',
-        text: 'Tom has a dog called Max. Max is brown and very big. Tom walks Max every morning before breakfast. They go to the park near their house. Max loves to run and play. Tom loves Max very much.',
-        question: 'What does Tom do every morning before breakfast?',
-        correct: 'He walks his dog Max / takes Max to the park',
-        inferenceLevel: 'literal',
-        hint: 'Look for what Tom does "every morning before breakfast".'
-      },
-      {
-        id: 'r-a1-2', type: 'read_comprehension',
-        instruction: 'Read this text carefully, then answer the question.',
-        text: 'Tom has a dog called Max. Max is brown and very big. Tom walks Max every morning before breakfast. They go to the park near their house. Max loves to run and play. Tom loves Max very much.',
-        question: 'What colour is Max?',
-        correct: 'brown',
-        inferenceLevel: 'literal',
-        hint: 'The answer is directly in the text.'
-      }
+      { id: 'r-a1-1', type: 'mc', instruction: 'Read this text carefully, then answer the question.', text: 'Tom has a dog called Max. Max is brown and very friendly. Every morning, before breakfast, Tom takes Max for a walk in the park. Max loves the park because there are many other dogs to play with. Tom always brings a ball for Max to catch.', question: 'What does Tom do every morning before breakfast?', options: ['He eats breakfast', 'He takes Max for a walk', 'He plays with a ball', 'He goes to work'], correct: 'He takes Max for a walk', correctIndex: 1 },
+      { id: 'r-a1-2', type: 'mc', instruction: 'Read this text carefully, then answer the question.', text: 'Tom has a dog called Max. Max is brown and very friendly. Every morning, before breakfast, Tom takes Max for a walk in the park. Max loves the park because there are many other dogs to play with. Tom always brings a ball for Max to catch.', question: 'What colour is Max?', options: ['Black', 'White', 'Brown', 'Golden'], correct: 'Brown', correctIndex: 2 }
     ],
-
     A2: [
-      {
-        id: 'r-a2-1', type: 'read_comprehension',
-        instruction: 'Read this text, then answer the question.',
-        text: 'Maria moved to London three years ago to find work. At first, she found the city too busy and the weather too cold. She felt lonely because she did not know anyone. But slowly, things changed. She found a job as a nurse, made good friends, and discovered London\'s restaurants and museums. Now she cannot imagine living anywhere else.',
-        question: 'Why did Maria move to London?',
-        correct: 'To find work',
-        inferenceLevel: 'literal',
-        hint: 'The reason for her move is stated directly.'
-      },
-      {
-        id: 'r-a2-2', type: 'read_comprehension',
-        instruction: 'Read the same text again, then answer this question.',
-        text: 'Maria moved to London three years ago to find work. At first, she found the city too busy and the weather too cold. She felt lonely because she did not know anyone. But slowly, things changed. She found a job as a nurse, made good friends, and discovered London\'s restaurants and museums. Now she cannot imagine living anywhere else.',
-        question: 'How did Maria\'s feelings about London change from the beginning to now?',
-        correct: 'She went from feeling lonely and unhappy to loving it and not wanting to leave',
-        inferenceLevel: 'simple_inference',
-        hint: 'Compare how she felt at first with how she feels now.'
-      }
+      { id: 'r-a2-1', type: 'mc', instruction: 'Read this text, then answer the question.', text: 'Maria moved to London three years ago to look for work. At first, she found the city very big and lonely — she missed her family and the food from home. However, after a few months, she made some good friends at her new job. Now she loves the city and cannot imagine living anywhere else.', question: 'Why did Maria move to London?', options: ['To study at university', 'To be with her family', 'To find work', 'To learn English'], correct: 'To find work', correctIndex: 2 },
+      { id: 'r-a2-2', type: 'mc', instruction: 'Read the same text again, then answer this question.', text: 'Maria moved to London three years ago to look for work. At first, she found the city very big and lonely — she missed her family and the food from home. However, after a few months, she made some good friends at her new job. Now she loves the city and cannot imagine living anywhere else.', question: "How did Maria's feelings about London change over time?", options: ['She always loved it', 'She went from feeling lonely to loving it', 'She still misses home', 'She decided to leave'], correct: 'She went from feeling lonely to loving it', correctIndex: 1 }
     ],
-
     B1: [
-      {
-        id: 'r-b1-1', type: 'read_comprehension',
-        instruction: 'Read this text carefully, then answer the question.',
-        text: 'Despite widespread concern about plastic pollution, global plastic production has continued to rise every year for the past decade. Critics argue that recycling campaigns give consumers a false sense that the problem is being managed. In reality, less than ten percent of all plastic ever produced has actually been recycled. Most ends up in landfill, or worse, in the ocean. Some scientists are now calling for a complete rethink of packaging design — moving away from single-use materials entirely rather than simply asking people to sort their bins more carefully.',
-        question: 'What do critics say about recycling campaigns?',
-        correct: 'They give people a false impression that the problem is under control / being managed',
-        inferenceLevel: 'inference',
-        hint: 'Look for what critics "argue" — their concern is that recycling campaigns are misleading.'
-      },
-      {
-        id: 'r-b1-2', type: 'read_comprehension',
-        instruction: 'Read the same text again, then answer this question.',
-        text: 'Despite widespread concern about plastic pollution, global plastic production has continued to rise every year for the past decade. Critics argue that recycling campaigns give consumers a false sense that the problem is being managed. In reality, less than ten percent of all plastic ever produced has actually been recycled. Most ends up in landfill, or worse, in the ocean. Some scientists are now calling for a complete rethink of packaging design — moving away from single-use materials entirely rather than simply asking people to sort their bins more carefully.',
-        question: 'What does the phrase "sort their bins more carefully" suggest about the author\'s view of recycling?',
-        correct: 'Recycling alone is too simple / insufficient — the problem needs more radical solutions',
-        inferenceLevel: 'inference',
-        hint: 'The author uses this phrase to contrast with a "complete rethink". What does that contrast imply?'
-      },
-      {
-        id: 'r-b1-3', type: 'read_comprehension',
-        instruction: 'Read the same text again, then answer this question.',
-        text: 'Despite widespread concern about plastic pollution, global plastic production has continued to rise every year for the past decade. Critics argue that recycling campaigns give consumers a false sense that the problem is being managed. In reality, less than ten percent of all plastic ever produced has actually been recycled. Most ends up in landfill, or worse, in the ocean. Some scientists are now calling for a complete rethink of packaging design — moving away from single-use materials entirely rather than simply asking people to sort their bins more carefully.',
-        question: 'What percentage of all plastic ever produced has actually been recycled?',
-        correct: 'Less than ten percent / under 10%',
-        inferenceLevel: 'literal',
-        hint: 'Scan for the exact number mentioned.'
-      }
+      { id: 'r-b1-1', type: 'mc', instruction: 'Read this text carefully, then answer the question.', text: 'Many governments have launched campaigns encouraging citizens to recycle. However, critics argue these campaigns give people a false sense that the plastic problem is being managed, when in reality less than 10% of all plastic ever produced has been recycled. Recycling alone, they say, cannot solve the crisis — a fundamental rethinking of production and consumption is required. Asking people to simply "sort their bins" may let corporations off the hook entirely.', question: 'What do critics say about recycling campaigns?', options: ['They are very effective', 'They make people believe the problem is under control when it is not', 'They are too expensive to run', 'They focus too much on corporations'], correct: 'They make people believe the problem is under control when it is not', correctIndex: 1 },
+      { id: 'r-b1-2', type: 'mc', instruction: 'Read the same text again, then answer this question.', text: 'Many governments have launched campaigns encouraging citizens to recycle. However, critics argue these campaigns give people a false sense that the plastic problem is being managed, when in reality less than 10% of all plastic ever produced has been recycled. Recycling alone, they say, cannot solve the crisis — a fundamental rethinking of production and consumption is required. Asking people to simply "sort their bins" may let corporations off the hook entirely.', question: 'What does the phrase "sort their bins" suggest about the author\'s view?', options: ['Sorting bins is the most important action', 'Recycling alone is not enough to solve the crisis', 'Governments should do more bin collection', 'People are too lazy to recycle'], correct: 'Recycling alone is not enough to solve the crisis', correctIndex: 1 },
+      { id: 'r-b1-3', type: 'mc', instruction: 'Read the same text again, then answer this question.', text: 'Many governments have launched campaigns encouraging citizens to recycle. However, critics argue these campaigns give people a false sense that the plastic problem is being managed, when in reality less than 10% of all plastic ever produced has been recycled. Recycling alone, they say, cannot solve the crisis — a fundamental rethinking of production and consumption is required. Asking people to simply "sort their bins" may let corporations off the hook entirely.', question: 'What percentage of plastic has ever been recycled?', options: ['More than 50%', 'About 25%', 'Less than 10%', 'About 40%'], correct: 'Less than 10%', correctIndex: 2 }
     ],
-
     B2: [
-      {
-        id: 'r-b2-1', type: 'read_comprehension',
-        instruction: 'Read this text carefully, then answer the question.',
-        text: 'The paradox at the heart of social media is this: platforms designed to connect people appear, in many cases, to be making them feel more isolated. Longitudinal studies suggest a correlation between heavy social media use and increased rates of anxiety and depression, particularly among adolescents. Yet the relationship is not straightforward. Some researchers argue that social media merely amplifies pre-existing conditions rather than creating them. Others point to the deliberately addictive design of these platforms — infinite scroll, variable reward mechanisms — as an engineered source of psychological dependency. The question is no longer whether these platforms affect mental health, but whether society has the regulatory will to act.',
-        question: 'What is "the paradox" the author describes in the opening sentence?',
-        correct: 'Platforms created to connect people are actually making people feel more isolated and lonely',
-        inferenceLevel: 'analysis',
-        hint: 'A paradox is a contradiction. What two things contradict each other in the first sentence?'
-      },
-      {
-        id: 'r-b2-2', type: 'read_comprehension',
-        instruction: 'Read the same text again, then answer this question.',
-        text: 'The paradox at the heart of social media is this: platforms designed to connect people appear, in many cases, to be making them feel more isolated. Longitudinal studies suggest a correlation between heavy social media use and increased rates of anxiety and depression, particularly among adolescents. Yet the relationship is not straightforward. Some researchers argue that social media merely amplifies pre-existing conditions rather than creating them. Others point to the deliberately addictive design of these platforms — infinite scroll, variable reward mechanisms — as an engineered source of psychological dependency. The question is no longer whether these platforms affect mental health, but whether society has the regulatory will to act.',
-        question: 'What does the final sentence imply about the author\'s view of the situation?',
-        correct: 'The author believes the harm is proven, but doubts governments/regulators will take meaningful action',
-        inferenceLevel: 'critical',
-        hint: 'The phrase "regulatory will" implies doubt about whether action will be taken. What does this tell us about the author\'s tone?'
-      },
-      {
-        id: 'r-b2-3', type: 'read_comprehension',
-        instruction: 'Read the same text again, then answer this question.',
-        text: 'The paradox at the heart of social media is this: platforms designed to connect people appear, in many cases, to be making them feel more isolated. Longitudinal studies suggest a correlation between heavy social media use and increased rates of anxiety and depression, particularly among adolescents. Yet the relationship is not straightforward. Some researchers argue that social media merely amplifies pre-existing conditions rather than creating them. Others point to the deliberately addictive design of these platforms — infinite scroll, variable reward mechanisms — as an engineered source of psychological dependency. The question is no longer whether these platforms affect mental health, but whether society has the regulatory will to act.',
-        question: 'What two explanations do researchers give for the link between social media and mental health?',
-        correct: 'Social media amplifies pre-existing conditions AND platforms are designed to be psychologically addictive',
-        inferenceLevel: 'analysis',
-        hint: 'The text presents two different researcher viewpoints — identify both.'
-      }
+      { id: 'r-b2-1', type: 'mc', instruction: 'Read this text carefully, then answer the question.', text: 'Research consistently links heavy social media use to rising rates of anxiety, depression, and loneliness — yet these same platforms were designed to connect people. This is the paradox at the heart of the debate. Some researchers point to amplification effects, arguing that platforms worsen pre-existing mental health conditions rather than cause new ones. Others focus on addictive design patterns: infinite scroll, variable reward notifications, and algorithmically curated content that maximises time on screen. Governments have begun calling for independent audits, though whether these will lead to binding regulation remains deeply uncertain.', question: 'What is "the paradox" referred to in the passage?', options: ['Social media is popular but boring', 'Platforms designed to connect people are making them more isolated', 'People use social media but don\'t like it', 'Governments support social media companies'], correct: 'Platforms designed to connect people are making them more isolated', correctIndex: 1 },
+      { id: 'r-b2-2', type: 'mc', instruction: 'Read the same text again, then answer this question.', text: 'Research consistently links heavy social media use to rising rates of anxiety, depression, and loneliness — yet these same platforms were designed to connect people. This is the paradox at the heart of the debate. Some researchers point to amplification effects, arguing that platforms worsen pre-existing mental health conditions rather than cause new ones. Others focus on addictive design patterns: infinite scroll, variable reward notifications, and algorithmically curated content that maximises time on screen. Governments have begun calling for independent audits, though whether these will lead to binding regulation remains deeply uncertain.', question: 'What does the final sentence imply?', options: ['Regulation is certain to come soon', 'The harm is proven and action will definitely be taken', 'There is doubt that audits will lead to real legal change', 'Governments are not interested in the issue'], correct: 'There is doubt that audits will lead to real legal change', correctIndex: 2 },
+      { id: 'r-b2-3', type: 'mc', instruction: 'Read the same text again, then answer this question.', text: 'Research consistently links heavy social media use to rising rates of anxiety, depression, and loneliness — yet these same platforms were designed to connect people. This is the paradox at the heart of the debate. Some researchers point to amplification effects, arguing that platforms worsen pre-existing mental health conditions rather than cause new ones. Others focus on addictive design patterns: infinite scroll, variable reward notifications, and algorithmically curated content that maximises time on screen. Governments have begun calling for independent audits, though whether these will lead to binding regulation remains deeply uncertain.', question: 'Which two explanations for the link between social media and mental health are mentioned?', options: ['Loneliness and addiction', 'Amplification of pre-existing conditions and addictive design patterns', 'Poor content quality and too much advertising', 'Government inaction and corporate greed'], correct: 'Amplification of pre-existing conditions and addictive design patterns', correctIndex: 1 }
     ],
-
     C1: [
-      {
-        id: 'r-c1-1', type: 'read_comprehension',
-        instruction: 'Read this text carefully, then answer the question.',
-        text: 'Proponents of universal basic income often cite automation-driven unemployment as their central justification. Yet this framing contains an uncomfortable assumption: that technological displacement of labour is a novel threat rather than a recurring feature of economic development that markets have historically absorbed. The weavers displaced by the Industrial Revolution did not permanently swell the ranks of the unemployed; they, or their children, found work in industries that did not yet exist. Whether the same will prove true in an era of artificial intelligence remains genuinely uncertain — but certainty of catastrophe is no more defensible than complacency.',
-        question: 'What assumption does the author identify in the pro-UBI argument?',
-        correct: 'That automation-caused unemployment is new / unprecedented, when historically economies have always adapted to technological change',
-        inferenceLevel: 'critical',
-        hint: 'The author says the argument contains "an uncomfortable assumption". What exactly is that assumption?'
-      },
-      {
-        id: 'r-c1-2', type: 'read_comprehension',
-        instruction: 'Read the same text again, then answer this question.',
-        text: 'Proponents of universal basic income often cite automation-driven unemployment as their central justification. Yet this framing contains an uncomfortable assumption: that technological displacement of labour is a novel threat rather than a recurring feature of economic development that markets have historically absorbed. The weavers displaced by the Industrial Revolution did not permanently swell the ranks of the unemployed; they, or their children, found work in industries that did not yet exist. Whether the same will prove true in an era of artificial intelligence remains genuinely uncertain — but certainty of catastrophe is no more defensible than complacency.',
-        question: 'The author says "certainty of catastrophe is no more defensible than complacency." What does this sentence tell us about the author\'s overall position?',
-        correct: 'The author is balanced / agnostic — they reject both extreme pessimism and complacency, accepting genuine uncertainty',
-        inferenceLevel: 'critical',
-        hint: 'The author rejects two opposite positions. What are those two positions, and where does the author stand?'
-      },
-      {
-        id: 'r-c1-3', type: 'read_comprehension',
-        instruction: 'Read the same text again, then answer this question.',
-        text: 'Proponents of universal basic income often cite automation-driven unemployment as their central justification. Yet this framing contains an uncomfortable assumption: that technological displacement of labour is a novel threat rather than a recurring feature of economic development that markets have historically absorbed. The weavers displaced by the Industrial Revolution did not permanently swell the ranks of the unemployed; they, or their children, found work in industries that did not yet exist. Whether the same will prove true in an era of artificial intelligence remains genuinely uncertain — but certainty of catastrophe is no more defensible than complacency.',
-        question: 'What historical example does the author use to challenge the assumption in the pro-UBI argument, and what point does it illustrate?',
-        correct: 'Industrial Revolution weavers who lost jobs but later found work in new industries — it illustrates that technological displacement is not new and economies adapt over time',
-        inferenceLevel: 'critical',
-        hint: 'The author uses a specific historical comparison. Why did the author choose this particular example?'
-      }
+      { id: 'r-c1-1', type: 'mc', instruction: 'Read this text carefully, then answer the question.', text: 'Proponents of Universal Basic Income argue that the rise of automation represents an unprecedented threat to employment — one that traditional welfare systems are not equipped to handle. Critics, however, question the underlying assumption: that this wave of technological disruption is fundamentally different from previous ones. The Industrial Revolution displaced the weavers of the 1800s, yet new industries emerged. The certainty of catastrophe, these critics suggest, is no more defensible than complacency. What is clear is that the debate turns not on whether jobs will change — they will — but on whether societies will act with sufficient foresight to manage that change humanely.', question: 'What assumption in the pro-UBI argument do critics question?', options: ['That automation is bad for workers', "That previous disruptions were less severe than today's", 'That automation is unprecedented, when historically economies adapt', 'That governments should control technology'], correct: 'That automation is unprecedented, when historically economies adapt', correctIndex: 2 },
+      { id: 'r-c1-2', type: 'mc', instruction: 'Read the same text again, then answer this question.', text: 'Proponents of Universal Basic Income argue that the rise of automation represents an unprecedented threat to employment — one that traditional welfare systems are not equipped to handle. Critics, however, question the underlying assumption: that this wave of technological disruption is fundamentally different from previous ones. The Industrial Revolution displaced the weavers of the 1800s, yet new industries emerged. The certainty of catastrophe, these critics suggest, is no more defensible than complacency. What is clear is that the debate turns not on whether jobs will change — they will — but on whether societies will act with sufficient foresight to manage that change humanely.', question: 'What does "the certainty of catastrophe is no more defensible than complacency" suggest about the author?', options: ['The author strongly supports UBI', 'The author thinks catastrophe is certain', 'The author is balanced and avoids taking a firm side', 'The author believes we should do nothing'], correct: 'The author is balanced and avoids taking a firm side', correctIndex: 2 },
+      { id: 'r-c1-3', type: 'mc', instruction: 'Read the same text again, then answer this question.', text: 'Proponents of Universal Basic Income argue that the rise of automation represents an unprecedented threat to employment — one that traditional welfare systems are not equipped to handle. Critics, however, question the underlying assumption: that this wave of technological disruption is fundamentally different from previous ones. The Industrial Revolution displaced the weavers of the 1800s, yet new industries emerged. The certainty of catastrophe, these critics suggest, is no more defensible than complacency. What is clear is that the debate turns not on whether jobs will change — they will — but on whether societies will act with sufficient foresight to manage that change humanely.', question: 'What historical example is used and what point does it make?', options: ['The French Revolution — showing that change is violent', 'Industrial Revolution weavers — showing that past displacement did not prevent new industries from emerging', 'The invention of the internet — showing technology always creates jobs', 'World War II — showing that economies can recover quickly'], correct: 'Industrial Revolution weavers — showing that past displacement did not prevent new industries from emerging', correctIndex: 1 }
     ],
+    C2: [
+      { id: 'r-c2-1', type: 'mc', instruction: 'Read this text carefully, then answer the question.', text: 'The tension between judicial independence and democratic accountability has never been fully resolved in liberal constitutional theory. Courts that strike down legislation passed by elected majorities inevitably attract the charge of counter-majoritarianism — the accusation that an unelected judiciary is substituting its own preferences for those of the people. Yet defenders of judicial review contend that democracy is not reducible to majority rule: if constitutional rights are to mean anything, they must be enforceable even against the wishes of a transient parliamentary majority. The debate thus forces us to confront a prior question: what do we mean, precisely, when we invoke "democracy"?', question: 'What is "counter-majoritarianism" as used in the passage?', options: ['A theory that courts should have more power than parliaments', 'The accusation that courts override elected majorities with their own preferences', 'The view that minorities should be protected from majority rule', 'A political movement opposed to constitutional reform'], correct: 'The accusation that courts override elected majorities with their own preferences', correctIndex: 1 },
+      { id: 'r-c2-2', type: 'mc', instruction: 'Read the same text again, then answer this question.', text: 'The tension between judicial independence and democratic accountability has never been fully resolved in liberal constitutional theory. Courts that strike down legislation passed by elected majorities inevitably attract the charge of counter-majoritarianism — the accusation that an unelected judiciary is substituting its own preferences for those of the people. Yet defenders of judicial review contend that democracy is not reducible to majority rule: if constitutional rights are to mean anything, they must be enforceable even against the wishes of a transient parliamentary majority. The debate thus forces us to confront a prior question: what do we mean, precisely, when we invoke "democracy"?', question: 'How do defenders of judicial review respond to the charge?', options: ['They argue courts always reflect public opinion', 'They deny that courts ever strike down legislation', 'They argue democracy means more than majority rule and rights must be protected from transient majorities', 'They argue the judiciary should be elected'], correct: 'They argue democracy means more than majority rule and rights must be protected from transient majorities', correctIndex: 2 },
+      { id: 'r-c2-3', type: 'mc', instruction: 'Read the same text again, then answer this question.', text: 'The tension between judicial independence and democratic accountability has never been fully resolved in liberal constitutional theory. Courts that strike down legislation passed by elected majorities inevitably attract the charge of counter-majoritarianism — the accusation that an unelected judiciary is substituting its own preferences for those of the people. Yet defenders of judicial review contend that democracy is not reducible to majority rule: if constitutional rights are to mean anything, they must be enforceable even against the wishes of a transient parliamentary majority. The debate thus forces us to confront a prior question: what do we mean, precisely, when we invoke "democracy"?', question: 'What "prior question" does the author say the debate forces us to confront?', options: ['Whether courts should be reformed', 'What we actually mean by the concept of democracy itself', 'Whether rights should be written into law', 'Whether judges should be politically neutral'], correct: 'What we actually mean by the concept of democracy itself', correctIndex: 1 }
+    ]
   },
 
   writing: {
-    universal: {
-      id: 'w-universal',
-      type: 'free_write',
-      instruction: 'Think of an important decision you made in your life. It can be a small or a big decision. Write between 80 and 150 words. Include: what the decision was, why you made it, and what happened as a result.',
-      minWords: 60,
-      maxWords: 180,
-      evaluationPrompt: `You are a real English teacher reading a student's writing. Read it the way a real person would — not like a machine.
-
-The student was asked: "Think of an important decision you made in your life. What was it, why did you make it, and what happened?"
-
-They wrote:
-"{writing}"
-
-Read it carefully. Think about:
-- How well do they express ideas? Can you understand them easily?
-- What grammar patterns do they use? What slips up?
-- How wide is their vocabulary — basic everyday words only, or do they reach for more?
-- Do their sentences connect smoothly or feel choppy and disconnected?
-- Did they actually answer all three parts of the question?
-
-Now assign a level. Be honest — not too generous, not too harsh:
-- A1: barely connected sentences, many basic errors, very limited words
-- A2: simple sentences that connect, some errors, everyday vocabulary only
-- B1: clear writing with some errors, decent vocabulary, some varied sentences
-- B2: good writing, occasional errors, solid vocabulary range, well organised
-- C1: sophisticated writing, rare errors, precise vocabulary, complex ideas expressed naturally
-- C2: near-native, exceptional precision, everything flows
-
-Write your response like a real teacher talking to a student — warm, honest, specific. Two or three sentences. Name something specific they did well and one specific thing to work on. No grammar codes, no formulas, no bullet points.
-
-Then on the very last lines add the JSON data (this is just for the app to read — the student sees your written feedback):
-LEVEL_DATA: {"level": "B1", "sublevel": "mid", "evidence": "your feedback text here", "strengths": ["one specific strength"], "specific_errors": ["one specific error with correction"], "priority_improvement": "the one most important thing to work on"}`
-    }
+    A1: [{ id: 'w-a1-1', type: 'free_write', instruction: 'Think of an important decision you made in your life. What was it, why did you make it, and what happened? Write 40–80 words.', minWords: 30, maxWords: 100 }],
+    A2: [{ id: 'w-a2-1', type: 'free_write', instruction: 'Write about something you did last week using past simple. What did you do? Where did you go? (40–80 words)', minWords: 30, maxWords: 100 }],
+    B1: [{ id: 'w-b1-1', type: 'free_write', instruction: 'Think of an important decision you made in your life. What was it, why did you make it, and what happened? Write 80–150 words. Use at least one past perfect or conditional structure.', minWords: 60, maxWords: 180 }],
+    B2: [{ id: 'w-b2-1', type: 'free_write', instruction: 'A friend is considering quitting their stable job to start a business. Write them an email of advice (100–160 words). Use at least one modal of advice (should, ought to, might want to) and one conditional.', minWords: 80, maxWords: 200 }],
+    C1: [{ id: 'w-c1-1', type: 'free_write', instruction: 'Write a formal argumentative paragraph (120–200 words) on the following: "Governments have a duty to regulate social media platforms." Use hedging language, a counter-argument, and a coherent conclusion.', minWords: 100, maxWords: 250 }],
+    C2: [{ id: 'w-c2-1', type: 'free_write', instruction: 'Write a critically analytical paragraph (150–220 words) responding to: "Expertise is overrated in democratic decision-making." Your paragraph should acknowledge complexity, deploy precise hedging, and reach a nuanced position.', minWords: 120, maxWords: 280 }]
   },
 
   dialogue: {
     A1: [
-      {
-        id: 'd-a1-1', type: 'dialogue_comprehension',
-        instruction: 'Read this conversation, then answer the question.',
-        text: 'Lucy: Hi! Are you new here?\nJames: Yes, I started today. My name is James.\nLucy: Nice to meet you, James. I am Lucy. Do you need help?\nJames: Yes, please. Where is the bathroom?\nLucy: It is on the second floor, next to the stairs.',
-        question: 'Where is the bathroom?',
-        correct: 'On the second floor / next to the stairs',
-        hint: 'Lucy gives James the answer directly.'
-      },
-      {
-        id: 'd-a1-2', type: 'dialogue_comprehension',
-        instruction: 'Read the same conversation again.',
-        text: 'Lucy: Hi! Are you new here?\nJames: Yes, I started today. My name is James.\nLucy: Nice to meet you, James. I am Lucy. Do you need help?\nJames: Yes, please. Where is the bathroom?\nLucy: It is on the second floor, next to the stairs.',
-        question: 'Why does James need help?',
-        correct: 'He is new and does not know where things are / he needs to find the bathroom',
-        hint: 'What does James say when Lucy asks if he needs help?'
-      }
+      { id: 'd-a1-1', type: 'mc', instruction: 'Read this conversation, then answer the question.', text: 'Lucy: Hi James! You look a bit lost — is everything okay?\nJames: Oh, hi! Yes, I\'m new here. I can\'t find the bathroom.\nLucy: No problem! It\'s on the second floor, next to the stairs.\nJames: Thank you so much! This building is really confusing.\nLucy: Don\'t worry, you\'ll get used to it quickly!', question: 'Where is the bathroom?', options: ['First floor, near the lift', 'Second floor, next to the stairs', 'Third floor, by the window', 'Ground floor, near the exit'], correct: 'Second floor, next to the stairs', correctIndex: 1 },
+      { id: 'd-a1-2', type: 'mc', instruction: 'Read the same conversation again.', text: 'Lucy: Hi James! You look a bit lost — is everything okay?\nJames: Oh, hi! Yes, I\'m new here. I can\'t find the bathroom.\nLucy: No problem! It\'s on the second floor, next to the stairs.\nJames: Thank you so much! This building is really confusing.\nLucy: Don\'t worry, you\'ll get used to it quickly!', question: 'Why does James need help?', options: ["He's injured", "He's new and doesn't know the building", 'He forgot his keys', "He can't read the signs"], correct: "He's new and doesn't know the building", correctIndex: 1 }
     ],
-
     A2: [
-      {
-        id: 'd-a2-1', type: 'dialogue_comprehension',
-        instruction: 'Read this conversation, then answer the question.',
-        text: 'Customer: Excuse me. I bought this jacket last week but the zip is broken.\nShop assistant: I\'m sorry to hear that. Do you have your receipt?\nCustomer: Yes, here it is.\nShop assistant: Thank you. Would you like to exchange it or get a refund?\nCustomer: I would prefer an exchange, please.\nShop assistant: Of course. Let me find the same jacket in your size.',
-        question: 'What is the problem with the jacket?',
-        correct: 'The zip is broken',
-        hint: 'The customer explains the problem in the first line.'
-      },
-      {
-        id: 'd-a2-2', type: 'dialogue_comprehension',
-        instruction: 'Read the same conversation again.',
-        text: 'Customer: Excuse me. I bought this jacket last week but the zip is broken.\nShop assistant: I\'m sorry to hear that. Do you have your receipt?\nCustomer: Yes, here it is.\nShop assistant: Thank you. Would you like to exchange it or get a refund?\nCustomer: I would prefer an exchange, please.\nShop assistant: Of course. Let me find the same jacket in your size.',
-        question: 'What does the customer decide to do?',
-        correct: 'Exchange the jacket / get a new one in the same style',
-        hint: 'The shop assistant offers two options. Which does the customer choose?'
-      }
+      { id: 'd-a2-1', type: 'mc', instruction: 'Read this conversation, then answer the question.', text: 'Customer: Excuse me. I bought this jacket here last week, but there\'s a problem with it.\nAssistant: Oh, I\'m sorry to hear that. What seems to be the issue?\nCustomer: The zip is broken. It got stuck the first time I used it.\nAssistant: That\'s not acceptable at all. Would you like a refund or an exchange?\nCustomer: I really like the jacket, so I\'d prefer to exchange it if possible.\nAssistant: Of course. Let me check if we have your size in stock.', question: 'What is the problem with the jacket?', options: ['It is the wrong size', 'The zip is broken', 'The colour is wrong', 'There is a hole in it'], correct: 'The zip is broken', correctIndex: 1 },
+      { id: 'd-a2-2', type: 'mc', instruction: 'Read the same conversation again.', text: 'Customer: Excuse me. I bought this jacket here last week, but there\'s a problem with it.\nAssistant: Oh, I\'m sorry to hear that. What seems to be the issue?\nCustomer: The zip is broken. It got stuck the first time I used it.\nAssistant: That\'s not acceptable at all. Would you like a refund or an exchange?\nCustomer: I really like the jacket, so I\'d prefer to exchange it if possible.\nAssistant: Of course. Let me check if we have your size in stock.', question: 'What does the customer decide to do?', options: ['Get a refund', 'Exchange it for another jacket', 'Keep the broken jacket', 'Ask for a discount'], correct: 'Exchange it for another jacket', correctIndex: 1 }
     ],
-
     B1: [
-      {
-        id: 'd-b1-1', type: 'dialogue_comprehension',
-        instruction: 'Read this conversation, then answer the question.',
-        text: 'Manager: I noticed you have been late three times this week.\nEmployee: I know, I apologise. The bus has been delayed because of the roadworks near the station.\nManager: I understand, but it is affecting your team. Can we find a solution?\nEmployee: I could work from home on Mondays and Fridays when the traffic is worst.\nManager: That sounds reasonable. Let\'s try it for a month and see how it goes.',
-        question: 'Why has the employee been late?',
-        correct: 'Roadworks near the station are causing bus delays',
-        hint: 'The employee explains the reason in their first response.'
-      },
-      {
-        id: 'd-b1-2', type: 'dialogue_comprehension',
-        instruction: 'Read the same conversation again.',
-        text: 'Manager: I noticed you have been late three times this week.\nEmployee: I know, I apologise. The bus has been delayed because of the roadworks near the station.\nManager: I understand, but it is affecting your team. Can we find a solution?\nEmployee: I could work from home on Mondays and Fridays when the traffic is worst.\nManager: That sounds reasonable. Let\'s try it for a month and see how it goes.',
-        question: 'What does the manager\'s response tell us about their management style?',
-        correct: 'They are flexible and solution-focused rather than punishing / they listen and try to find practical answers',
-        hint: 'Look at how the manager responds to the employee\'s suggestion. Are they strict or understanding?'
-      },
-      {
-        id: 'd-b1-3', type: 'dialogue_comprehension',
-        instruction: 'Read the same conversation again.',
-        text: 'Manager: I noticed you have been late three times this week.\nEmployee: I know, I apologise. The bus has been delayed because of the roadworks near the station.\nManager: I understand, but it is affecting your team. Can we find a solution?\nEmployee: I could work from home on Mondays and Fridays when the traffic is worst.\nManager: That sounds reasonable. Let\'s try it for a month and see how it goes.',
-        question: 'What solution do the manager and employee agree on?',
-        correct: 'Working from home on Mondays and Fridays for a trial month',
-        hint: 'Look at the employee\'s suggestion and the manager\'s final response.'
-      }
+      { id: 'd-b1-1', type: 'mc', instruction: 'Read this conversation, then answer the question.', text: 'Manager: I wanted to have a quick word about the recent lateness. You\'ve been late three times this week.\nEmployee: I know, and I\'m really sorry. There are roadworks near my house and the bus has been severely delayed every morning.\nManager: I see. I appreciate you explaining. Have you looked at other routes?\nEmployee: I\'ve tried, but they all add at least 40 minutes.\nManager: In that case, what if you worked from home on Mondays and Fridays for the next month? We can review after that.\nEmployee: That would be incredibly helpful. Thank you for being so understanding.', question: 'Why has the employee been arriving late?', options: ['They overslept', 'Roadworks are causing bus delays', 'Their car is broken', 'They live too far away'], correct: 'Roadworks are causing bus delays', correctIndex: 1 },
+      { id: 'd-b1-2', type: 'mc', instruction: 'Read the same conversation again.', text: 'Manager: I wanted to have a quick word about the recent lateness. You\'ve been late three times this week.\nEmployee: I know, and I\'m really sorry. There are roadworks near my house and the bus has been severely delayed every morning.\nManager: I see. I appreciate you explaining. Have you looked at other routes?\nEmployee: I\'ve tried, but they all add at least 40 minutes.\nManager: In that case, what if you worked from home on Mondays and Fridays for the next month? We can review after that.\nEmployee: That would be incredibly helpful. Thank you for being so understanding.', question: 'What does the manager\'s response reveal about their approach?', options: ['They are angry and strict', 'They are flexible and solution-focused', 'They want to fire the employee', "They don't care about the issue"], correct: 'They are flexible and solution-focused', correctIndex: 1 },
+      { id: 'd-b1-3', type: 'mc', instruction: 'Read the same conversation again.', text: 'Manager: I wanted to have a quick word about the recent lateness. You\'ve been late three times this week.\nEmployee: I know, and I\'m really sorry. There are roadworks near my house and the bus has been severely delayed every morning.\nManager: I see. I appreciate you explaining. Have you looked at other routes?\nEmployee: I\'ve tried, but they all add at least 40 minutes.\nManager: In that case, what if you worked from home on Mondays and Fridays for the next month? We can review after that.\nEmployee: That would be incredibly helpful. Thank you for being so understanding.', question: 'What do they agree on as a solution?', options: ['A different job role', 'A pay cut', 'Working from home on Mondays and Fridays', 'Starting work later every day'], correct: 'Working from home on Mondays and Fridays', correctIndex: 2 }
     ],
-
     B2: [
-      {
-        id: 'd-b2-1', type: 'dialogue_comprehension',
-        instruction: 'Read this conversation, then answer the question.',
-        text: 'Interviewer: Your CV shows three years at Deloitte, but you left without another role lined up. Can you explain that?\nCandidate: I wanted to reflect on my direction. I completed a part-time analytics course and volunteered with a local charity.\nInterviewer: That sounds constructive. What drew you specifically to this role?\nCandidate: Your company\'s work on ethical AI aligns with research I have been doing independently.\nInterviewer: When you say independently, do you mean in your own time?\nCandidate: Yes — reading widely, attending conferences, building small projects.',
-        question: 'What two things did the candidate do during their career gap?',
-        correct: 'Completed a part-time analytics course AND volunteered with a local charity',
-        hint: 'The candidate lists both activities in their first response.'
-      },
-      {
-        id: 'd-b2-2', type: 'dialogue_comprehension',
-        instruction: 'Read the same conversation again.',
-        text: 'Interviewer: Your CV shows three years at Deloitte, but you left without another role lined up. Can you explain that?\nCandidate: I wanted to reflect on my direction. I completed a part-time analytics course and volunteered with a local charity.\nInterviewer: That sounds constructive. What drew you specifically to this role?\nCandidate: Your company\'s work on ethical AI aligns with research I have been doing independently.\nInterviewer: When you say independently, do you mean in your own time?\nCandidate: Yes — reading widely, attending conferences, building small projects.',
-        question: 'Why does the interviewer ask "When you say independently, do you mean in your own time?" What does this question reveal?',
-        correct: 'The interviewer wants to clarify whether the candidate is being vague or precise — they are checking whether "independently" means formally/professionally or just privately',
-        hint: 'The interviewer is not sure exactly what "independently" means. What might they be checking or questioning?'
-      },
-      {
-        id: 'd-b2-3', type: 'dialogue_comprehension',
-        instruction: 'Read the same conversation again.',
-        text: 'Interviewer: Your CV shows three years at Deloitte, but you left without another role lined up. Can you explain that?\nCandidate: I wanted to reflect on my direction. I completed a part-time analytics course and volunteered with a local charity.\nInterviewer: That sounds constructive. What drew you specifically to this role?\nCandidate: Your company\'s work on ethical AI aligns with research I have been doing independently.\nInterviewer: When you say independently, do you mean in your own time?\nCandidate: Yes — reading widely, attending conferences, building small projects.',
-        question: 'How does the candidate\'s reason for being drawn to the role connect to their earlier actions?',
-        correct: 'Their independent research on ethical AI connects to the volunteer work and personal development during their career gap — it shows intentional direction',
-        hint: 'Look at what the candidate did during their career gap and what they say attracted them to the role. Is there a pattern?'
-      }
+      { id: 'd-b2-1', type: 'mc', instruction: 'Read this conversation, then answer the question.', text: 'Interviewer: During your CV gap, what were you actually doing?\nCandidate: I completed a professional analytics course online and spent six months volunteering with a local charity, independently managing their donor communications.\nInterviewer: Interesting. When you say "independently" — do you mean you had formal oversight, or were you entirely self-directed?\nCandidate: Entirely self-directed. I set my own targets, reported to no one, and built their system from scratch.\nInterviewer: And how does that period connect to the role you\'re applying for today?\nCandidate: It was entirely intentional. I knew I wanted to move into data-driven communications, and I used the gap to build the skills I was missing.', question: 'Name two things the candidate did during their gap year.', options: ['Travelled and learned languages', 'Completed an analytics course and volunteered at a charity', 'Worked part-time and studied full-time', 'Took care of family and freelanced'], correct: 'Completed an analytics course and volunteered at a charity', correctIndex: 1 },
+      { id: 'd-b2-2', type: 'mc', instruction: 'Read the same conversation again.', text: 'Interviewer: During your CV gap, what were you actually doing?\nCandidate: I completed a professional analytics course online and spent six months volunteering with a local charity, independently managing their donor communications.\nInterviewer: Interesting. When you say "independently" — do you mean you had formal oversight, or were you entirely self-directed?\nCandidate: Entirely self-directed. I set my own targets, reported to no one, and built their system from scratch.\nInterviewer: And how does that period connect to the role you\'re applying for today?\nCandidate: It was entirely intentional. I knew I wanted to move into data-driven communications, and I used the gap to build the skills I was missing.', question: 'Why does the interviewer ask about the word "independently"?', options: ['They think the candidate is lying', 'They want to check whether it means formally supervised or self-directed', "They don't know what the word means", 'They are testing the candidate\'s language skills'], correct: 'They want to check whether it means formally supervised or self-directed', correctIndex: 1 },
+      { id: 'd-b2-3', type: 'mc', instruction: 'Read the same conversation again.', text: 'Interviewer: During your CV gap, what were you actually doing?\nCandidate: I completed a professional analytics course online and spent six months volunteering with a local charity, independently managing their donor communications.\nInterviewer: Interesting. When you say "independently" — do you mean you had formal oversight, or were you entirely self-directed?\nCandidate: Entirely self-directed. I set my own targets, reported to no one, and built their system from scratch.\nInterviewer: And how does that period connect to the role you\'re applying for today?\nCandidate: It was entirely intentional. I knew I wanted to move into data-driven communications, and I used the gap to build the skills I was missing.', question: 'How does the candidate\'s gap period connect to their current application?', options: ['It was unplanned but worked out', 'It shows the gap was intentional and designed to build relevant skills', 'It proves they were unemployable elsewhere', 'It shows they prefer working alone'], correct: 'It shows the gap was intentional and designed to build relevant skills', correctIndex: 1 }
     ],
-
     C1: [
-      {
-        id: 'd-c1-1', type: 'dialogue_comprehension',
-        instruction: 'Read this conversation, then answer the question.',
-        text: 'Journalist: Your housing policy promises 50,000 new homes by 2027. The previous target of 40,000 by 2025 was missed by over 60%. Why should the public believe this commitment is different?\nMinister: We have learned from past mistakes. Our planning reforms will cut approval times significantly.\nJournalist: Those reforms were blocked in committee last year by your own party. Have you actually secured the votes?\nMinister: We are confident we have the support we need.\nJournalist: Confident, or certain?\nMinister: These things are never certain in politics.',
-        question: 'What technique does the journalist use in their opening question, and what is its purpose?',
-        correct: 'The journalist uses a confrontational technique — citing specific evidence (the missed target and percentage) to challenge the minister\'s credibility and make it hard for them to avoid the question',
-        hint: 'Notice the journalist does not just ask "do you believe this target?" — they use specific numbers. Why?'
-      },
-      {
-        id: 'd-c1-2', type: 'dialogue_comprehension',
-        instruction: 'Read the same conversation again.',
-        text: 'Journalist: Your housing policy promises 50,000 new homes by 2027. The previous target of 40,000 by 2025 was missed by over 60%. Why should the public believe this commitment is different?\nMinister: We have learned from past mistakes. Our planning reforms will cut approval times significantly.\nJournalist: Those reforms were blocked in committee last year by your own party. Have you actually secured the votes?\nMinister: We are confident we have the support we need.\nJournalist: Confident, or certain?\nMinister: These things are never certain in politics.',
-        question: 'What does the minister\'s final answer reveal about their actual position?',
-        correct: 'They do not have guaranteed support — "confident" was an overstatement, and the journalist forced them to admit they cannot guarantee the votes',
-        hint: 'Compare what the minister says at the end with what they said just before. Did the journalist successfully reveal something?'
-      },
-      {
-        id: 'd-c1-3', type: 'dialogue_comprehension',
-        instruction: 'Read the same conversation again.',
-        text: 'Journalist: Your housing policy promises 50,000 new homes by 2027. The previous target of 40,000 by 2025 was missed by over 60%. Why should the public believe this commitment is different?\nMinister: We have learned from past mistakes. Our planning reforms will cut approval times significantly.\nJournalist: Those reforms were blocked in committee last year by your own party. Have you actually secured the votes?\nMinister: We are confident we have the support we need.\nJournalist: Confident, or certain?\nMinister: These things are never certain in politics.',
-        question: 'What does the journalist achieve by pressing the minister from "confident" to "certain"?',
-        correct: 'The journalist exposes the gap between the minister\'s public confidence and the political reality — by refusing to accept vague reassurance, they force the minister to admit uncertainty',
-        hint: 'Why did the journalist ask for a stronger word than "confident"? What did pressing for "certain" reveal?'
-      }
+      { id: 'd-c1-1', type: 'mc', instruction: 'Read this conversation, then answer the question.', text: 'Journalist: Minister, the housing targets were missed for the fourth consecutive year. At what point does a target become meaningless?\nMinister: I understand the frustration, but these are complex structural issues. We remain fully committed to the programme.\nJournalist: You told Parliament last spring you were "confident" the targets would be met. Were you confident?\nMinister: I was confident in the direction of the programme, yes.\nJournalist: Confident, or certain?\nMinister: Well... I was confident we had the right approach. Whether every figure would be hit — I couldn\'t be certain of that.', question: 'What technique does the journalist use in their opening question?', options: ['They ask a vague general question', 'They use specific evidence (four consecutive years) to challenge the minister\'s credibility', 'They express sympathy for the minister\'s situation', 'They ask the minister to explain government policy'], correct: 'They use specific evidence (four consecutive years) to challenge the minister\'s credibility', correctIndex: 1 },
+      { id: 'd-c1-2', type: 'mc', instruction: 'Read the same conversation again.', text: 'Journalist: Minister, the housing targets were missed for the fourth consecutive year. At what point does a target become meaningless?\nMinister: I understand the frustration, but these are complex structural issues. We remain fully committed to the programme.\nJournalist: You told Parliament last spring you were "confident" the targets would be met. Were you confident?\nMinister: I was confident in the direction of the programme, yes.\nJournalist: Confident, or certain?\nMinister: Well... I was confident we had the right approach. Whether every figure would be hit — I couldn\'t be certain of that.', question: 'What does the minister\'s final answer reveal?', options: ['They were always secretly confident', 'They had full parliamentary support', 'They did not have guaranteed certainty — "confident" was overstated', 'They blame the journalist for misquoting them'], correct: 'They did not have guaranteed certainty — "confident" was overstated', correctIndex: 2 },
+      { id: 'd-c1-3', type: 'mc', instruction: 'Read the same conversation again.', text: 'Journalist: Minister, the housing targets were missed for the fourth consecutive year. At what point does a target become meaningless?\nMinister: I understand the frustration, but these are complex structural issues. We remain fully committed to the programme.\nJournalist: You told Parliament last spring you were "confident" the targets would be met. Were you confident?\nMinister: I was confident in the direction of the programme, yes.\nJournalist: Confident, or certain?\nMinister: Well... I was confident we had the right approach. Whether every figure would be hit — I couldn\'t be certain of that.', question: 'What is the purpose of pressing the minister on "confident" vs "certain"?', options: ['To test the minister\'s vocabulary', 'To show that the journalist is pedantic', 'To expose the gap between public confidence and private doubt', 'To confuse the audience'], correct: 'To expose the gap between public confidence and private doubt', correctIndex: 2 }
+    ],
+    C2: [
+      { id: 'd-c2-1', type: 'mc', instruction: 'Read this conversation, then answer the question.', text: 'Chair: Professor, your paper claims the evidence for this intervention is "robust." The Cochrane review published last March rated it as low-certainty. How do you reconcile those characterisations?\nProfessor: The Cochrane review used a GRADE framework that penalises heterogeneity across trials. Our meta-analysis controlled for baseline confounds.\nChair: Controlled for, or adjusted post-hoc?\nProfessor: The adjustments were pre-registered in our protocol.\nChair: Registered before or after you saw the data?\nProfessor: Before final analysis, yes — though some preliminary figures were available at the time of registration.\nChair: That\'s not pre-registration as it is ordinarily understood in the field, is it?', question: 'What specific methodological conflict does the Chair identify?', options: ['The professor used the wrong statistics', 'The Cochrane review contradicts the professor\'s "robust" claim, given it rated evidence as low-certainty', 'The professor has no peer-reviewed publications', 'The professor used data from a different country'], correct: 'The Cochrane review contradicts the professor\'s "robust" claim, given it rated evidence as low-certainty', correctIndex: 1 },
+      { id: 'd-c2-2', type: 'mc', instruction: 'Read the same conversation again.', text: 'Chair: Professor, your paper claims the evidence for this intervention is "robust." The Cochrane review published last March rated it as low-certainty. How do you reconcile those characterisations?\nProfessor: The Cochrane review used a GRADE framework that penalises heterogeneity across trials. Our meta-analysis controlled for baseline confounds.\nChair: Controlled for, or adjusted post-hoc?\nProfessor: The adjustments were pre-registered in our protocol.\nChair: Registered before or after you saw the data?\nProfessor: Before final analysis, yes — though some preliminary figures were available at the time of registration.\nChair: That\'s not pre-registration as it is ordinarily understood in the field, is it?', question: 'What does the Chair\'s final question imply about the professor\'s pre-registration?', options: ['The professor correctly followed the protocol', 'The professor\'s pre-registration is technically accurate but does not meet the standard the field actually requires', 'The professor is fraudulent', 'The professor registered the wrong protocol'], correct: 'The professor\'s pre-registration is technically accurate but does not meet the standard the field actually requires', correctIndex: 1 },
+      { id: 'd-c2-3', type: 'mc', instruction: 'Read the same conversation again.', text: 'Chair: Professor, your paper claims the evidence for this intervention is "robust." The Cochrane review published last March rated it as low-certainty. How do you reconcile those characterisations?\nProfessor: The Cochrane review used a GRADE framework that penalises heterogeneity across trials. Our meta-analysis controlled for baseline confounds.\nChair: Controlled for, or adjusted post-hoc?\nProfessor: The adjustments were pre-registered in our protocol.\nChair: Registered before or after you saw the data?\nProfessor: Before final analysis, yes — though some preliminary figures were available at the time of registration.\nChair: That\'s not pre-registration as it is ordinarily understood in the field, is it?', question: 'How does the dialogue structure reveal the Chair\'s strategy?', options: ['The Chair attacks the professor personally', 'The Chair asks vague general questions', 'The Chair progressively narrows each answer to expose a logical inconsistency about methodology and research integrity', 'The Chair agrees with the professor at every step'], correct: 'The Chair progressively narrows each answer to expose a logical inconsistency about methodology and research integrity', correctIndex: 2 }
     ]
   }
 };
@@ -775,7 +215,7 @@ function getNextLevel(skillAnswers, currentLevel) {
   const atCurrentLevel = skillAnswers.filter(a => a.level === currentLevel);
   const levelIndex = CEFR_LEVELS.indexOf(currentLevel);
 
-  // Climbing phase (A1, A2): 1 question, always go forward (no punishment for wrong)
+  // Climbing phase (A1, A2): 1 question, always go forward
   if (levelIndex <= 1) {
     if (atCurrentLevel.length === 0) return { action: 'continue', level: currentLevel };
     if (levelIndex < CEFR_LEVELS.length - 1) return { action: 'up', level: CEFR_LEVELS[levelIndex + 1] };
@@ -789,12 +229,10 @@ function getNextLevel(skillAnswers, currentLevel) {
   const correctCount = last3.filter(a => a.correct).length;
 
   if (correctCount >= 2) {
-    // Passed — go up
     if (levelIndex < CEFR_LEVELS.length - 1) return { action: 'up', level: CEFR_LEVELS[levelIndex + 1] };
     return { action: 'confirm', level: currentLevel };
   }
 
-  // Failed — this is their ceiling
   return { action: 'confirm', level: currentLevel };
 }
 
@@ -802,10 +240,8 @@ function isSkillConfirmed(skillAnswers, currentLevel) {
   const atLevel = skillAnswers.filter(a => a.level === currentLevel);
   const levelIndex = CEFR_LEVELS.indexOf(currentLevel);
 
-  // Climbing levels (A1, A2): never confirm the skill here — let it flow to B1+
   if (levelIndex <= 1) return false;
 
-  // Confirmation levels: 3+ answers
   if (atLevel.length < 3) return false;
 
   const last3 = atLevel.slice(-3);
@@ -836,7 +272,6 @@ function getFinalLevel(skillAnswers) {
       if (a.correct) levelScores[a.level].correct++;
     }
   });
-  // Walk from highest level down — find first level that was clearly passed
   for (let i = CEFR_LEVELS.length - 1; i >= 0; i--) {
     const level = CEFR_LEVELS[i];
     const s = levelScores[level];
@@ -852,10 +287,28 @@ function getFinalLevel(skillAnswers) {
 function getNextQuestion(skill, currentLevel, usedIds) {
   const bank = QUESTION_BANK[skill];
   if (!bank) return null;
-  if (skill === 'writing') return { ...QUESTION_BANK.writing.universal, skill, level: currentLevel };
+
+  // Writing: per-level prompts
+  if (skill === 'writing') {
+    const levelBank = bank[currentLevel];
+    if (levelBank && levelBank.length > 0) {
+      const available = levelBank.filter(q => !usedIds.includes(q.id));
+      if (available.length > 0) return { ...available[0], skill, level: currentLevel };
+    }
+    // Fallback: try other levels
+    for (const lvl of CEFR_LEVELS) {
+      const lb = bank[lvl];
+      if (lb) {
+        const av = lb.filter(q => !usedIds.includes(q.id));
+        if (av.length > 0) return { ...av[0], skill, level: currentLevel };
+      }
+    }
+    return null;
+  }
+
   const levelBank = bank[currentLevel];
   if (!levelBank) {
-    const fallbackLevel = currentLevel === 'C1' ? 'B2' : currentLevel === 'A1' ? 'A2' : 'B1';
+    const fallbackLevel = CEFR_LEVELS[Math.max(0, CEFR_LEVELS.indexOf(currentLevel) - 1)] || 'B1';
     const fallback = bank[fallbackLevel];
     if (!fallback) return null;
     const available = fallback.filter(q => !usedIds.includes(q.id));
@@ -899,7 +352,6 @@ router.post('/start', authMiddleware, async (req, res) => {
     );
     if (existing.rows.length > 0) return res.json({ testId: existing.rows[0].id, resumed: true });
 
-    // Check retake eligibility
     const completed = await pool.query(
       `SELECT retake_eligible_at FROM placement_tests WHERE user_id = $1 AND status = 'completed' ORDER BY started_at DESC LIMIT 1`,
       [req.user.userId]
@@ -919,6 +371,37 @@ router.post('/start', authMiddleware, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ error: 'Something went wrong.' }); }
 });
 
+function checkDirectAnswer(questionType, questionData, answer) {
+  if (questionType === 'mc') {
+    return answer.trim().toLowerCase() === (questionData.correct || '').toLowerCase();
+  }
+  if (questionType === 'fill') {
+    return answer.trim().toLowerCase() === (questionData.correct || '').toLowerCase();
+  }
+  if (questionType === 'sort') {
+    return answer.trim().toLowerCase().replace(/\s+/g, ' ') === (questionData.correct || '').toLowerCase().replace(/\s+/g, ' ');
+  }
+  if (questionType === 'match') {
+    // Answer should be JSON stringified pairs
+    try {
+      const userPairs = JSON.parse(answer);
+      const correctPairs = questionData.pairs;
+      return Object.entries(userPairs).every(([k, v]) => correctPairs[k] === v);
+    } catch { return false; }
+  }
+  if (questionType === 'error') {
+    return answer.trim().toLowerCase() === (questionData.correct || '').toLowerCase();
+  }
+  if (questionType === 'spot_fake') {
+    try {
+      const userFound = JSON.parse(answer);
+      const fakeCount = userFound.filter(w => questionData.pseudoWords.includes(w)).length;
+      return fakeCount >= Math.ceil(questionData.pseudoWords.length / 2);
+    } catch { return false; }
+  }
+  return null;
+}
+
 router.get('/:testId/question', authMiddleware, async (req, res) => {
   try {
     const testResult = await pool.query('SELECT * FROM placement_tests WHERE id = $1 AND user_id = $2', [req.params.testId, req.user.userId]);
@@ -931,7 +414,6 @@ router.get('/:testId/question', authMiddleware, async (req, res) => {
     const skillAnswers = answers.filter(a => a.skill === skill);
     const usedIds = skillAnswers.map(a => a.questionId).filter(Boolean);
 
-    // Special case: writing skill — just return the writing task
     if (skill === 'writing') {
       if (skillAnswers.length > 0) {
         const skillIndex = SKILL_ORDER.indexOf(skill);
@@ -942,14 +424,21 @@ router.get('/:testId/question', authMiddleware, async (req, res) => {
         await pool.query('UPDATE placement_tests SET current_skill = $1 WHERE id = $2', [nextSkill, req.params.testId]);
         return res.json({ skillComplete: true, completedSkill: skill, completedLevel: getFinalLevel(skillAnswers), nextSkill, allComplete: false });
       }
-      const writingQ = QUESTION_BANK.writing.universal;
+      const level = determineStartLevel();
+      const question = getNextQuestion(skill, level, usedIds);
+      if (!question) {
+        const skillIndex = SKILL_ORDER.indexOf(skill);
+        if (skillIndex === SKILL_ORDER.length - 1) return res.json({ skillComplete: true, allComplete: true });
+        const nextSkill = SKILL_ORDER[skillIndex + 1];
+        await pool.query('UPDATE placement_tests SET current_skill = $1 WHERE id = $2', [nextSkill, req.params.testId]);
+        return res.json({ skillComplete: true, completedSkill: skill, completedLevel: 'A1', nextSkill, allComplete: false });
+      }
       return res.json({
-        question: { ...writingQ, skill, level: 'universal' },
-        progress: { currentSkill: skill, skillIndex: SKILL_ORDER.indexOf(skill), totalSkills: SKILL_ORDER.length, questionsInSkill: skillAnswers.length, showEncouragement: false }
+        question: { ...question, skill, level: question.level || level },
+        progress: { currentSkill: skill, skillIndex: SKILL_ORDER.indexOf(skill), totalSkills: SKILL_ORDER.length, questionsInSkill: 0, showEncouragement: false }
       });
     }
 
-    // Check if this skill is confirmed
     let currentLevel = determineStartLevel();
     if (skillAnswers.length > 0) {
       const lastLevel = skillAnswers[skillAnswers.length - 1].level;
@@ -992,7 +481,6 @@ router.post('/:testId/answer', authMiddleware, async (req, res) => {
 
     // ── Writing: special evaluation ──────────────────────────────────────
     if (questionType === 'free_write') {
-      // Save answer first so it persists even if AI fails
       const currentAnswers = testResult.rows[0].answers || [];
       const baseAnswer = {
         skill, level: 'pending', questionType,
@@ -1006,11 +494,36 @@ router.post('/:testId/answer', authMiddleware, async (req, res) => {
       );
 
       try {
-        const prompt = QUESTION_BANK.writing.universal.evaluationPrompt.replace('{writing}', answer);
+        const prompt = `You are a real English teacher reading a student's writing. Read it the way a real person would — not like a machine.
+
+The student was given this prompt:
+"${questionData.instruction}"
+
+They wrote:
+"${answer.substring(0, 2000)}"
+
+Read it carefully. Think about:
+- How well do they express ideas?
+- What grammar patterns do they use?
+- How wide is their vocabulary?
+- Do their sentences connect smoothly?
+- Did they actually answer the prompt?
+
+Now assign a level:
+- A1: barely connected sentences, very limited words
+- A2: simple sentences, some errors, everyday vocabulary
+- B1: clear writing with some errors, decent vocabulary
+- B2: good writing, occasional errors, solid vocabulary
+- C1: sophisticated writing, rare errors, precise vocabulary
+- C2: near-native, exceptional precision
+
+Write your response like a real teacher talking to a student — warm, honest, specific. Two or three sentences. Name something specific they did well and one specific thing to work on.
+
+Then on the very last lines add:
+LEVEL_DATA: {"level": "B1", "sublevel": "mid", "evidence": "your notes", "strengths": ["one strength"], "specific_errors": ["one error with correction"], "priority_improvement": "the most important thing to work on"}`;
         const result = await model.generateContent(prompt);
         const rawText = result.response.text().trim();
 
-        // Extract the LEVEL_DATA JSON from the end
         const levelDataMatch = rawText.match(/LEVEL_DATA:\s*(\{[\s\S]+\})/);
         let levelData = { detectedLevel: 'B1', sublevel: 'mid', strengths: [], specific_errors: [], improvement: '' };
         let humanFeedback = rawText;
@@ -1029,7 +542,6 @@ router.post('/:testId/answer', authMiddleware, async (req, res) => {
           } catch { /* keep defaults */ }
         }
 
-        // Update the saved answer with evaluation data
         const updatedAnswers = [...currentAnswers, { ...baseAnswer, level: levelData.detectedLevel, writingEvaluation: levelData }];
         await pool.query(
           'UPDATE placement_tests SET answers = $1 WHERE id = $2',
@@ -1048,133 +560,53 @@ router.post('/:testId/answer', authMiddleware, async (req, res) => {
       }
     }
 
-    // ── fill_blank and choose_correct: exact match + AI natural feedback ──
-    if (questionType === 'fill_blank' || questionType === 'choose_correct') {
-      const correct = (questionData.correct || '').toLowerCase().trim();
-      const given = answer.toLowerCase().trim();
-      const isCorrect = given === correct;
-      let feedback = isCorrect ? 'Correct!' : `Not quite — the answer is "${questionData.correct}"`;
-      try {
-        const aiPrompt = `You are a warm English teacher. The student answered a ${questionType === 'fill_blank' ? 'fill-in-the-blank' : 'multiple choice'} question.
-Question: "${questionData.question || questionData.instruction}"
-Correct answer: "${questionData.correct}"
-Student's answer: "${answer}"
-The student was ${isCorrect ? '' : 'not '}correct.
+    // ── spot_fake: special evaluation ────────────────────────────────────
+    if (questionType === 'spot_fake') {
+      const currentAnswers = testResult.rows[0].answers || [];
+      let userFound = [];
+      try { userFound = JSON.parse(answer); } catch { userFound = []; }
+      const pseudoWords = questionData.pseudoWords || [];
+      const correctFinds = userFound.filter(w => pseudoWords.includes(w));
+      const wrongFinds = userFound.filter(w => !pseudoWords.includes(w));
+      const isCorrect = correctFinds.length >= Math.ceil(pseudoWords.length / 2);
+      const feedback = isCorrect ? 'Strong vocabulary intuition! You spotted most of the fake words.' : `You found ${correctFinds.length}/${pseudoWords.length} fake words. The fake words were: ${pseudoWords.join(', ')}.`;
 
-Write ONE short, friendly sentence explaining why in plain language. If wrong, say what the right answer is simply. No verdict line needed.`;
-        const r = await model.generateContent(aiPrompt);
-        feedback = r.response.text().trim().split('\n')[0];
-      } catch {}
+      await pool.query(
+        'UPDATE placement_tests SET answers = $1 WHERE id = $2',
+        [JSON.stringify([...currentAnswers, { skill, level, questionType, answer, correct: isCorrect, questionId: questionData?.id, timestamp: new Date().toISOString() }]), req.params.testId]
+      );
+      return res.json({ correct: isCorrect, feedback, correction: isCorrect ? null : `The fake words: ${pseudoWords.join(', ')}`, rule: null });
+    }
+
+    // ── Direct-check types: mc, fill, sort, match, error ────────────────
+    if (DIRECT_CHECK_TYPES.includes(questionType)) {
+      const isCorrect = checkDirectAnswer(questionType, questionData, answer);
+      const feedback = isCorrect ? 'Correct!' : `Not quite — the correct answer is "${questionData.correct}".`;
       const currentAnswers = testResult.rows[0].answers || [];
       await pool.query(
         'UPDATE placement_tests SET answers = $1 WHERE id = $2',
         [JSON.stringify([...currentAnswers, { skill, level, questionType, answer, correct: isCorrect, questionId: questionData?.id, timestamp: new Date().toISOString() }]), req.params.testId]
       );
-      return res.json({
-        correct: isCorrect,
-        feedback,
-        correction: isCorrect ? null : questionData.correct,
-        rule: isCorrect ? null : questionData.rule
-      });
+      return res.json({ correct: isCorrect, feedback, correction: isCorrect ? null : questionData.correct, rule: null });
     }
 
-    // ── Everything else: AI thinks freely, verdict extracted ─────────────
-    // Build a context-aware prompt based on question type
+    // ── Write/use-in-sentence: AI evaluation ────────────────────────────
     let prompt = '';
 
-    if (questionType === 'fix_error') {
-      prompt = `You are an English teacher checking a student's work.
-
-The student was shown this broken sentence and asked to fix the ONE mistake in it:
-BROKEN: "${questionData.text}"
-CORRECT: "${questionData.correct}"
-
-The specific thing that was wrong: ${questionData.rule || 'see the difference between broken and correct'}
-
-The student wrote this as their fix: "${answer}"
-
-Think through it like a real teacher:
-— What word or phrase is different between BROKEN and CORRECT? That is the mistake.
-— Did the student fix that exact thing? Or did they change something else and leave the mistake in?
-— Is the mistake still sitting there unchanged in the student's answer?
-
-Respond naturally in 2-3 short sentences like a helpful friend. Tell the student what they did right, or name the specific word they needed to change and why. Then on the very last line write either:
-VERDICT: CORRECT
-or
-VERDICT: WRONG`;
-
-    } else if (questionType === 'write_sentence' || questionType === 'use_in_sentence') {
+    if (questionType === 'write' || questionType === 'write_sentence' || questionType === 'use_in_sentence') {
       prompt = `You are an English teacher checking a student's sentence.
 
-Task the student had: "${questionData.instruction}"
-${questionData.word ? `Word they needed to use: "${questionData.word}"` : ''}
-What makes a good answer: ${questionData.evaluationCriteria}
+Task: "${questionData.instruction}"
+${questionData.evaluationCriteria ? `What makes a good answer: ${questionData.evaluationCriteria}` : ''}
 
 The student wrote: "${answer}"
 
-Think like a real teacher:
-— Did they actually use the required word correctly?
-— Does the sentence demonstrate what the task asked for?
-— Is it real English a person would naturally say?
-— Be generous with phrasing variations — only mark wrong if the English is genuinely incorrect or the task is clearly not done.
-
-Respond in 1-2 short sentences like a helpful friend. If wrong, name the specific word that slipped. If right, say what they did well. Then on the very last line write either:
-VERDICT: CORRECT
-or
-VERDICT: WRONG`;
-
-    } else if (questionType === 'define_word') {
-      prompt = `You are a strict-but-kind English teacher checking if a student knows a word's meaning.
-
-Word: "${questionData.word}"
-Acceptable meanings: ${JSON.stringify(questionData.acceptableAnswers)}
-
-The student's definition: "${answer}"
-
-CRITICAL — be strict about wrong answers:
-— If the student's answer has nothing to do with the word's actual meaning, mark WRONG.
-— "I love" is NOT a definition of "inevitable" — that is WRONG.
-— Accept paraphrases and imperfect grammar only if the core definition is recognisable.
-— Do NOT give credit for answers that describe a completely different concept.
-— If in doubt, lean WRONG rather than incorrectly passing.
-
-Respond in 1-2 short sentences. If wrong, explain what the word actually means in simple terms. Then on the very last line write either:
-VERDICT: CORRECT
-or
-VERDICT: WRONG`;
-
-    } else if (questionType === 'read_comprehension' || questionType === 'dialogue_comprehension') {
-      prompt = `You are an English teacher checking a student's comprehension answer.
-
-The question: "${questionData.question}"
-The key idea a correct answer needs: "${questionData.correct}"
-The student answered: "${answer}"
-
-CRITICAL RULES — read these before deciding:
-— Short answers are completely valid. "To find work" is just as correct as "She moved to London to find work." Never penalise for being brief.
-— Grammar mistakes do not make a comprehension answer wrong. Only the IDEA matters.
-— If the student's answer captures the key idea — even briefly, even differently — CORRECT.
-— Only WRONG if the student answered something completely different or missed the key idea entirely.
-
-Does "${answer}" capture the idea from "${questionData.correct}"?
-
-One short sentence response like a friendly teacher. Then on the very last line write either:
+Respond in 1-2 short sentences. If wrong, name the specific word that slipped. If right, say what they did well. Then on the very last line write either:
 VERDICT: CORRECT
 or
 VERDICT: WRONG`;
     }
 
-    // ── fix_error: exact match wins (skip AI if answer matches expected) ──
-    if (questionType === 'fix_error' && questionData.correct && answer.trim().toLowerCase() === questionData.correct.toLowerCase()) {
-      const cAnswers = testResult.rows[0].answers || [];
-      await pool.query(
-        'UPDATE placement_tests SET answers = $1 WHERE id = $2',
-        [JSON.stringify([...cAnswers, { skill, level, questionType, answer, correct: true, questionId: questionData?.id, timestamp: new Date().toISOString() }]), req.params.testId]
-      );
-      return res.json({ correct: true, feedback: 'Perfect — you fixed it exactly right.', correction: null, rule: questionData.rule });
-    }
-
-    // Run the prompt and extract verdict
     let isCorrect = false;
     let feedback = '';
     let correction = null;
@@ -1183,56 +615,30 @@ VERDICT: WRONG`;
       const result = await model.generateContent(prompt);
       const rawText = result.response.text().trim();
 
-      // Extract verdict from last line (case-insensitive)
       const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
       const lastLine = lines[lines.length - 1];
       isCorrect = lastLine.toUpperCase().includes('VERDICT: CORRECT');
 
-      // Everything before the verdict line is the natural feedback
       const feedbackLines = lines.filter(l => !l.toUpperCase().startsWith('VERDICT:'));
       feedback = feedbackLines.join(' ').trim();
 
       if (!isCorrect) {
-        const typeCorrection = questionType === 'define_word' ? (questionData.acceptableAnswers?.[0] || questionData.word)
-          : (questionType === 'write_sentence' || questionType === 'use_in_sentence') ? questionData.evaluationCriteria
-          : questionData.correct;
-        correction = typeCorrection || null;
+        correction = questionData.correct || questionData.evaluationCriteria || null;
       }
     } catch (err) {
       console.error('AI evaluation error:', err?.message || err);
-      // Fallback: simple keyword matching when AI is unavailable
-      const lower = answer.toLowerCase();
-      const answerSource = questionType === 'define_word' ? (questionData.acceptableAnswers || [])
-        : (questionType === 'write_sentence' || questionType === 'use_in_sentence') ? [questionData.evaluationCriteria || '']
-        : [questionData.correct || ''];
-      const keywords = answerSource
-        .flatMap(k => k.toLowerCase().split(/[\s,./()]+/)).filter(w => w.length > 3);
-      const matched = keywords.filter(k => lower.includes(k));
-      isCorrect = matched.length >= Math.min(2, keywords.length);
-      const fallbackAnswer = questionType === 'define_word' ? (questionData.acceptableAnswers?.[0] || questionData.word)
-        : (questionType === 'write_sentence' || questionType === 'use_in_sentence') ? questionData.evaluationCriteria
-        : questionData.correct;
-      feedback = isCorrect
-        ? 'That captures the key idea — well done.'
-        : `Not quite — the key point is: ${fallbackAnswer}`;
-      if (!isCorrect) correction = fallbackAnswer;
+      isCorrect = false;
+      feedback = 'Could not evaluate — please try again.';
+      correction = questionData.correct || null;
     }
 
-    // Save answer to database
     const currentAnswers = testResult.rows[0].answers || [];
-    const newAnswer = {
-      skill, level, questionType,
-      answer: answer.substring(0, 300),
-      correct: isCorrect,
-      questionId: questionData?.id,
-      timestamp: new Date().toISOString()
-    };
     await pool.query(
       'UPDATE placement_tests SET answers = $1 WHERE id = $2',
-      [JSON.stringify([...currentAnswers, newAnswer]), req.params.testId]
+      [JSON.stringify([...currentAnswers, { skill, level, questionType, answer: answer.substring(0, 300), correct: isCorrect, questionId: questionData?.id, timestamp: new Date().toISOString() }]), req.params.testId]
     );
 
-    res.json({ correct: isCorrect, feedback, correction, rule: isCorrect ? null : questionData?.rule });
+    res.json({ correct: isCorrect, feedback, correction, rule: null });
 
   } catch (err) {
     console.error('Answer error:', err);
