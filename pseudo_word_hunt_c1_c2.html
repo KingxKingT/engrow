@@ -1,0 +1,45 @@
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.wrap { padding: 1.5rem 0; font-family: var(--font-sans); }
+.timer-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+.timer-display { display: flex; align-items: center; gap: 10px; }
+.timer-num { font-size: 28px; font-weight: 500; color: var(--color-text-primary); font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+.timer-label { font-size: 12px; color: var(--color-text-secondary); }
+.timer-bar-wrap { flex: 1; margin: 0 16px; height: 4px; background: var(--color-background-secondary); border-radius: 2px; overflow: hidden; }
+.timer-bar { height: 100%; background: var(--color-text-primary); border-radius: 2px; transition: width 1s linear, background 0.5s; }
+.ctrl-btns { display: flex; gap: 8px; }
+.ctrl-btn { padding: 6px 14px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: transparent; font-size: 13px; cursor: pointer; color: var(--color-text-primary); }
+.ctrl-btn:hover { background: var(--color-background-secondary); }
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.25rem; }
+.stat-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+.stat-lbl { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 3px; }
+.stat-val { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+.passage-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+.passage-text { font-size: 15px; line-height: 1.85; color: var(--color-text-primary); font-family: var(--font-serif); }
+.word-token { cursor: pointer; border-radius: 3px; padding: 0 2px; transition: background 0.12s; display: inline; }
+.word-token:hover { background: var(--color-background-secondary); }
+.word-token.selected-correct { background: #EAF3DE; color: #27500A; text-decoration: underline; text-decoration-color: #639922; border-radius: 3px; }
+.word-token.selected-wrong { background: #FCEBEB; color: #791F1F; }
+.word-token.wrong-flash { background: #FCEBEB; color: #791F1F; transition: none; }
+.word-token.revealed { background: #FAEEDA; color: #633806; }
+.selected-list { margin-bottom: 1rem; }
+.selected-list-title { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 8px; font-weight: 500; }
+.chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 14px; font-size: 13px; border: 0.5px solid; }
+.chip-correct { background: #EAF3DE; color: #27500A; border-color: #97C459; }
+.chip-wrong { background: #FCEBEB; color: #791F1F; border-color: #F09595; }
+.chip-x { cursor: pointer; font-size: 14px; line-height: 1; color: inherit; opacity: 0.6; background: none; border: none; padding: 0; }
+.chip-x:hover { opacity: 1; }
+.instr { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 1rem; line-height: 1.5; }
+.result-panel { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-top: 1rem; }
+.result-title { font-size: 18px; font-weight: 500; margin-bottom: 6px; color: var(--color-text-primary); }
+.result-sub { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 1rem; }
+.answer-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem; }
+.ans-chip { padding: 5px 12px; border-radius: 14px; font-size: 13px; font-style: italic; }
+.ans-found { background: #EAF3DE; color: #27500A; }
+.ans-missed { background: #FAEEDA; color: #633806; }
+.explain-list { font-size: 13px; line-height: 1.7; color: var(--color-text-secondary); }
+.explain-list span { color: var(--color-text-primary); font-style: italic; font-weight: 500; }
+.reveal-btn { margin-top: 10px; padding: 6px 16px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: transparent; font-size: 13px; cursor: pointer; color: var(--color-text-primary); }
+.reveal-btn:hover { background: var(--color-background-secondary); }
+</style>

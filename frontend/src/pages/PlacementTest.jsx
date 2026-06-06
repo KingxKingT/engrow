@@ -245,6 +245,18 @@ export default function PlacementTest() {
                   </div>
                 ) : question.type === 'fill' && question.blanks ? (
                   <div style={{ marginBottom:'1rem' }}>
+                    {question.parts && (
+                      <div style={{ background:'var(--bg)', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', padding:'0.875rem 1.125rem', marginBottom:'1rem', fontSize:'15px', lineHeight:1.8, color:'var(--text)' }}>
+                        {question.parts.map((part, i) => {
+                          const isBlank = part.startsWith('[') && part.endsWith(']');
+                          if (isBlank) {
+                            const clean = part.slice(1, -1);
+                            return <span key={i} style={{ display:'inline', borderBottom:'2px dashed var(--blue-primary)', color:'var(--blue-primary)', fontWeight:500, padding:'0 2px' }}>{clean}</span>;
+                          }
+                          return <span key={i}>{part}</span>;
+                        })}
+                      </div>
+                    )}
                     {(() => {
                       const blank = question.blanks[0];
                       if (blank && blank.options) {
@@ -279,8 +291,15 @@ export default function PlacementTest() {
                       )) : <span style={{ fontSize:'13px', color:'var(--text-tertiary)', padding:'0.25rem 0' }}>Select words below...</span>}
                     </div>
                     <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', marginTop:'0.5rem' }}>
-                      {question.words.filter(w => !answer.split(' ').includes(w)).map(w => (
-                        <button key={w} onClick={() => setAnswer(prev => (prev ? prev + ' ' : '') + w)}
+                      {(() => {
+                        const used = answer ? answer.split(' ') : [];
+                        const counts = {};
+                        used.forEach(w => { counts[w] = (counts[w] || 0) + 1; });
+                        const available = {};
+                        question.words.forEach(w => { available[w] = (available[w] || 0) + 1; });
+                        return question.words.filter(w => (counts[w] || 0) < available[w]);
+                      })().map((w, idx) => (
+                        <button key={`${w}-${idx}`} onClick={() => setAnswer(prev => (prev ? prev + ' ' : '') + w)}
                           style={{ padding:'0.4rem 0.875rem', border:'1.5px solid var(--border)', borderRadius:'var(--radius-md)', fontSize:'14px', background:'white', cursor:'pointer' }}>
                           {w}
                         </button>
