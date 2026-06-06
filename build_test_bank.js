@@ -113,6 +113,16 @@ CEFR_LEVELS.forEach(level => {
   });
 });
 
+// ── Inject hardcoded spot_fake question into vocabulary C2 ──────────
+QUESTION_BANK.vocabulary.C2.push({
+  id: 'v-c2-6',
+  type: 'spot_fake',
+  instruction: 'Click any word you think is a fake English word. It must look like real English but not exist in any dictionary. There are exactly 10.',
+  passage: 'The relentless proliferation of digital media has precipitated a profound shift in our collective psychology, ostensibly designed to foster unprecedented global connectivity. However, beneath this veneer of limitless interaction lies a pervasive ephemerance, where substantive discourse is rapidly supplanted by fleeting, superficial engagements. We are frequently confronted by the ostentatiary displays of curated personas, which only serve to exacerbate the latent cognitive dissonance experienced by the average individual. Despite concerted efforts to achieve some ameliorance of this digital fatigue, the sheer vociferity of the online ecosystem drowns out nuanced contemplation. In our pursuit of serendipital discoveries within the algorithmic expanse, we often find ourselves entangled in an ineffablistic web of data that defies logical categorization. This relentless bombardment demands a high degree of cognitancy just to navigate the daily barrage of information, yet the inherent obfuscity of platform algorithms ensures that true clarity remains elusive. Consequently, what initially sparked a sense of global ebulliment has, for many, devolved into a stubborn intransigism, leaving society fundamentally fragmented despite its illusion of absolute cohesion.',
+  pseudoWords: ['ephemerance', 'ostentatiary', 'ameliorance', 'vociferity', 'serendipital', 'ineffablistic', 'cognitancy', 'obfuscity', 'ebulliment', 'intransigism'],
+  timer: 600
+});
+
 // Output the result as a formatted JS string
 const output = 'const QUESTION_BANK = ' + JSON.stringify(QUESTION_BANK, null, 2) + ';';
 fs.writeFileSync('generated_question_bank.json', JSON.stringify(QUESTION_BANK, null, 2));

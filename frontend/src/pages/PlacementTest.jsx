@@ -23,14 +23,37 @@ export default function PlacementTest() {
   const [error, setError] = useState('');
   const [writingLevel, setWritingLevel] = useState(null);
   const [serverWaking, setServerWaking] = useState(false);
+  const [selectedWords, setSelectedWords] = useState([]);
+  const [timeLeft, setTimeLeft] = useState(null);
   const wakeTimerRef = useRef(null);
   const topRef = useRef(null);
+  const timerRef = useRef(null);
+  const submitFnRef = useRef(null);
+  submitFnRef.current = submitAnswer;
 
   useEffect(() => {
     const saved = localStorage.getItem('engrow_test_id');
     if (saved) setTestId(saved);
     return () => { if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current); };
   }, []);
+
+  // Timer countdown for spot_fake questions
+  useEffect(() => {
+    if (question?.type !== 'spot_fake' || !question?.timer) return;
+    setTimeLeft(question.timer);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+          setTimeout(() => submitFnRef.current?.(), 200);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [question?.id, question?.type]);
 
   async function startTest() {
     setLoading(true);
@@ -62,6 +85,9 @@ export default function PlacementTest() {
     setLoading(true);
     setFeedback(null);
     setAnswer('');
+    setSelectedWords([]);
+    setTimeLeft(null);
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     setShowHint(false);
     setWritingLevel(null);
     setError('');
@@ -90,7 +116,8 @@ export default function PlacementTest() {
   }
 
   async function submitAnswer() {
-    if (!answer.trim()) return;
+    const finalAnswer = question?.type === 'spot_fake' ? JSON.stringify(selectedWords) : answer.trim();
+    if (!finalAnswer || (question?.type === 'spot_fake' && selectedWords.length === 0)) return;
 
     setError('');
     setSubmitting(true);
@@ -99,7 +126,7 @@ export default function PlacementTest() {
       const res = await fetch(`${API}/test/${testId}/answer`, {
         method:'POST',
         headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${getToken()}` },
-        body: JSON.stringify({ answer:answer.trim(), skill:question.skill, level:question.level, questionType:question.type, questionData:question })
+        body: JSON.stringify({ answer:finalAnswer, skill:question.skill, level:question.level, questionType:question.type, questionData:question })
       });
       clearTimeout(wakeTimerRef.current);
       setServerWaking(false);
@@ -321,6 +348,76 @@ export default function PlacementTest() {
                       <span style={{ fontSize:'12px', color:'var(--text-tertiary)' }}>Suggested: 80–150 words</span>
                     </div>
                   </div>
+                ) : question.type === 'spot_fake' ? (
+                  <div>
+                    {/* Timer */}
+                    {timeLeft !== null && (
+                      <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'1rem', padding:'0.625rem 0.875rem', background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'var(--radius-md)' }}>
+                        <span style={{ fontSize:'22px', fontWeight:500, fontVariantNumeric:'tabular-nums', color:timeLeft <= 60 ? '#DC2626' : '#92400E' }}>
+                          {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                        </span>
+                        <span style={{ fontSize:'12px', color:'#92400E' }}>remaining</span>
+                      </div>
+                    )}
+
+                    {/* Passage with clickable words */}
+                    {question.passage && (
+                      <div style={{ background:'var(--bg)', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', padding:'1rem 1.125rem', marginBottom:'1rem', fontSize:'15px', lineHeight:2, color:'var(--text)', fontFamily:'var(--font-serif)' }}>
+                        <p style={{ margin:0, fontSize:'13px', color:'var(--text-secondary)', marginBottom:'0.5rem', fontFamily:'var(--font-sans)' }}>Click any word you think is fake:</p>
+                        {question.passage.split(/(\s+)/).map((segment, i) => {
+                          if (!segment.trim()) return <span key={i}>{segment}</span>;
+                          const word = segment.replace(/[^a-zA-Z'-]/g, '').toLowerCase();
+                          if (!word) return <span key={i}>{segment}</span>;
+                          const selected = selectedWords.includes(word);
+                          const expired = timeLeft === 0;
+                          return (
+                            <span key={i} onClick={() => {
+                              if (expired) return;
+                              if (selected) {
+                                setSelectedWords(prev => prev.filter(w => w !== word));
+                              } else {
+                                setSelectedWords(prev => [...prev, word]);
+                              }
+                            }} style={{
+                              cursor: expired ? 'default' : 'pointer',
+                              padding:'0 2px',
+                              borderRadius:'3px',
+                              background: selected ? 'var(--blue-light)' : 'transparent',
+                              borderBottom: selected ? '2px solid var(--blue-primary)' : '2px solid transparent',
+                              color: selected ? 'var(--blue-primary)' : 'inherit',
+                              fontWeight: selected ? 600 : 400,
+                              transition:'all 0.12s'
+                            }}>
+                              {segment}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Selected chips */}
+                    {selectedWords.length > 0 && (
+                      <div style={{ marginBottom:'1rem' }}>
+                        <p style={{ fontSize:'12px', color:'var(--text-secondary)', marginBottom:'0.5rem', fontWeight:500 }}>
+                          Selected ({selectedWords.length}):
+                        </p>
+                        <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+                          {selectedWords.map(w => (
+                            <span key={w} style={{ display:'inline-flex', alignItems:'center', gap:'4px', padding:'4px 10px', borderRadius:'14px', fontSize:'13px', background:'var(--blue-light)', border:'1px solid var(--blue-medium)', color:'var(--blue-primary)' }}>
+                              {w}
+                              <button onClick={() => setSelectedWords(prev => prev.filter(x => x !== w))}
+                                style={{ background:'none', border:'none', cursor:'pointer', fontSize:'14px', lineHeight:1, color:'var(--blue-primary)', opacity:0.6, padding:0 }}>
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {timeLeft === 0 && (
+                      <p style={{ fontSize:'13px', color:'#DC2626', marginBottom:'0.5rem' }}>Time's up! Submit your selections.</p>
+                    )}
+                  </div>
                 ) : (
                   <input type="text" className="form-input" value={answer}
                     onChange={e => { setAnswer(e.target.value); setError(''); }}
@@ -330,11 +427,11 @@ export default function PlacementTest() {
                 )}
 
                 {/* Submit */}
-                <button onClick={submitAnswer} disabled={!answer.trim() || submitting} className="btn btn-primary"
+                <button onClick={submitAnswer} disabled={submitting || (question.type !== 'spot_fake' ? !answer.trim() : selectedWords.length === 0)} className="btn btn-primary"
                   style={{ width:'100%', marginTop:'1.125rem', padding:'0.7rem' }} aria-busy={submitting}>
                   {submitting
                     ? <><div className="spinner" style={{ borderTopColor:'white', borderColor:'rgba(255,255,255,0.3)', width:'15px', height:'15px' }} />
-                        {question.type==='free_write' ? 'Analysing your writing...' : 'Checking your answer...'}
+                        {'Checking your answer...'}
                       </>
                     : question.type === 'free_write' ? 'Submit writing →' : 'Submit answer →'
                   }
