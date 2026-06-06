@@ -250,8 +250,10 @@ export default function PlacementTest() {
                 </div>
               );
             })}
-            <button onClick={() => { if(confirm('Leave? Progress is saved — you can continue later.')) navigate('/dashboard'); }} style={S.exitBtn}>
-              ✕ <span style={{ fontSize:'11px' }}>Exit</span>
+            <button onClick={() => { if(confirm('Leave? Progress is saved — you can continue later.')) navigate('/dashboard'); }}
+              style={{ ...S.exitBtn, color:'var(--text-secondary)', fontWeight:500 }}
+              aria-label="Save and exit test">
+              ✕ <span style={{ fontSize:'11px' }}>Save & exit</span>
             </button>
           </div>
         )}
@@ -307,7 +309,7 @@ export default function PlacementTest() {
 
             {/* Error sentence */}
             {(question.type === 'fix_error' || question.type === 'error') && (
-              <div style={{ background:'#FFF1F2', border:'1px solid #FECACA', borderRadius:'var(--radius-md)', padding:'0.875rem 1rem', marginBottom:'1rem', fontStyle:'italic', color:'#B91C1C', fontSize:'15px' }}>
+              <div style={{ background:'#FEF2F2', border:'1.5px solid #FCA5A5', borderRadius:'var(--radius-md)', padding:'0.875rem 1rem', marginBottom:'1rem', fontStyle:'italic', color:'#991B1B', fontSize:'15px', fontWeight:500 }}>
                 "{question.sentence || question.text}"
               </div>
             )}
@@ -357,21 +359,27 @@ export default function PlacementTest() {
                       if (blank && blank.options) {
                         return (
                           <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }} role="group" aria-label="Choose the correct word">
-                            {blank.options.map(opt => (
+                            {blank.options.map((opt, oi) => (
                               <button key={opt} onClick={() => setAnswer(opt)} aria-pressed={answer===opt}
-                                style={{ padding:'0.6rem 1.25rem', border:'1.5px solid', borderRadius:'var(--radius-md)', fontSize:'14px', cursor:'pointer', fontFamily:'var(--font-sans)', transition:'all 0.14s',
+                                style={{ padding:'0.7rem 1.375rem', border:'2px solid', borderRadius:'var(--radius-md)', fontSize:'15px', cursor:'pointer', fontFamily:'var(--font-sans)', transition:'all var(--transition)', minHeight:'44px', lineHeight:1.3,
                                   borderColor:answer===opt?'var(--blue-primary)':'var(--border)',
                                   background:answer===opt?'var(--blue-light)':'white',
                                   color:answer===opt?'var(--blue-primary)':'var(--text)',
-                                  fontWeight:answer===opt?500:400
+                                  fontWeight:answer===opt?600:400
                                 }}>
+                                <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:'20px', height:'20px', borderRadius:'50%', border:'1.5px solid', borderColor:answer===opt?'var(--blue-primary)':'var(--border)', marginRight:'8px', fontSize:'11px', fontWeight:600, flexShrink:0, color:answer===opt?'var(--blue-primary)':'var(--text-tertiary)' }} aria-hidden="true">{String.fromCharCode(65+oi)}</span>
                                 {opt}
                               </button>
                             ))}
                           </div>
                         );
                       }
-                      return <input type="text" className="form-input" value={answer} onChange={e => setAnswer(e.target.value)} placeholder="Type your answer..." />;
+                      return (
+                        <>
+                          <input type="text" className="form-input" value={answer} onChange={e => setAnswer(e.target.value)} placeholder="Type your answer..." />
+                          <p style={{ fontSize:'12px', color:'var(--text-tertiary)', marginTop:'6px' }}>Press Enter to submit</p>
+                        </>
+                      );
                     })()}
                   </div>
                 ) : question.type === 'sort' && question.words ? (
@@ -380,7 +388,7 @@ export default function PlacementTest() {
                     <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', minHeight:'40px', padding:'0.5rem', border:'1.5px dashed var(--border)', borderRadius:'var(--radius-md)' }}>
                       {answer ? answer.split(' ').map((w, i) => (
                         <button key={`${w}-${i}`} onClick={() => { const a = answer.split(' '); a.splice(i, 1); setAnswer(a.join(' ')); }}
-                          style={{ padding:'0.4rem 0.875rem', border:'1.5px solid var(--blue-primary)', borderRadius:'var(--radius-md)', fontSize:'14px', background:'var(--blue-light)', color:'var(--blue-primary)', cursor:'pointer' }}>
+                          style={{ padding:'0.55rem 1rem', minHeight:'44px', border:'1.5px solid var(--blue-primary)', borderRadius:'var(--radius-md)', fontSize:'14px', background:'var(--blue-light)', color:'var(--blue-primary)', cursor:'pointer', transition:'all var(--transition)' }}>
                           {w} ✕
                         </button>
                       )) : <span style={{ fontSize:'13px', color:'var(--text-tertiary)', padding:'0.25rem 0' }}>Select words below...</span>}
@@ -395,7 +403,7 @@ export default function PlacementTest() {
                         return question.words.filter(w => (counts[w] || 0) < available[w]);
                       })().map((w, idx) => (
                         <button key={`${w}-${idx}`} onClick={() => setAnswer(prev => (prev ? prev + ' ' : '') + w)}
-                          style={{ padding:'0.4rem 0.875rem', border:'1.5px solid var(--border)', borderRadius:'var(--radius-md)', fontSize:'14px', background:'white', cursor:'pointer' }}>
+                          style={{ padding:'0.55rem 1rem', minHeight:'44px', border:'1.5px solid var(--border)', borderRadius:'var(--radius-md)', fontSize:'14px', background:'white', cursor:'pointer', transition:'all var(--transition)' }}>
                           {w}
                         </button>
                       ))}
@@ -419,12 +427,18 @@ export default function PlacementTest() {
                 ) : question.type === 'spot_fake' ? (
                   <div>
                     {/* Timer */}
-                    {timeLeft !== null && (
-                      <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'1rem', padding:'0.625rem 0.875rem', background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'var(--radius-md)' }}>
-                        <span style={{ fontSize:'22px', fontWeight:500, fontVariantNumeric:'tabular-nums', color:timeLeft <= 60 ? '#DC2626' : '#92400E' }}>
-                          {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-                        </span>
-                        <span style={{ fontSize:'12px', color:'#92400E' }}>remaining</span>
+                    {timeLeft !== null && question?.timer && (
+                      <div style={{ marginBottom:'1rem' }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:'10px', padding:'0.625rem 0.875rem', background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'var(--radius-md)', borderBottomLeftRadius:0, borderBottomRightRadius:0 }}>
+                          <span style={{ fontSize:'22px', fontWeight:500, fontVariantNumeric:'tabular-nums', color:timeLeft <= 60 ? '#DC2626' : '#92400E' }}>
+                            {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                          </span>
+                          <span style={{ fontSize:'12px', color:'#92400E' }}>remaining</span>
+                        </div>
+                        <div role="progressbar" aria-valuenow={Math.round((timeLeft / question.timer) * 100)} aria-valuemin={0} aria-valuemax={100} aria-label="Time remaining"
+                          style={{ height:'5px', background:'var(--border)', borderRadius:'0 0 var(--radius-md) var(--radius-md)', overflow:'hidden' }}>
+                          <div style={{ height:'100%', width:`${(timeLeft / question.timer) * 100}%`, background: timeLeft / question.timer > 0.5 ? 'var(--green-accent)' : timeLeft / question.timer > 0.25 ? '#D97706' : '#DC2626', transition:'width 1s linear, background 0.3s' }} />
+                        </div>
                       </div>
                     )}
 
@@ -474,7 +488,7 @@ export default function PlacementTest() {
                             <span key={w} style={{ display:'inline-flex', alignItems:'center', gap:'4px', padding:'4px 10px', borderRadius:'14px', fontSize:'13px', background:'var(--blue-light)', border:'1px solid var(--blue-medium)', color:'var(--blue-primary)' }}>
                               {w}
                               <button onClick={() => setSelectedWords(prev => prev.filter(x => x !== w))}
-                                style={{ background:'none', border:'none', cursor:'pointer', fontSize:'14px', lineHeight:1, color:'var(--blue-primary)', opacity:0.6, padding:0 }}>
+                                style={{ background:'none', border:'none', cursor:'pointer', fontSize:'14px', lineHeight:1, color:'var(--blue-primary)', opacity:0.7, padding:'6px' }}>
                                 ✕
                               </button>
                             </span>
@@ -536,9 +550,11 @@ export default function PlacementTest() {
                         <div style={{ fontSize:'15px', fontWeight:600, color:feedback.correct?'var(--green-accent)':'#DC2626', marginBottom:'4px' }}>
                           {feedback.correct ? 'Correct!' : 'Not quite'}
                         </div>
-                        <p style={{ fontSize:'14px', color:'var(--text)', margin:0, lineHeight:1.65 }}>
-                          {feedback.feedback}
-                        </p>
+                        {feedback.feedback && (
+                          <p style={{ fontSize:'14px', color:'var(--text)', margin:0, lineHeight:1.65 }}>
+                            {feedback.feedback}
+                          </p>
+                        )}
                       </div>
                     </div>
                     {feedback.correction && (
@@ -634,6 +650,7 @@ function Welcome({ onStart, loading, serverWaking, error }) {
 }
 
 function SkillDone({ info, onContinue }) {
+  const skillIndex = SKILL_ORDER.indexOf(info?.skill);
   return (
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', padding:'2rem 1rem' }}>
       <div style={{ maxWidth:'440px', width:'100%', textAlign:'center' }}>
@@ -641,6 +658,9 @@ function SkillDone({ info, onContinue }) {
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#15803D" strokeWidth="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
         <h2 style={{ fontSize:'20px', fontWeight:500, marginBottom:'0.5rem' }}>{SKILL_LABELS[info?.skill]} complete</h2>
+        <p style={{ fontSize:'12px', color:'var(--text-tertiary)', marginBottom:'0.5rem' }}>
+          Skill {skillIndex + 1} of {SKILL_ORDER.length}
+        </p>
         <p style={{ color:'var(--text-secondary)', fontSize:'14px', lineHeight:1.75, marginBottom:'1.5rem' }}>
           Next: <strong>{SKILL_LABELS[info?.next]}</strong> — {SKILL_DESCRIPTIONS[info?.next]}
         </p>
@@ -651,10 +671,20 @@ function SkillDone({ info, onContinue }) {
 }
 
 function Completing() {
+  const [dotCount, setDotCount] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setDotCount(prev => (prev + 1) % 4), 500);
+    return () => clearInterval(t);
+  }, []);
   return (
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', flexDirection:'column', gap:'1rem' }}>
       <div className="spinner" style={{ width:'28px', height:'28px', borderWidth:'2.5px' }} />
-      <p style={{ color:'var(--text-secondary)', fontSize:'15px' }}>Analysing your results...</p>
+      <p style={{ color:'var(--text-secondary)', fontSize:'15px' }}>Analysing your results{'.'.repeat(dotCount)}</p>
+      <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
+        {[0,1,2,3,4].map(i => (
+          <div key={i} style={{ width:'8px', height:'8px', borderRadius:'50%', background:i <= dotCount ? 'var(--blue-primary)' : 'var(--border)', transition:'background 0.3s' }} />
+        ))}
+      </div>
       <p style={{ color:'var(--text-tertiary)', fontSize:'13px' }}>This takes about 15 seconds</p>
     </div>
   );

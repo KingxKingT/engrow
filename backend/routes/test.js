@@ -420,7 +420,7 @@ LEVEL_DATA: {"level": "B1", "sublevel": "mid", "evidence": "your notes", "streng
     // ── Direct-check types: mc, fill, sort, match, error ────────────────
     if (DIRECT_CHECK_TYPES.includes(questionType)) {
       const isCorrect = checkDirectAnswer(questionType, questionData, answer);
-      const feedback = isCorrect ? 'Correct!' : `Not quite — the correct answer is "${questionData.correct}".`;
+      const feedback = isCorrect ? null : `The correct answer is "${questionData.correct}".`;
       const currentAnswers = testResult.rows[0].answers || [];
       await pool.query(
         'UPDATE placement_tests SET answers = $1 WHERE id = $2',
