@@ -124,71 +124,75 @@ function addListeningQuestion(skill, level, id, audioUrl, instruction, options, 
 }
 
 // ── Inject listening questions for each level ──────────────────────
-// A1 — voice-a1.mp3
+// A1 — voice-a1.mp3 (Morning Routine)
 addListeningQuestion('listening', 'A1', 'l-a1-1', '/audio/voice-a1.mp3',
-  'Listen to the audio. What is the main topic of the conversation?',
-  ['Introducing yourself', 'Ordering food', 'Asking for directions', 'Talking about the weather'], 0);
+  'Listen to the passage about a morning routine. Based on what you hear, how does the person truly feel about the bus being late?',
+  ['They hate it because it makes them late for work', 'They don\'t mind it because it gives them time to rest', 'They enjoy it because they can eat breakfast on the bus', 'They are confused because the bus is never on time'], 1);
 addListeningQuestion('listening', 'A1', 'l-a1-2', '/audio/voice-a1.mp3',
-  'Listen again. Where does the conversation most likely take place?',
-  ['In a classroom', 'At a train station', 'In a shop', 'At someone\'s home'], 0);
+  'Listen again. What does the narrator do during the morning commute?',
+  ['Eat a big breakfast and read the news', 'Drink coffee, run to the bus, and sleep on the way', 'Walk slowly while listening to music', 'Take a taxi to avoid being late'], 1);
+// A1 — voice-a1-a2.mp3 (Shoe Shopping)
 addListeningQuestion('listening', 'A1', 'l-a1-3', '/audio/voice-a1-a2.mp3',
-  'Listen to the recording. How many people are speaking?',
-  ['One', 'Two', 'Three', 'Four'], 1);
+  'Listen to the passage about shopping. Why didn\'t the person buy any shoes?',
+  ['They decided they didn\'t need new shoes after all', 'The store was closed when they arrived', 'They only like wearing sneakers', 'The nice shoes were too expensive and the cheap ones were uncomfortable'], 3);
 
-// A2 — voice-a2.mp3
+// A2 — voice-a2.mp3 (Evening Routine)
 addListeningQuestion('listening', 'A2', 'l-a2-1', '/audio/voice-a2.mp3',
-  'Listen to the audio. What is the speaker mainly describing?',
-  ['A daily routine', 'A holiday trip', 'A work project', 'A family event'], 1);
+  'Listen to the passage about an evening at home. What is the real reason the person left the dishes in the sink?',
+  ['They wanted to relax and watch their game because it was getting late', 'They broke the kitchen light and couldn\'t see to clean', 'They expected someone else to wash them', 'They realized they needed to buy soap the next morning'], 0);
 addListeningQuestion('listening', 'A2', 'l-a2-2', '/audio/voice-a2.mp3',
-  'Listen again. How does the speaker feel about the experience?',
-  ['Bored', 'Excited', 'Disappointed', 'Nervous'], 1);
-addListeningQuestion('listening', 'A2', 'l-a2-3', '/audio/voice-a1-a2.mp3',
-  'Listen to the conversation. What problem does the speaker mention?',
-  ['They lost their bag', 'They missed the bus', 'They can\'t find the exit', 'They forgot the address'], 1);
+  'Listen again. What can be inferred about the narrator\'s priorities at that moment?',
+  ['They felt guilty about not cleaning up', 'They valued their own comfort and leisure over the chore', 'They planned to wake up early and do the dishes', 'They were angry about having to cook dinner'], 1);
+// A2 — voice-a2-b1.mp3 (Leaving the Party)
+addListeningQuestion('listening', 'A2', 'l-a2-3', '/audio/voice-a2-b1.mp3',
+  'Listen to the passage about a party. What can be inferred about Sarah\'s departure?',
+  ['She suddenly became very ill and needed medical attention', 'She was not enjoying the loud crowded environment', 'Her brother had an emergency and forced her to leave', 'She was angry because the host played bad music'], 1);
 
-// B1 — voice-b1.mp3
+// B1 — voice-b1.mp3 (Gym Membership / Office)
 addListeningQuestion('listening', 'B1', 'l-b1-1', '/audio/voice-b1.mp3',
-  'Listen to the discussion. What is the main issue being discussed?',
-  ['A company restructuring', 'Planning a team event', 'Solving a technical problem', 'Choosing a new supplier'], 0);
+  'Listen to the passage about a new office. What is the underlying problem the narrator is facing?',
+  ['They are unhappy that the new office is too far from home', 'They dislike the taste of the new espresso machine', 'The open office design lacks the privacy and quiet needed to concentrate', 'They are trying to avoid a specific coworker'], 2);
 addListeningQuestion('listening', 'B1', 'l-b1-2', '/audio/voice-b1.mp3',
-  'Listen again. What solution does one speaker propose?',
-  ['Hire more staff', 'Change the schedule', 'Use a different approach', 'Ask for customer feedback'], 2);
-addListeningQuestion('listening', 'B1', 'l-b1-3', '/audio/voice-a2-b1.mp3',
-  'Listen to the recording. What time does the appointment start?',
-  ['9:00', '9:30', '10:00', '10:30'], 2);
+  'Listen again. Why did the narrator schedule a meeting with their manager?',
+  ['To complain about the printer placement', 'To request permission to work remotely on certain days', 'To ask for a desk relocation away from the hallway', 'To discuss getting a promotion'], 1);
+// B1 — voice-b1-b2.mp3 (Mountain Trip)
+addListeningQuestion('listening', 'B1', 'l-b1-3', '/audio/voice-b1-b2.mp3',
+  'Listen to the passage about a planned trip. Why did the narrator suggest taking the train instead of driving?',
+  ['They wanted to enjoy the snowy scenery without focusing on the road', 'They recognized that driving their car in heavy snow would be dangerous', 'They thought the extra bags would be too heavy for the car', 'Their partner dislikes driving long distances in winter'], 1);
 
-// B2 — voice-b2.mp3
+// B2 — voice-b2.mp3 (Corporate Merger)
 addListeningQuestion('listening', 'B2', 'l-b2-1', '/audio/voice-b2.mp3',
-  'Listen to the talk. What is the speaker\'s main argument?',
-  ['Technology improves education', 'Traditional methods are outdated', 'Change should be gradual', 'Investment is too risky'], 0);
+  'Listen to the passage about a corporate merger. What do the senior employees anticipate will happen?',
+  ['They expect to be promoted to middle management', 'They anticipate that the merger will result in layoffs', 'They think the CEO is planning to leave the company', 'They believe the rival firm will cancel the merger'], 1);
 addListeningQuestion('listening', 'B2', 'l-b2-2', '/audio/voice-b2.mp3',
-  'Listen again. What evidence does the speaker provide?',
-  ['Statistics from a recent study', 'A personal anecdote', 'Historical examples', 'Expert opinions'], 0);
-addListeningQuestion('listening', 'B2', 'l-b2-3', '/audio/voice-b1-b2.mp3',
-  'Listen to the conversation. What is the relationship between the speakers?',
-  ['Teacher and student', 'Manager and employee', 'Doctor and patient', 'Friends'], 1);
+  'Listen again. Why are the senior employees speaking in hushed tones?',
+  ['They don\'t want the CEO to hear their concerns', 'They are discussing a secret project', 'They are afraid of being overheard by rival firm spies', 'The breakroom has a quiet policy'], 0);
+addListeningQuestion('listening', 'B2', 'l-b2-3', '/audio/voice-b2.mp3',
+  'Based on the passage, what does the CEO\'s enthusiastic email suggest?',
+  ['The company is honestly preparing employees for changes', 'The company is using positive language to hide potential negative outcomes', 'The company wants everyone to celebrate the merger', 'The company is excited about new business partnerships'], 1);
 
-// C1 — voice-c1.mp3
+// C1 — voice-c1.mp3 (Restaurant Supply)
 addListeningQuestion('listening', 'C1', 'l-c1-1', '/audio/voice-c1.mp3',
-  'Listen to the lecture excerpt. What theoretical concept is being explained?',
-  ['Cognitive dissonance', 'Supply and demand', 'Cultural relativism', 'The butterfly effect'], 0);
+  'Listen to the passage about a restaurant. What is the implicit message regarding the restaurant\'s business practices?',
+  ['The restaurant is expanding to serve out-of-state customers', 'The owner is buying the regional farms to ensure supply', 'The restaurant relies on commercial suppliers despite its local branding', 'The restaurant\'s farm-to-table marketing is deceptive'], 3);
 addListeningQuestion('listening', 'C1', 'l-c1-2', '/audio/voice-c1.mp3',
-  'Listen again. What criticism does the speaker acknowledge?',
-  ['The theory lacks practical evidence', 'The concept is too abstract', 'Alternative models are more accurate', 'The research methodology was flawed'], 0);
+  'Listen again. How does the owner\'s response to the food blogger reveal the truth?',
+  ['It demonstrates a genuine commitment to quality ingredients', 'The vague justification suggests an attempt to deflect scrutiny', 'It shows the restaurant is transparent about its supply chain', 'The owner is proud of the seasonal menu variety'], 1);
+// C1 — voice-c1-c2.mp3 (Municipal Library)
 addListeningQuestion('listening', 'C1', 'l-c1-3', '/audio/voice-c1-c2.mp3',
-  'Listen to the discussion. What conclusion do the speakers reach?',
-  ['More data is needed', 'The proposal should be accepted', 'The risks outweigh the benefits', 'A compromise is necessary'], 1);
+  'Listen to the passage about a new library. What is the author\'s primary underlying criticism of the project?',
+  ['It prioritized modern aesthetics over essential community support services', 'The glass and steel design is inferior to the historic brick building', 'The politicians failed to provide enough books for the library', 'The silent atmosphere is too intimidating for local children'], 0);
 
-// C2 — voice-c2.mp3
+// C2 — voice-c2.mp3 (Educational Reform)
 addListeningQuestion('listening', 'C2', 'l-c2-1', '/audio/voice-c2.mp3',
-  'Listen to the debate. What logical fallacy does one speaker identify?',
-  ['Straw man argument', 'False dichotomy', 'Ad hominem', 'Circular reasoning'], 2);
+  'Listen to the passage about educational reform. According to the passage, what was the actual result of the reform?',
+  ['A truly equal educational system that closed the socioeconomic gap', 'Higher levels of critical thinking among students', 'The complete abandonment of standardized testing', 'A superficial statistical success that stifled genuine learning'], 3);
 addListeningQuestion('listening', 'C2', 'l-c2-2', '/audio/voice-c2.mp3',
-  'Listen again. How does the other speaker respond to the criticism?',
-  ['By conceding the point', 'By reframing the argument', 'By providing counter-evidence', 'By changing the subject'], 1);
-addListeningQuestion('listening', 'C2', 'l-c2-3', '/audio/voice-c1-c2.mp3',
-  'Listen to the analysis. What underlying assumption is being challenged?',
-  ['That economic growth is always positive', 'That democracy requires majority rule', 'That expertise is value-neutral', 'That markets regulate themselves'], 2);
+  'Listen again. What does the author imply about the phrase \'standardize excellence\'?',
+  ['It accurately describes the reform\'s successful outcomes', 'It is a misleading slogan used to promote a flawed policy', 'It represents a breakthrough in educational measurement', 'It helped teachers focus on what matters most'], 1);
+addListeningQuestion('listening', 'C2', 'l-c2-3', '/audio/voice-c2.mp3',
+  'Based on the passage, what was the \'profound unmeasured casualty\' of the reform?',
+  ['The loss of funding for arts programs', 'The decline in teacher morale and retention', 'The sacrifice of intellectual curiosity and deep learning', 'The increase in dropout rates among disadvantaged students'], 2);
 
 // ── Inject hardcoded spot_fake question into vocabulary C2 ──────────
 QUESTION_BANK.vocabulary.C2.push({
