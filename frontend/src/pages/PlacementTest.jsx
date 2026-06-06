@@ -225,9 +225,12 @@ export default function PlacementTest() {
             {/* Audio player for listening skill */}
             {question.audioUrl && (
               <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', padding:'0.75rem 1rem', marginBottom:'1rem' }}>
-                <audio controls src={question.audioUrl} style={{ width:'100%', height:'40px' }}
-                  onError={e => console.error('Audio failed to load:', question.audioUrl, e)}
-                  aria-label="Listening audio" />
+                {(() => {
+                  const audioSrc = import.meta.env.DEV ? `http://localhost:5000${question.audioUrl}` : question.audioUrl;
+                  return <audio controls src={audioSrc} style={{ width:'100%' }}
+                    onError={e => console.error('Audio failed to load:', audioSrc, e)}
+                    aria-label="Listening audio" />;
+                })()}
                 <p style={{ fontSize:'12px', color:'var(--text-tertiary)', marginTop:'6px', marginBottom:0 }}>
                   Listen carefully, then answer the question. You can replay the audio as many times as you need.
                 </p>
