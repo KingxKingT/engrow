@@ -200,7 +200,7 @@ export default function PlacementTest() {
             </p>
 
             {/* Passage */}
-            {question.text && !['fill_blank','fix_error'].includes(question.type) && (
+            {question.text && !['fill_blank','fix_error','fill','error'].includes(question.type) && (
               <div style={S.passage}>{question.text}</div>
             )}
 
@@ -212,9 +212,9 @@ export default function PlacementTest() {
             )}
 
             {/* Error sentence */}
-            {question.type === 'fix_error' && (
+            {(question.type === 'fix_error' || question.type === 'error') && (
               <div style={{ background:'#FFF1F2', border:'1px solid #FECACA', borderRadius:'var(--radius-md)', padding:'0.875rem 1rem', marginBottom:'1rem', fontStyle:'italic', color:'#B91C1C', fontSize:'15px' }}>
-                "{question.text}"
+                "{question.sentence || question.text}"
               </div>
             )}
 
@@ -228,8 +228,8 @@ export default function PlacementTest() {
             {/* Answer area */}
             {!feedback && (
               <div>
-                {/* Multiple choice */}
-                {(question.type === 'fill_blank' || question.type === 'choose_correct') && question.options ? (
+                {/* Multiple choice: mc, error */}
+                {(question.type === 'fill_blank' || question.type === 'choose_correct' || question.type === 'mc' || question.type === 'error') && question.options ? (
                   <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'1rem' }} role="group" aria-label="Choose your answer">
                     {question.options.map(opt => (
                       <button key={opt} onClick={() => setAnswer(opt)} aria-pressed={answer===opt}
@@ -242,6 +242,50 @@ export default function PlacementTest() {
                         {opt}
                       </button>
                     ))}
+                  </div>
+                ) : question.type === 'fill' && question.blanks ? (
+                  <div style={{ marginBottom:'1rem' }}>
+                    {(() => {
+                      const blank = question.blanks[0];
+                      if (blank && blank.options) {
+                        return (
+                          <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }} role="group" aria-label="Choose the correct word">
+                            {blank.options.map(opt => (
+                              <button key={opt} onClick={() => setAnswer(opt)} aria-pressed={answer===opt}
+                                style={{ padding:'0.6rem 1.25rem', border:'1.5px solid', borderRadius:'var(--radius-md)', fontSize:'14px', cursor:'pointer', fontFamily:'var(--font-sans)', transition:'all 0.14s',
+                                  borderColor:answer===opt?'var(--blue-primary)':'var(--border)',
+                                  background:answer===opt?'var(--blue-light)':'white',
+                                  color:answer===opt?'var(--blue-primary)':'var(--text)',
+                                  fontWeight:answer===opt?500:400
+                                }}>
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
+                        );
+                      }
+                      return <input type="text" className="form-input" value={answer} onChange={e => setAnswer(e.target.value)} placeholder="Type your answer..." />;
+                    })()}
+                  </div>
+                ) : question.type === 'sort' && question.words ? (
+                  <div style={{ marginBottom:'1rem' }}>
+                    <p style={{ fontSize:'13px', color:'var(--text-secondary)', marginBottom:'0.5rem' }}>Click words in the correct order:</p>
+                    <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', minHeight:'40px', padding:'0.5rem', border:'1.5px dashed var(--border)', borderRadius:'var(--radius-md)' }}>
+                      {answer ? answer.split(' ').map((w, i) => (
+                        <button key={`${w}-${i}`} onClick={() => { const a = answer.split(' '); a.splice(i, 1); setAnswer(a.join(' ')); }}
+                          style={{ padding:'0.4rem 0.875rem', border:'1.5px solid var(--blue-primary)', borderRadius:'var(--radius-md)', fontSize:'14px', background:'var(--blue-light)', color:'var(--blue-primary)', cursor:'pointer' }}>
+                          {w} ✕
+                        </button>
+                      )) : <span style={{ fontSize:'13px', color:'var(--text-tertiary)', padding:'0.25rem 0' }}>Select words below...</span>}
+                    </div>
+                    <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', marginTop:'0.5rem' }}>
+                      {question.words.filter(w => !answer.split(' ').includes(w)).map(w => (
+                        <button key={w} onClick={() => setAnswer(prev => (prev ? prev + ' ' : '') + w)}
+                          style={{ padding:'0.4rem 0.875rem', border:'1.5px solid var(--border)', borderRadius:'var(--radius-md)', fontSize:'14px', background:'white', cursor:'pointer' }}>
+                          {w}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 ) : question.type === 'free_write' ? (
                   <div>
