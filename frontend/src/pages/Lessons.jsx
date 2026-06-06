@@ -3,8 +3,8 @@ import Sidebar from '../components/Sidebar';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const SKILLS = ['all','grammar','vocabulary','reading','writing','dialogue'];
-const SKILL_LABELS = { all:'All skills', grammar:'Grammar', vocabulary:'Vocabulary', reading:'Reading', writing:'Writing', dialogue:'Dialogue' };
+const SKILLS = ['all','grammar','vocabulary','reading','writing','dialogue','listening'];
+const SKILL_LABELS = { all:'All skills', grammar:'Grammar', vocabulary:'Vocabulary', reading:'Reading', writing:'Writing', dialogue:'Dialogue', listening:'Listening' };
 const CEFR_ORDER = ['A1','A2','B1','B2','C1','C2'];
 
 const CURRICULUM = {
@@ -45,7 +45,7 @@ export default function Lessons() {
     }));
   };
 
-  const allSkills = ['grammar','vocabulary','reading','writing','dialogue'];
+  const allSkills = ['grammar','vocabulary','reading','writing','dialogue','listening'];
   const lessons = activeSkill === 'all'
     ? allSkills.flatMap(s => buildLessons(s).slice(0, 6))
     : buildLessons(activeSkill);

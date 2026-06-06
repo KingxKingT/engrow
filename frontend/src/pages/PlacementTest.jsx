@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const API = import.meta.env.VITE_API_URL || '/api';
-const SKILL_LABELS = { grammar:'Grammar', vocabulary:'Vocabulary', reading:'Reading', writing:'Writing', dialogue:'Dialogue Comprehension' };
-const SKILL_DESCRIPTIONS = { grammar:'Grammar rules and sentence structure', vocabulary:'Word knowledge and usage', reading:'Understanding written English', writing:'Expressing ideas in writing', dialogue:'Understanding real conversations' };
-const SKILL_ORDER = ['grammar','vocabulary','reading','writing','dialogue'];
+const SKILL_LABELS = { grammar:'Grammar', vocabulary:'Vocabulary', reading:'Reading', writing:'Writing', dialogue:'Dialogue Comprehension', listening:'Listening' };
+const SKILL_DESCRIPTIONS = { grammar:'Grammar rules and sentence structure', vocabulary:'Word knowledge and usage', reading:'Understanding written English', writing:'Expressing ideas in writing', dialogue:'Understanding real conversations', listening:'Understanding spoken English' };
+const SKILL_ORDER = ['grammar','vocabulary','reading','writing','dialogue','listening'];
 
 export default function PlacementTest() {
   const { getToken, markTestComplete } = useAuth();
@@ -219,6 +219,18 @@ export default function PlacementTest() {
             {progress?.showEncouragement && (
               <div style={{ background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'var(--radius-md)', padding:'0.65rem 0.875rem', fontSize:'13px', color:'#92400E', marginBottom:'1.25rem' }}>
                 Getting harder on purpose — this is how we find your real ceiling. Keep going.
+              </div>
+            )}
+
+            {/* Audio player for listening skill */}
+            {question.audioUrl && (
+              <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', padding:'0.75rem 1rem', marginBottom:'1rem' }}>
+                <audio controls src={question.audioUrl} style={{ width:'100%', height:'40px' }}
+                  onError={e => console.error('Audio failed to load:', question.audioUrl, e)}
+                  aria-label="Listening audio" />
+                <p style={{ fontSize:'12px', color:'var(--text-tertiary)', marginTop:'6px', marginBottom:0 }}>
+                  Listen carefully, then answer the question. You can replay the audio as many times as you need.
+                </p>
               </div>
             )}
 
@@ -504,7 +516,7 @@ function Welcome({ onStart, loading, serverWaking, error }) {
         <div style={{ fontFamily:'var(--font-serif)', fontSize:'26px', color:'var(--blue-primary)', letterSpacing:'-0.02em', marginBottom:'2rem', textAlign:'center' }}>Engrow</div>
         <h1 style={{ fontSize:'24px', fontWeight:500, marginBottom:'0.875rem', letterSpacing:'-0.02em', textAlign:'center' }}>Your placement test</h1>
         <p style={{ color:'var(--text-secondary)', fontSize:'14px', lineHeight:1.75, marginBottom:'1.5rem', textAlign:'center' }}>
-          This test checks 5 skills separately. It adapts to your level as you go. Takes about <strong>12–18 minutes</strong>.
+          This test checks 6 skills separately. It adapts to your level as you go. Takes about <strong>14–22 minutes</strong>.
         </p>
 
         <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--radius-lg)', padding:'1.125rem 1.375rem', marginBottom:'1.25rem' }}>
@@ -513,7 +525,8 @@ function Welcome({ onStart, loading, serverWaking, error }) {
             ['Vocabulary','Define words and use them — tests depth, not guessing'],
             ['Reading','Passages that get harder — tests real comprehension'],
             ['Writing','Write 80–150 words — AI reads and assesses your level'],
-            ['Dialogue','Real conversations — tests meaning and tone']
+            ['Dialogue','Real conversations — tests meaning and tone'],
+            ['Listening','Understand spoken English — tests your ear']
           ].map(([skill, desc], i) => (
             <div key={skill} style={{ display:'flex', gap:'10px', alignItems:'flex-start', marginBottom: i < 4 ? '10px' : 0 }}>
               <div style={{ width:'22px', height:'22px', borderRadius:'50%', background:'var(--blue-light)', color:'var(--blue-primary)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:700, flexShrink:0, marginTop:'2px' }}>{i+1}</div>

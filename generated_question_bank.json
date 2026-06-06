@@ -1613,5 +1613,271 @@
         "text": "Chair: Professor, your paper claims the evidence for this intervention is \"robust.\" The Cochrane review published last March rated it as low-certainty. How do you reconcile those characterisations?\nProfessor: The Cochrane review used a GRADE framework that penalises heterogeneity across trials. Our meta-analysis controlled for baseline confounds.\nChair: Controlled for, or adjusted post-hoc?\nProfessor: The adjustments were pre-registered in our protocol.\nChair: Registered before or after you saw the data?\nProfessor: Before final analysis, yes — though some preliminary figures were available at the time of registration.\nChair: That's not pre-registration as it is ordinarily understood in the field, is it?"
       }
     ]
+  },
+  "listening": {
+    "A1": [
+      {
+        "id": "l-a1-1",
+        "type": "mc",
+        "instruction": "Listen to the audio. What is the main topic of the conversation?",
+        "options": [
+          "Introducing yourself",
+          "Ordering food",
+          "Asking for directions",
+          "Talking about the weather"
+        ],
+        "correct": "Introducing yourself",
+        "correctIndex": 0,
+        "audioUrl": "/audio/voice-a1.mp3"
+      },
+      {
+        "id": "l-a1-2",
+        "type": "mc",
+        "instruction": "Listen again. Where does the conversation most likely take place?",
+        "options": [
+          "In a classroom",
+          "At a train station",
+          "In a shop",
+          "At someone's home"
+        ],
+        "correct": "In a classroom",
+        "correctIndex": 0,
+        "audioUrl": "/audio/voice-a1.mp3"
+      },
+      {
+        "id": "l-a1-3",
+        "type": "mc",
+        "instruction": "Listen to the recording. How many people are speaking?",
+        "options": [
+          "One",
+          "Two",
+          "Three",
+          "Four"
+        ],
+        "correct": "Two",
+        "correctIndex": 1,
+        "audioUrl": "/audio/voice-a1-a2.mp3"
+      }
+    ],
+    "A2": [
+      {
+        "id": "l-a2-1",
+        "type": "mc",
+        "instruction": "Listen to the audio. What is the speaker mainly describing?",
+        "options": [
+          "A daily routine",
+          "A holiday trip",
+          "A work project",
+          "A family event"
+        ],
+        "correct": "A holiday trip",
+        "correctIndex": 1,
+        "audioUrl": "/audio/voice-a2.mp3"
+      },
+      {
+        "id": "l-a2-2",
+        "type": "mc",
+        "instruction": "Listen again. How does the speaker feel about the experience?",
+        "options": [
+          "Bored",
+          "Excited",
+          "Disappointed",
+          "Nervous"
+        ],
+        "correct": "Excited",
+        "correctIndex": 1,
+        "audioUrl": "/audio/voice-a2.mp3"
+      },
+      {
+        "id": "l-a2-3",
+        "type": "mc",
+        "instruction": "Listen to the conversation. What problem does the speaker mention?",
+        "options": [
+          "They lost their bag",
+          "They missed the bus",
+          "They can't find the exit",
+          "They forgot the address"
+        ],
+        "correct": "They missed the bus",
+        "correctIndex": 1,
+        "audioUrl": "/audio/voice-a1-a2.mp3"
+      }
+    ],
+    "B1": [
+      {
+        "id": "l-b1-1",
+        "type": "mc",
+        "instruction": "Listen to the discussion. What is the main issue being discussed?",
+        "options": [
+          "A company restructuring",
+          "Planning a team event",
+          "Solving a technical problem",
+          "Choosing a new supplier"
+        ],
+        "correct": "A company restructuring",
+        "correctIndex": 0,
+        "audioUrl": "/audio/voice-b1.mp3"
+      },
+      {
+        "id": "l-b1-2",
+        "type": "mc",
+        "instruction": "Listen again. What solution does one speaker propose?",
+        "options": [
+          "Hire more staff",
+          "Change the schedule",
+          "Use a different approach",
+          "Ask for customer feedback"
+        ],
+        "correct": "Use a different approach",
+        "correctIndex": 2,
+        "audioUrl": "/audio/voice-b1.mp3"
+      },
+      {
+        "id": "l-b1-3",
+        "type": "mc",
+        "instruction": "Listen to the recording. What time does the appointment start?",
+        "options": [
+          "9:00",
+          "9:30",
+          "10:00",
+          "10:30"
+        ],
+        "correct": "10:00",
+        "correctIndex": 2,
+        "audioUrl": "/audio/voice-a2-b1.mp3"
+      }
+    ],
+    "B2": [
+      {
+        "id": "l-b2-1",
+        "type": "mc",
+        "instruction": "Listen to the talk. What is the speaker's main argument?",
+        "options": [
+          "Technology improves education",
+          "Traditional methods are outdated",
+          "Change should be gradual",
+          "Investment is too risky"
+        ],
+        "correct": "Technology improves education",
+        "correctIndex": 0,
+        "audioUrl": "/audio/voice-b2.mp3"
+      },
+      {
+        "id": "l-b2-2",
+        "type": "mc",
+        "instruction": "Listen again. What evidence does the speaker provide?",
+        "options": [
+          "Statistics from a recent study",
+          "A personal anecdote",
+          "Historical examples",
+          "Expert opinions"
+        ],
+        "correct": "Statistics from a recent study",
+        "correctIndex": 0,
+        "audioUrl": "/audio/voice-b2.mp3"
+      },
+      {
+        "id": "l-b2-3",
+        "type": "mc",
+        "instruction": "Listen to the conversation. What is the relationship between the speakers?",
+        "options": [
+          "Teacher and student",
+          "Manager and employee",
+          "Doctor and patient",
+          "Friends"
+        ],
+        "correct": "Manager and employee",
+        "correctIndex": 1,
+        "audioUrl": "/audio/voice-b1-b2.mp3"
+      }
+    ],
+    "C1": [
+      {
+        "id": "l-c1-1",
+        "type": "mc",
+        "instruction": "Listen to the lecture excerpt. What theoretical concept is being explained?",
+        "options": [
+          "Cognitive dissonance",
+          "Supply and demand",
+          "Cultural relativism",
+          "The butterfly effect"
+        ],
+        "correct": "Cognitive dissonance",
+        "correctIndex": 0,
+        "audioUrl": "/audio/voice-c1.mp3"
+      },
+      {
+        "id": "l-c1-2",
+        "type": "mc",
+        "instruction": "Listen again. What criticism does the speaker acknowledge?",
+        "options": [
+          "The theory lacks practical evidence",
+          "The concept is too abstract",
+          "Alternative models are more accurate",
+          "The research methodology was flawed"
+        ],
+        "correct": "The theory lacks practical evidence",
+        "correctIndex": 0,
+        "audioUrl": "/audio/voice-c1.mp3"
+      },
+      {
+        "id": "l-c1-3",
+        "type": "mc",
+        "instruction": "Listen to the discussion. What conclusion do the speakers reach?",
+        "options": [
+          "More data is needed",
+          "The proposal should be accepted",
+          "The risks outweigh the benefits",
+          "A compromise is necessary"
+        ],
+        "correct": "The proposal should be accepted",
+        "correctIndex": 1,
+        "audioUrl": "/audio/voice-c1-c2.mp3"
+      }
+    ],
+    "C2": [
+      {
+        "id": "l-c2-1",
+        "type": "mc",
+        "instruction": "Listen to the debate. What logical fallacy does one speaker identify?",
+        "options": [
+          "Straw man argument",
+          "False dichotomy",
+          "Ad hominem",
+          "Circular reasoning"
+        ],
+        "correct": "Ad hominem",
+        "correctIndex": 2,
+        "audioUrl": "/audio/voice-c2.mp3"
+      },
+      {
+        "id": "l-c2-2",
+        "type": "mc",
+        "instruction": "Listen again. How does the other speaker respond to the criticism?",
+        "options": [
+          "By conceding the point",
+          "By reframing the argument",
+          "By providing counter-evidence",
+          "By changing the subject"
+        ],
+        "correct": "By reframing the argument",
+        "correctIndex": 1,
+        "audioUrl": "/audio/voice-c2.mp3"
+      },
+      {
+        "id": "l-c2-3",
+        "type": "mc",
+        "instruction": "Listen to the analysis. What underlying assumption is being challenged?",
+        "options": [
+          "That economic growth is always positive",
+          "That democracy requires majority rule",
+          "That expertise is value-neutral",
+          "That markets regulate themselves"
+        ],
+        "correct": "That expertise is value-neutral",
+        "correctIndex": 2,
+        "audioUrl": "/audio/voice-c1-c2.mp3"
+      }
+    ]
   }
 }

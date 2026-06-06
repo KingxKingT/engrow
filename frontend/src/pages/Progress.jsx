@@ -1,7 +1,7 @@
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../context/AuthContext';
 
-const SKILL_LABELS = { grammar:'Grammar', vocabulary:'Vocabulary', reading:'Reading', writing:'Writing', dialogue:'Dialogue' };
+const SKILL_LABELS = { grammar:'Grammar', vocabulary:'Vocabulary', reading:'Reading', writing:'Writing', dialogue:'Dialogue', listening:'Listening' };
 const CEFR_ORDER = ['A1','A2','B1','B2','C1','C2'];
 const CEFR_PLAIN = { A1:'Beginner', A2:'Elementary', B1:'Intermediate', B2:'Upper-intermediate', C1:'Advanced', C2:'Mastery' };
 

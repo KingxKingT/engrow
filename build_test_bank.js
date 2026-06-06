@@ -4,9 +4,9 @@
 const fs = require('fs');
 
 // SECTION_MAP matches the HTML section names to backend skill keys
-const SECTION_MAP = { Grammar: 'grammar', Vocabulary: 'vocabulary', Reading: 'reading', Dialogue: 'dialogue', Writing: 'writing' };
+const SECTION_MAP = { Grammar: 'grammar', Vocabulary: 'vocabulary', Reading: 'reading', Dialogue: 'dialogue', Writing: 'writing', Listening: 'listening' };
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-const SKILL_ORDER = ['grammar', 'vocabulary', 'reading', 'writing', 'dialogue'];
+const SKILL_ORDER = ['grammar', 'vocabulary', 'reading', 'writing', 'dialogue', 'listening'];
 
 // Read the HTML file and extract the DATA variable
 const html = fs.readFileSync('engrow_test_bank_redesigned.html', 'utf8');
@@ -112,6 +112,83 @@ CEFR_LEVELS.forEach(level => {
     });
   });
 });
+
+// ── Helper to add listening questions ──────────────────────────────
+function addListeningQuestion(skill, level, id, audioUrl, instruction, options, correctIndex) {
+  QUESTION_BANK[skill][level].push({
+    id, type: 'mc', instruction, options,
+    correct: options[correctIndex],
+    correctIndex,
+    audioUrl
+  });
+}
+
+// ── Inject listening questions for each level ──────────────────────
+// A1 — voice-a1.mp3
+addListeningQuestion('listening', 'A1', 'l-a1-1', '/audio/voice-a1.mp3',
+  'Listen to the audio. What is the main topic of the conversation?',
+  ['Introducing yourself', 'Ordering food', 'Asking for directions', 'Talking about the weather'], 0);
+addListeningQuestion('listening', 'A1', 'l-a1-2', '/audio/voice-a1.mp3',
+  'Listen again. Where does the conversation most likely take place?',
+  ['In a classroom', 'At a train station', 'In a shop', 'At someone\'s home'], 0);
+addListeningQuestion('listening', 'A1', 'l-a1-3', '/audio/voice-a1-a2.mp3',
+  'Listen to the recording. How many people are speaking?',
+  ['One', 'Two', 'Three', 'Four'], 1);
+
+// A2 — voice-a2.mp3
+addListeningQuestion('listening', 'A2', 'l-a2-1', '/audio/voice-a2.mp3',
+  'Listen to the audio. What is the speaker mainly describing?',
+  ['A daily routine', 'A holiday trip', 'A work project', 'A family event'], 1);
+addListeningQuestion('listening', 'A2', 'l-a2-2', '/audio/voice-a2.mp3',
+  'Listen again. How does the speaker feel about the experience?',
+  ['Bored', 'Excited', 'Disappointed', 'Nervous'], 1);
+addListeningQuestion('listening', 'A2', 'l-a2-3', '/audio/voice-a1-a2.mp3',
+  'Listen to the conversation. What problem does the speaker mention?',
+  ['They lost their bag', 'They missed the bus', 'They can\'t find the exit', 'They forgot the address'], 1);
+
+// B1 — voice-b1.mp3
+addListeningQuestion('listening', 'B1', 'l-b1-1', '/audio/voice-b1.mp3',
+  'Listen to the discussion. What is the main issue being discussed?',
+  ['A company restructuring', 'Planning a team event', 'Solving a technical problem', 'Choosing a new supplier'], 0);
+addListeningQuestion('listening', 'B1', 'l-b1-2', '/audio/voice-b1.mp3',
+  'Listen again. What solution does one speaker propose?',
+  ['Hire more staff', 'Change the schedule', 'Use a different approach', 'Ask for customer feedback'], 2);
+addListeningQuestion('listening', 'B1', 'l-b1-3', '/audio/voice-a2-b1.mp3',
+  'Listen to the recording. What time does the appointment start?',
+  ['9:00', '9:30', '10:00', '10:30'], 2);
+
+// B2 — voice-b2.mp3
+addListeningQuestion('listening', 'B2', 'l-b2-1', '/audio/voice-b2.mp3',
+  'Listen to the talk. What is the speaker\'s main argument?',
+  ['Technology improves education', 'Traditional methods are outdated', 'Change should be gradual', 'Investment is too risky'], 0);
+addListeningQuestion('listening', 'B2', 'l-b2-2', '/audio/voice-b2.mp3',
+  'Listen again. What evidence does the speaker provide?',
+  ['Statistics from a recent study', 'A personal anecdote', 'Historical examples', 'Expert opinions'], 0);
+addListeningQuestion('listening', 'B2', 'l-b2-3', '/audio/voice-b1-b2.mp3',
+  'Listen to the conversation. What is the relationship between the speakers?',
+  ['Teacher and student', 'Manager and employee', 'Doctor and patient', 'Friends'], 1);
+
+// C1 — voice-c1.mp3
+addListeningQuestion('listening', 'C1', 'l-c1-1', '/audio/voice-c1.mp3',
+  'Listen to the lecture excerpt. What theoretical concept is being explained?',
+  ['Cognitive dissonance', 'Supply and demand', 'Cultural relativism', 'The butterfly effect'], 0);
+addListeningQuestion('listening', 'C1', 'l-c1-2', '/audio/voice-c1.mp3',
+  'Listen again. What criticism does the speaker acknowledge?',
+  ['The theory lacks practical evidence', 'The concept is too abstract', 'Alternative models are more accurate', 'The research methodology was flawed'], 0);
+addListeningQuestion('listening', 'C1', 'l-c1-3', '/audio/voice-c1-c2.mp3',
+  'Listen to the discussion. What conclusion do the speakers reach?',
+  ['More data is needed', 'The proposal should be accepted', 'The risks outweigh the benefits', 'A compromise is necessary'], 1);
+
+// C2 — voice-c2.mp3
+addListeningQuestion('listening', 'C2', 'l-c2-1', '/audio/voice-c2.mp3',
+  'Listen to the debate. What logical fallacy does one speaker identify?',
+  ['Straw man argument', 'False dichotomy', 'Ad hominem', 'Circular reasoning'], 2);
+addListeningQuestion('listening', 'C2', 'l-c2-2', '/audio/voice-c2.mp3',
+  'Listen again. How does the other speaker respond to the criticism?',
+  ['By conceding the point', 'By reframing the argument', 'By providing counter-evidence', 'By changing the subject'], 1);
+addListeningQuestion('listening', 'C2', 'l-c2-3', '/audio/voice-c1-c2.mp3',
+  'Listen to the analysis. What underlying assumption is being challenged?',
+  ['That economic growth is always positive', 'That democracy requires majority rule', 'That expertise is value-neutral', 'That markets regulate themselves'], 2);
 
 // ── Inject hardcoded spot_fake question into vocabulary C2 ──────────
 QUESTION_BANK.vocabulary.C2.push({

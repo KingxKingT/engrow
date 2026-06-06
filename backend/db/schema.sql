@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS user_skill_levels (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  skill VARCHAR(50) NOT NULL, -- grammar, vocabulary, reading, writing, dialogue
+  skill VARCHAR(50) NOT NULL, -- grammar, vocabulary, reading, writing, dialogue, listening
   cefr_level VARCHAR(5) NOT NULL DEFAULT 'A1', -- A1, A2, B1, B2, C1, C2
   cefr_sublevel VARCHAR(10) DEFAULT 'low', -- low, mid, high
   xp INTEGER DEFAULT 0,

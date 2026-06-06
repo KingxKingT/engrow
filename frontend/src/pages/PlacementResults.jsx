@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
 
 const API = import.meta.env.VITE_API_URL || '/api';
-const SKILL_LABELS = { grammar:'Grammar', vocabulary:'Vocabulary', reading:'Reading', writing:'Writing', dialogue:'Dialogue' };
+const SKILL_LABELS = { grammar:'Grammar', vocabulary:'Vocabulary', reading:'Reading', writing:'Writing', dialogue:'Dialogue', listening:'Listening' };
 const CEFR_ORDER = ['A1','A2','B1','B2','C1','C2'];
 const CEFR_PLAIN = { A1:'Beginner — you know the basics', A2:'Elementary — you handle everyday situations', B1:'Intermediate — you manage most common situations', B2:'Upper-intermediate — you understand complex topics', C1:'Advanced — you express yourself fluently', C2:'Mastery — near-native level' };
 

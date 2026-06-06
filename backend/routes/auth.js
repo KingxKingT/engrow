@@ -49,7 +49,7 @@ router.post('/signup', async (req, res) => {
     const user = result.rows[0];
 
     // Initialize skill levels
-    const skills = ['grammar', 'vocabulary', 'reading', 'writing', 'dialogue'];
+    const skills = ['grammar', 'vocabulary', 'reading', 'writing', 'dialogue', 'listening'];
     for (const skill of skills) {
       await pool.query(
         'INSERT INTO user_skill_levels (user_id, skill, cefr_level) VALUES ($1, $2, $3)',

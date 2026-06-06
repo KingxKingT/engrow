@@ -33,6 +33,9 @@ app.use('/api/', limiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/signup', authLimiter);
 
+// Static files (audio, etc.)
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/test', require('./routes/test'));
