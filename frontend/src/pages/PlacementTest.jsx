@@ -1,710 +1,612 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect, useRef } from "react";
 
-const API = import.meta.env.VITE_API_URL || '/api';
-const SKILL_LABELS = { grammar:'Grammar', vocabulary:'Vocabulary', reading:'Reading', writing:'Writing', dialogue:'Dialogue Comprehension', listening:'Listening' };
-const SKILL_DESCRIPTIONS = { grammar:'Grammar rules and sentence structure', vocabulary:'Word knowledge and usage', reading:'Understanding written English', writing:'Expressing ideas in writing', dialogue:'Understanding real conversations', listening:'Understanding spoken English' };
-const SKILL_ORDER = ['grammar','vocabulary','reading','writing','dialogue','listening'];
+// ─── QUESTION BANK (inline for now, move to API later) ───────────────────────
+const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
-function AudioPlayer({ src, label }) {
-  const audioRef = useRef(null);
-  const [playing, setPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [error, setError] = useState(false);
+const VOCABULARY = [
+  { id: "v-a1-1", level: "A1", question: "Which word means a place where you sleep when you travel?", options: ["hotel", "factory", "library", "stadium"], answer: "hotel" },
+  { id: "v-a1-2", level: "A1", question: "What do you use to write on paper?", options: ["pen", "cup", "door", "clock"], answer: "pen" },
+  { id: "v-a2-1", level: "A2", question: "She felt very _____ after running five kilometers.", options: ["exhausted", "enormous", "elegant", "essential"], answer: "exhausted" },
+  { id: "v-a2-2", level: "A2", question: "The store was closed, so we had to come back the next _____.", options: ["morning", "color", "weather", "number"], answer: "morning" },
+  { id: "v-b1-1", level: "B1", question: "The new policy will _____ all employees starting next month.", options: ["affect", "afford", "attempt", "admit"], answer: "affect" },
+  { id: "v-b1-2", level: "B1", question: "He gave a very _____ speech that made everyone think deeply.", options: ["thought-provoking", "good-looking", "well-known", "easy-going"], answer: "thought-provoking" },
+  { id: "v-b2-1", level: "B2", question: "The scientist's findings were _____, challenging everything experts believed.", options: ["groundbreaking", "straightforward", "time-consuming", "well-established"], answer: "groundbreaking" },
+  { id: "v-b2-2", level: "B2", question: "Which word best fits: 'The government needs to _____ the issue of rising costs.'", options: ["tackle", "glance", "wander", "whisper"], answer: "tackle" },
+  { id: "v-c1-1", level: "C1", question: "The lawyer's argument was so _____ that even the judge seemed convinced.", options: ["compelling", "complying", "compiling", "competing"], answer: "compelling" },
+  { id: "v-c1-2", level: "C1", question: "Her _____ approach to management meant she gave staff very little freedom.", options: ["autocratic", "aristocratic", "acrobatic", "automatic"], answer: "autocratic" },
+  { id: "v-c2-1", level: "C2", question: "The philosopher's writing was known for its _____ — every sentence carried layers of meaning.", options: ["profundity", "proximity", "prolixity", "proclivity"], answer: "profundity" },
+  { id: "v-c2-2", level: "C2", question: "The new law was criticized for its _____ — it could be interpreted in too many ways.", options: ["ambiguity", "animosity", "anonymity", "antiquity"], answer: "ambiguity" },
+];
 
-  const toggle = () => {
-    if (!audioRef.current) return;
-    if (playing) { audioRef.current.pause(); setPlaying(false); }
-    else { audioRef.current.play().catch(() => setError(true)); setPlaying(true); }
-  };
+const GRAMMAR = [
+  { id: "g-a1-1", level: "A1", question: "_____ name is Maria.", options: ["Her", "She", "Hers", "He"], answer: "Her" },
+  { id: "g-a1-2", level: "A1", question: "There _____ two cats in the garden.", options: ["are", "is", "am", "be"], answer: "are" },
+  { id: "g-a2-1", level: "A2", question: "I _____ to the market yesterday but it was closed.", options: ["went", "go", "gone", "going"], answer: "went" },
+  { id: "g-a2-2", level: "A2", question: "She _____ English for three years now.", options: ["has been studying", "studied", "is studying", "studies"], answer: "has been studying" },
+  { id: "g-b1-1", level: "B1", question: "If I _____ more time, I would learn a new language.", options: ["had", "have", "would have", "will have"], answer: "had" },
+  { id: "g-b1-2", level: "B1", question: "The report _____ by the team before the deadline.", options: ["was completed", "completed", "has completed", "completing"], answer: "was completed" },
+  { id: "g-b2-1", level: "B2", question: "_____ she had studied harder, she might have passed the exam.", options: ["Had", "If", "Were", "Should"], answer: "Had" },
+  { id: "g-b2-2", level: "B2", question: "He spoke so quietly that I could barely _____ what he was saying.", options: ["make out", "make up", "make off", "make over"], answer: "make out" },
+  { id: "g-c1-1", level: "C1", question: "Not until she arrived _____ we realize how serious the situation was.", options: ["did", "had", "were", "would"], answer: "did" },
+  { id: "g-c1-2", level: "C1", question: "The suspect denied _____ at the scene of the crime.", options: ["having been", "to have been", "to be", "being have"], answer: "having been" },
+  { id: "g-c2-1", level: "C2", question: "_____ the circumstances been different, the outcome would have surprised us all.", options: ["Had", "Were", "Should", "Would"], answer: "Had" },
+  { id: "g-c2-2", level: "C2", question: "She is said _____ the most influential thinker of her generation.", options: ["to have been", "to be having been", "having been", "to have being"], answer: "to have been" },
+];
 
-  const format = (s) => {
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60);
-    return `${m}:${sec.toString().padStart(2, '0')}`;
-  };
+const COMPREHENSION = [
+  { id: "c-a1-1", level: "A1", type: "mc", passage: "Tom wakes up at seven every morning. He eats breakfast and then walks to school. He likes school because he has many friends there.", question: "Why does Tom like school?", options: ["Because it is close to his house", "Because he has many friends there", "Because the food is good", "Because he wakes up early"], answer: "Because he has many friends there" },
+  { id: "c-a2-1", level: "A2", type: "mc", passage: "Maria moved to a new city last year. At first she felt lonely because she didn't know anyone. But after joining a dance class, she made many new friends and now loves living there.", question: "What helped Maria feel better in the new city?", options: ["Getting a new job", "Moving back to her old city", "Joining a dance class", "Calling her family every day"], answer: "Joining a dance class" },
+  { id: "c-b1-1", level: "B1", type: "mc", passage: "Remote work has changed the way people think about their careers. Many employees now value flexibility over salary. Companies that refuse to offer remote options often struggle to hire talented workers, while those that embrace it report higher productivity and lower staff turnover.", question: "What happens to companies that don't offer remote work?", options: ["They save more money on office space", "They struggle to find talented workers", "Their employees become more productive", "They report lower staff turnover"], answer: "They struggle to find talented workers" },
+  { id: "c-b2-1", level: "B2", type: "mc", passage: "The paradox of choice suggests that having more options does not necessarily lead to greater satisfaction. In fact, an abundance of choices can cause decision paralysis — a state where individuals become so overwhelmed by possibilities that they fail to make any decision at all. Furthermore, even when a decision is made, the awareness of unchosen alternatives can generate lingering regret.", question: "What does 'decision paralysis' mean in this passage?", options: ["Making quick decisions without thinking", "Being physically unable to move", "Feeling unable to choose because there are too many options", "Regretting a decision after making it"], answer: "Feeling unable to choose because there are too many options" },
+];
 
+const FAKE_WORD_QUESTIONS = [
+  {
+    id: "fw-b2-1", level: "B2", type: "fake_word_hunt", timeLimit: 600,
+    instructions: "Read carefully. Find the 4 words that DO NOT exist in real English. They follow English patterns but are invented.",
+    passage: "The research team carefully documented their observations over several months. Each member was responsible for a specific area of the study. The lead scientist, known for her meticulous approach, reviewed every report with great thorness. Her colleagues admired her dedicacy to the project, even when the work became repetulous and tiring. Despite the challenges, the team maintained their professionness throughout.",
+    fakeWords: ["thorness", "dedicacy", "repetulous", "professionness"],
+    wordCount: 4
+  },
+  {
+    id: "fw-c1-1", level: "C1", type: "fake_word_hunt", timeLimit: 600,
+    instructions: "Read carefully. Find the 7 words that DO NOT exist in real English.",
+    passage: "The philosopher's central argument rested on the notion that human consciousness is fundamentally unresolvable — not merely complex, but resistant to any framework that seeks to overclarify it. Critics argued this position was overly disemphasive of scientific progress, preferring a more rationalistic approach. Yet the philosopher remained unconvinced, insisting that to underlook the subjective dimension of experience was to misrepresent reality entirely. His supporters praised the intricateness of his reasoning, while opponents dismissed it as obfuscation. The debate ultimately remained unsolvated — a testament to the enduring difficultness of questions at the intersection of mind and meaning.",
+    fakeWords: ["unresolvable", "overclarify", "disemphasive", "underlook", "intricateness", "unsolvated", "difficultness"],
+    wordCount: 7
+  },
+  {
+    id: "fw-c2-1", level: "C2", type: "fake_word_hunt", timeLimit: 600,
+    instructions: "Read carefully. Find the 10 words that DO NOT exist in real English. These are extremely difficult — they look and sound completely real.",
+    passage: "Contemporary discourse on artificial intelligence has grown increasingly polarific, with commentators either embracing its transformative potential or decrying what they perceive as an existential menace. The most thoughtive analysts, however, resist such binary framings, arguing instead for a more granulistic understanding of how these systems will reshape labor, creativity, and cognition. One must not disregard the epistemic humilitude required when navigating questions of such scope — to speak with unqualified certainness is itself a form of intellectric dishonesty. The technologism of our era demands not passivation but active engagement: a willingness to interrogate assumptions, to sit with ambiguance, and to resist the allure of oversimplistic narratives. Those who cultivate this kind of cogitative discipline will be better positioned to navigate the uncertainties ahead.",
+    fakeWords: ["polarific", "thoughtive", "granulistic", "humilitude", "certainness", "intellectric", "passivation", "ambiguance", "cogitative", "technologism"],
+    wordCount: 10
+  }
+];
+
+const DETECTIVE_STAGES = [
+  { stage: 1, targetLevel: "A1-A2", line: "Hello. What is your name and where do you work?" },
+  { stage: 2, targetLevel: "A2-B1", line: "Were you in the office yesterday afternoon? What were you doing between two and four o'clock?" },
+  { stage: 3, targetLevel: "B1-B2", line: "Did you notice anything unusual yesterday? Someone acting strangely, perhaps? Take your time." },
+  { stage: 4, targetLevel: "B2-C1", line: "Interesting. You mentioned a colleague behaving oddly. Hypothetically — if you had to guess why someone might take that briefcase, what would your theory be?" },
+  { stage: 5, targetLevel: "C1-C2", line: "One final question — in your professional opinion, how could this company's internal security protocols be improved to prevent incidents like this?" },
+];
+
+// ─── ADAPTIVE ENGINE ─────────────────────────────────────────────────────────
+function getQuestionsForSection(bank, level) {
+  const levelIndex = LEVELS.indexOf(level);
+  const pool = bank.filter(q => {
+    const qIndex = LEVELS.indexOf(q.level);
+    return Math.abs(qIndex - levelIndex) <= 1;
+  });
+  return pool.sort(() => Math.random() - 0.5).slice(0, 2);
+}
+
+// ─── STYLES ──────────────────────────────────────────────────────────────────
+const S = {
+  wrap: { minHeight: "100vh", background: "#0f0f14", color: "#e8e6f0", fontFamily: "'Inter', system-ui, sans-serif", display: "flex", flexDirection: "column", alignItems: "center", padding: "0 16px 80px" },
+  header: { width: "100%", maxWidth: 680, padding: "32px 0 24px", display: "flex", alignItems: "center", justifyContent: "space-between" },
+  logo: { fontSize: 22, fontWeight: 700, letterSpacing: "-0.5px", color: "#c4b5fd" },
+  progressBar: { width: "100%", maxWidth: 680, height: 4, background: "#1e1e2e", borderRadius: 2, marginBottom: 32, overflow: "hidden" },
+  progressFill: (pct) => ({ height: "100%", width: `${pct}%`, background: "linear-gradient(90deg, #7c3aed, #a78bfa)", borderRadius: 2, transition: "width 0.4s ease" }),
+  card: { width: "100%", maxWidth: 680, background: "#16161f", borderRadius: 20, padding: "32px 28px", border: "1px solid #2a2a3a", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" },
+  sectionTag: { display: "inline-block", fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", color: "#7c3aed", background: "#1e1030", padding: "4px 10px", borderRadius: 6, marginBottom: 20 },
+  levelBadge: { display: "inline-block", fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "#a78bfa", background: "#1a1030", padding: "3px 8px", borderRadius: 4, marginLeft: 8 },
+  passage: { background: "#1a1a27", borderLeft: "3px solid #7c3aed", borderRadius: "0 12px 12px 0", padding: "16px 20px", marginBottom: 24, fontSize: 15, lineHeight: 1.8, color: "#d4d0e8" },
+  question: { fontSize: 18, fontWeight: 600, lineHeight: 1.6, marginBottom: 28, color: "#f0eeff" },
+  optionBtn: (selected, correct, wrong, disabled) => ({
+    width: "100%", textAlign: "left", padding: "14px 18px", marginBottom: 10,
+    borderRadius: 12, border: `2px solid ${correct ? "#22c55e" : wrong ? "#ef4444" : selected ? "#7c3aed" : "#2a2a3a"}`,
+    background: correct ? "#052e16" : wrong ? "#2d0a0a" : selected ? "#1e1030" : "#1a1a27",
+    color: correct ? "#86efac" : wrong ? "#fca5a5" : "#e8e6f0",
+    fontSize: 15, cursor: disabled ? "default" : "pointer",
+    transition: "all 0.15s ease", fontFamily: "inherit", fontWeight: selected || correct || wrong ? 600 : 400,
+    display: "flex", alignItems: "center", gap: 12
+  }),
+  optionLetter: (selected, correct, wrong) => ({
+    width: 28, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+    background: correct ? "#22c55e22" : wrong ? "#ef444422" : selected ? "#7c3aed33" : "#ffffff11",
+    color: correct ? "#22c55e" : wrong ? "#ef4444" : selected ? "#a78bfa" : "#888",
+    fontSize: 12, fontWeight: 700, flexShrink: 0
+  }),
+  feedbackBox: (correct) => ({
+    marginTop: 16, padding: "14px 18px", borderRadius: 12,
+    background: correct ? "#052e16" : "#2d0a0a",
+    border: `1px solid ${correct ? "#22c55e33" : "#ef444433"}`,
+    fontSize: 14, color: correct ? "#86efac" : "#fca5a5", lineHeight: 1.6
+  }),
+  nextBtn: { marginTop: 24, width: "100%", padding: "16px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #7c3aed, #a78bfa)", color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", letterSpacing: 0.3 },
+  timerBox: (urgent) => ({ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 10, background: urgent ? "#2d0a0a" : "#1a1a27", border: `1px solid ${urgent ? "#ef4444" : "#2a2a3a"}`, color: urgent ? "#ef4444" : "#a78bfa", fontSize: 14, fontWeight: 600, marginBottom: 20 }),
+  textArea: { width: "100%", background: "#1a1a27", border: "2px solid #2a2a3a", borderRadius: 12, padding: "14px 16px", color: "#e8e6f0", fontSize: 15, lineHeight: 1.7, resize: "vertical", minHeight: 120, fontFamily: "inherit", outline: "none", boxSizing: "border-box" },
+  detectiveBubble: { background: "#1e1030", border: "1px solid #3a2a5a", borderRadius: "0 16px 16px 16px", padding: "16px 20px", marginBottom: 24, fontSize: 15, lineHeight: 1.7, color: "#d4d0e8", position: "relative" },
+  detectiveLabel: { fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "#7c3aed", textTransform: "uppercase", marginBottom: 8 },
+  resultCard: { textAlign: "center", padding: "40px 28px" },
+  levelDisplay: { fontSize: 72, fontWeight: 900, letterSpacing: -3, background: "linear-gradient(135deg, #7c3aed, #c4b5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1 },
+  resultLabel: { fontSize: 14, color: "#888", marginTop: 8, marginBottom: 32 },
+  skillGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 24 },
+  skillBox: { background: "#1a1a27", borderRadius: 12, padding: "14px 16px", border: "1px solid #2a2a3a" },
+  skillName: { fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 },
+  skillLevel: { fontSize: 20, fontWeight: 800, color: "#a78bfa" },
+  startCard: { textAlign: "center", padding: "48px 28px" },
+  startTitle: { fontSize: 36, fontWeight: 900, letterSpacing: -1.5, color: "#f0eeff", marginBottom: 12 },
+  startSub: { fontSize: 16, color: "#888", lineHeight: 1.6, marginBottom: 40, maxWidth: 400, margin: "0 auto 40px" },
+  startBtn: { padding: "16px 48px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #7c3aed, #a78bfa)", color: "#fff", fontSize: 17, fontWeight: 700, cursor: "pointer", letterSpacing: 0.3 },
+  infoRow: { display: "flex", gap: 12, justifyContent: "center", marginBottom: 40, flexWrap: "wrap" },
+  infoPill: { padding: "8px 16px", borderRadius: 20, background: "#1e1e2e", border: "1px solid #2a2a3a", fontSize: 13, color: "#a78bfa", fontWeight: 500 },
+};
+
+const LETTERS = ["A", "B", "C", "D"];
+const SECTIONS = ["vocabulary", "grammar", "comprehension", "listening", "writing"];
+const SECTION_LABELS = { vocabulary: "Vocabulary", grammar: "Grammar", comprehension: "Comprehension", listening: "Listening", writing: "Writing" };
+
+// ─── TIMER COMPONENT ─────────────────────────────────────────────────────────
+function Timer({ seconds, onExpire }) {
+  const [left, setLeft] = useState(seconds);
+  useEffect(() => {
+    if (left <= 0) { onExpire(); return; }
+    const t = setTimeout(() => setLeft(l => l - 1), 1000);
+    return () => clearTimeout(t);
+  }, [left]);
+  const m = Math.floor(left / 60);
+  const s = left % 60;
+  const urgent = left < 60;
   return (
-    <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--radius-lg)', padding:'0.875rem 1rem', marginBottom:'1rem' }} role="group" aria-label="Audio player">
-      <audio ref={audioRef} src={src} preload="auto"
-        onLoadedMetadata={() => { setDuration(audioRef.current?.duration || 0); }}
-        onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
-        onEnded={() => setPlaying(false)}
-        onError={() => setError(true)} />
-      <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-        <button onClick={toggle} aria-label={playing ? 'Pause audio' : 'Play audio'} title={playing ? 'Pause' : 'Play'}
-          style={{ width:'44px', height:'44px', borderRadius:'50%', border:'1.5px solid var(--blue-primary)', background:playing?'var(--blue-primary)':'var(--blue-light)', color:playing?'white':'var(--blue-primary)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, transition:'all var(--transition)', fontSize:'18px' }}>
-          {playing ? '⏸' : '▶'}
-        </button>
-        {error ? (
-          <span style={{ fontSize:'13px', color:'var(--amber-error)' }}>Could not load audio. Try refreshing.</span>
-        ) : (
-          <>
-            <div style={{ flex:1, display:'flex', alignItems:'center', gap:'8px' }}>
-              <span style={{ fontSize:'12px', color:'var(--text-tertiary)', minWidth:'32px', fontVariantNumeric:'tabular-nums' }}>{format(currentTime)}</span>
-              <div role="progressbar" aria-valuenow={duration ? Math.round(currentTime / duration * 100) : 0} aria-valuemin={0} aria-valuemax={100} aria-label="Audio progress"
-                style={{ flex:1, height:'6px', background:'var(--border)', borderRadius:'var(--radius-full)', cursor:'pointer', position:'relative' }}
-                onClick={e => { if (audioRef.current && duration) { const rect = e.currentTarget.getBoundingClientRect(); const pct = (e.clientX - rect.left) / rect.width; audioRef.current.currentTime = pct * duration; } }}>
-                <div style={{ height:'100%', width:`${duration ? (currentTime / duration) * 100 : 0}%`, background:'var(--blue-primary)', borderRadius:'var(--radius-full)', transition:'width 0.1s linear' }} />
-              </div>
-              <span style={{ fontSize:'12px', color:'var(--text-tertiary)', minWidth:'32px', fontVariantNumeric:'tabular-nums' }}>{format(duration)}</span>
-            </div>
-            <button onClick={() => { if (audioRef.current) { audioRef.current.currentTime = 0; setCurrentTime(0); }}}
-              aria-label="Restart audio" title="Restart"
-              style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-tertiary)', fontSize:'14px', padding:'6px' }}>
-              ↺
-            </button>
-          </>
-        )}
-      </div>
-      {label && <p style={{ fontSize:'12px', color:'var(--text-tertiary)', marginTop:'8px', marginBottom:0 }}>{label}</p>}
+    <div style={S.timerBox(urgent)}>
+      <span>⏱</span>
+      <span>{m}:{s.toString().padStart(2, "0")} left</span>
+      {urgent && <span style={{ fontSize: 11 }}>— hurry up</span>}
     </div>
   );
 }
 
-export default function PlacementTest() {
-  const { getToken, markTestComplete } = useAuth();
-  const navigate = useNavigate();
-  const [phase, setPhase] = useState('welcome');
-  const [testId, setTestId] = useState(null);
-  const [question, setQuestion] = useState(null);
-  const [progress, setProgress] = useState(null);
-  const [answer, setAnswer] = useState('');
+// ─── FAKE WORD HUNT COMPONENT ─────────────────────────────────────────────────
+function FakeWordHunt({ question, onAnswer }) {
+  const [selected, setSelected] = useState([]);
+  const [submitted, setSubmitted] = useState(false);
+  const [expired, setExpired] = useState(false);
+
+  const words = question.passage.split(/(\s+|[.,—\-–])/).filter(w => w.trim().length > 0);
+  const cleanWord = (w) => w.replace(/[^a-zA-Z]/g, "");
+
+  const toggle = (word) => {
+    if (submitted || expired) return;
+    const clean = cleanWord(word);
+    if (!clean) return;
+    setSelected(prev =>
+      prev.includes(clean) ? prev.filter(w => w !== clean) : prev.length < question.wordCount ? [...prev, clean] : prev
+    );
+  };
+
+  const submit = () => {
+    if (selected.length !== question.wordCount) return;
+    setSubmitted(true);
+    const correct = question.fakeWords.filter(w => selected.map(s => s.toLowerCase()).includes(w.toLowerCase())).length;
+    onAnswer({ correct, total: question.wordCount, selected });
+  };
+
+  const isSelected = (w) => selected.map(s => s.toLowerCase()).includes(cleanWord(w).toLowerCase());
+  const isFake = (w) => question.fakeWords.map(f => f.toLowerCase()).includes(cleanWord(w).toLowerCase());
+
+  return (
+    <div>
+      <Timer seconds={question.timeLimit} onExpire={() => { setExpired(true); onAnswer({ correct: 0, total: question.wordCount, selected, expired: true }); }} />
+      <p style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>
+        Select exactly <strong style={{ color: "#a78bfa" }}>{question.wordCount}</strong> fake words. Selected: {selected.length}/{question.wordCount}
+      </p>
+      <div style={{ lineHeight: 2.2, fontSize: 16, color: "#d4d0e8" }}>
+        {question.passage.split(/\s+/).map((rawWord, i) => {
+          const clean = cleanWord(rawWord);
+          const sel = isSelected(rawWord);
+          const fake = submitted && isFake(rawWord);
+          const wrongSel = submitted && sel && !isFake(rawWord);
+          return (
+            <span key={i}>
+              <span
+                onClick={() => toggle(rawWord)}
+                style={{
+                  cursor: submitted || expired ? "default" : "pointer",
+                  padding: "2px 4px", borderRadius: 4,
+                  background: fake ? "#22c55e22" : wrongSel ? "#ef444422" : sel ? "#7c3aed33" : "transparent",
+                  border: fake ? "1px solid #22c55e" : wrongSel ? "1px solid #ef4444" : sel ? "1px solid #7c3aed" : "1px solid transparent",
+                  color: fake ? "#86efac" : wrongSel ? "#fca5a5" : sel ? "#c4b5fd" : "#d4d0e8",
+                  transition: "all 0.1s",
+                  textDecoration: sel && !submitted ? "underline" : "none",
+                  fontWeight: sel || fake ? 600 : 400,
+                }}
+              >{rawWord}</span>
+              {" "}
+            </span>
+          );
+        })}
+      </div>
+      {!submitted && !expired && (
+        <button
+          style={{ ...S.nextBtn, opacity: selected.length === question.wordCount ? 1 : 0.4 }}
+          onClick={submit}
+          disabled={selected.length !== question.wordCount}
+        >
+          Submit — {selected.length}/{question.wordCount} selected
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── DETECTIVE WRITING COMPONENT ─────────────────────────────────────────────
+function DetectiveWriting({ userLevel, onComplete }) {
+  const stagesForLevel = () => {
+    const li = LEVELS.indexOf(userLevel);
+    if (li <= 1) return DETECTIVE_STAGES.slice(0, 2);
+    if (li === 2) return DETECTIVE_STAGES.slice(0, 3);
+    if (li === 3) return DETECTIVE_STAGES.slice(0, 4);
+    return DETECTIVE_STAGES;
+  };
+
+  const stages = stagesForLevel();
+  const [stageIndex, setStageIndex] = useState(0);
+  const [responses, setResponses] = useState([]);
+  const [current, setCurrent] = useState("");
+  const [evaluating, setEvaluating] = useState(false);
   const [feedback, setFeedback] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [showHint, setShowHint] = useState(false);
-  const [skillDone, setSkillDone] = useState(null);
-  const [error, setError] = useState('');
-  const [writingLevel, setWritingLevel] = useState(null);
-  const [serverWaking, setServerWaking] = useState(false);
-  const [selectedWords, setSelectedWords] = useState([]);
-  const [timeLeft, setTimeLeft] = useState(null);
-  const wakeTimerRef = useRef(null);
-  const topRef = useRef(null);
-  const timerRef = useRef(null);
-  const submitFnRef = useRef(null);
-  submitFnRef.current = submitAnswer;
 
-  useEffect(() => {
-    const saved = localStorage.getItem('engrow_test_id');
-    if (saved) setTestId(saved);
-    return () => { if (wakeTimerRef.current) clearTimeout(wakeTimerRef.current); };
-  }, []);
+  const stage = stages[stageIndex];
 
-  // Timer countdown for spot_fake questions
-  useEffect(() => {
-    if (question?.type !== 'spot_fake' || !question?.timer) return;
-    setTimeLeft(question.timer);
-    timerRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
-          setTimeout(() => submitFnRef.current?.(), 200);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [question?.id, question?.type]);
+  const evaluate = async () => {
+    if (!current.trim()) return;
+    setEvaluating(true);
+    // Placeholder evaluation — Groq will replace this
+    await new Promise(r => setTimeout(r, 1200));
+    const wordCount = current.trim().split(/\s+/).length;
+    const hasGoodStructure = current.includes(",") || current.includes(".") || wordCount > 8;
+    const verdict = wordCount < 4 ? "BELOW" : hasGoodStructure ? "CORRECT" : "PARTIAL";
+    setFeedback({
+      verdict,
+      message: verdict === "CORRECT"
+        ? "Good response. Clear and well-structured."
+        : verdict === "PARTIAL"
+        ? "You answered but could add more detail."
+        : "Try to write a complete sentence.",
+    });
+    setEvaluating(false);
+  };
 
-  async function startTest() {
-    setLoading(true);
-    setError('');
-    // Show "waking up" message if API takes more than 4 seconds
-    wakeTimerRef.current = setTimeout(() => setServerWaking(true), 4000);
-    try {
-      const res = await fetch(`${API}/test/start`, {
-        method:'POST', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${getToken()}` }
-      });
-      clearTimeout(wakeTimerRef.current);
-      setServerWaking(false);
-      if (!res.ok) throw new Error('Server error');
-      const data = await res.json();
-      setTestId(data.testId);
-      localStorage.setItem('engrow_test_id', data.testId);
-      setPhase('testing');
-      await fetchQuestion(data.testId);
-    } catch (e) {
-      clearTimeout(wakeTimerRef.current);
-      setServerWaking(false);
-      setError('Could not connect. Please try again — sometimes the server takes up to 30 seconds to wake up.');
-      setLoading(false);
+  const next = () => {
+    setResponses(prev => [...prev, { stage: stage.stage, response: current, verdict: feedback?.verdict }]);
+    if (stageIndex + 1 >= stages.length) {
+      onComplete(responses);
+    } else {
+      setStageIndex(i => i + 1);
+      setCurrent("");
+      setFeedback(null);
     }
-  }
-
-  async function fetchQuestion(id) {
-    const tid = id || testId;
-    setLoading(true);
-    setFeedback(null);
-    setAnswer('');
-    setSelectedWords([]);
-    setTimeLeft(null);
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    setShowHint(false);
-    setWritingLevel(null);
-    setError('');
-    try {
-      const res = await fetch(`${API}/test/${tid}/question`, { headers:{ Authorization:`Bearer ${getToken()}` } });
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error || `Server returned ${res.status}`);
-      }
-      const data = await res.json();
-      if (data.completed || (data.skillComplete && data.allComplete)) {
-        await completeTest(tid); return;
-      }
-      if (data.skillComplete) {
-        setSkillDone({ skill:data.completedSkill, level:data.completedLevel, next:data.nextSkill });
-        setPhase('skill_done'); setLoading(false); return;
-      }
-      setQuestion(data.question);
-      setProgress(data.progress);
-      setTimeout(() => topRef.current?.scrollIntoView({ behavior:'smooth', block:'start' }), 100);
-    } catch (e) {
-      setError(e?.message || 'Could not load question. Please try refreshing the page.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function submitAnswer() {
-    const finalAnswer = question?.type === 'spot_fake' ? JSON.stringify(selectedWords) : answer.trim();
-    if (!finalAnswer || (question?.type === 'spot_fake' && selectedWords.length === 0)) return;
-
-    setError('');
-    setSubmitting(true);
-    wakeTimerRef.current = setTimeout(() => setServerWaking(true), 4000);
-    try {
-      const res = await fetch(`${API}/test/${testId}/answer`, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${getToken()}` },
-        body: JSON.stringify({ answer:finalAnswer, skill:question.skill, level:question.level, questionType:question.type, questionData:question })
-      });
-      clearTimeout(wakeTimerRef.current);
-      setServerWaking(false);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      if (data.tooShort) { setError(data.feedback); return; }
-      if (data.writingLevel) setWritingLevel(data.writingLevel);
-      setFeedback(data);
-    } catch {
-      clearTimeout(wakeTimerRef.current);
-      setServerWaking(false);
-      setError('Could not submit. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  async function completeTest(tid) {
-    setPhase('completing');
-    try {
-      const res = await fetch(`${API}/test/${tid}/complete`, { method:'POST', headers:{ Authorization:`Bearer ${getToken()}` } });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      markTestComplete();
-      localStorage.removeItem('engrow_test_id');
-      navigate('/placement-results', { state:{ results:data } });
-    } catch {
-      setError('Could not complete test. Please refresh and try again.');
-      setPhase('testing');
-    }
-  }
-
-  function continueSkill() { setPhase('testing'); setSkillDone(null); fetchQuestion(); }
-
-  const wordCount = answer.trim() ? answer.trim().split(/\s+/).filter(Boolean).length : 0;
-
-  if (phase === 'welcome') return <Welcome onStart={startTest} loading={loading} serverWaking={serverWaking} error={error} />;
-  if (phase === 'skill_done') return <SkillDone info={skillDone} onContinue={continueSkill} />;
-  if (phase === 'completing') return <Completing />;
+  };
 
   return (
-    <div style={S.page}>
-      <div ref={topRef} style={S.container}>
-
-        {/* Skill progress pills — visual + label for dyscalculia */}
-        {progress && (
-          <div style={S.skillBar} role="list" aria-label="Test progress by skill">
-            {SKILL_ORDER.map((s, i) => {
-              const done = i < progress.skillIndex;
-              const current = s === progress.currentSkill;
-              const colors = ['#1B4FD8','#4A9B7F','#D97706','#7C3AED','#DC2626','#0891B2'];
-              return (
-                <div key={s} role="listitem" aria-label={`${SKILL_LABELS[s]}${done ? ' — completed' : current ? ' — in progress' : ' — upcoming'}`}
-                  style={{ ...S.skillChip,
-                    background: done ? '#DCFCE7' : current ? '#EEF2FF' : 'var(--surface)',
-                    borderColor: done ? '#86EFAC' : current ? colors[i] : 'var(--border)',
-                    color: done ? '#15803D' : current ? colors[i] : 'var(--text-tertiary)',
-                    fontWeight: current ? 600 : 400,
-                    display:'flex', alignItems:'center', gap:'5px'
-                  }}>
-                  <span style={{ width:'8px', height:'8px', borderRadius:'50%', background:colors[i], flexShrink:0 }} aria-hidden="true" />
-                  {done && <span aria-hidden="true" style={{ fontSize:'11px' }}>✓</span>}
-                  <span>{SKILL_LABELS[s]}</span>
-                </div>
-              );
-            })}
-            <button onClick={() => { if(confirm('Leave? Progress is saved — you can continue later.')) navigate('/dashboard'); }}
-              style={{ ...S.exitBtn, color:'var(--text-secondary)', fontWeight:500 }}
-              aria-label="Save and exit test">
-              ✕ <span style={{ fontSize:'11px' }}>Save & exit</span>
-            </button>
-          </div>
-        )}
-
-        {/* Server waking up notice */}
-        {serverWaking && (
-          <div style={{ background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'var(--radius-md)', padding:'0.75rem 1rem', marginBottom:'1rem', fontSize:'13px', color:'#92400E', display:'flex', alignItems:'center', gap:'8px' }}>
-            <div className="spinner" style={{ width:'14px', height:'14px', borderWidth:'2px', borderColor:'#FCD34D', borderTopColor:'#D97706' }} />
-            The server is waking up — this can take up to 30 seconds. Please wait.
-          </div>
-        )}
-
-        {error && !serverWaking && (
-          <div className="alert alert-error" style={{ marginBottom:'1rem' }} role="alert">{error}</div>
-        )}
-
-        {/* Question card */}
-        {loading && !question ? <Skeleton /> : question ? (
-          <div style={S.card}>
-            <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'1.25rem' }}>
-              <div style={{ width:'8px', height:'8px', borderRadius:'50%', background:'var(--blue-primary)', flexShrink:0 }} />
-              <span style={{ fontSize:'13px', color:'var(--text-secondary)' }}>
-                {SKILL_LABELS[question.skill]} — {SKILL_DESCRIPTIONS[question.skill]}
-              </span>
-            </div>
-
-            {progress?.showEncouragement && (
-              <div style={{ background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'var(--radius-md)', padding:'0.65rem 0.875rem', fontSize:'13px', color:'#92400E', marginBottom:'1.25rem' }}>
-                Getting harder on purpose — this is how we find your real ceiling. Keep going.
-              </div>
-            )}
-
-            {question.audioUrl && (
-              <AudioPlayer src={`${API.replace(/\/api$/, '')}${question.audioUrl}`}
-                label="You can replay the audio as many times as you need." />
-            )}
-
-            <p style={{ fontSize:'15px', fontWeight:500, color:'var(--text)', marginBottom:'1rem', lineHeight:1.5 }}>
-              {question.instruction}
-            </p>
-
-            {/* Passage */}
-            {question.text && !['fill_blank','fix_error','fill','error'].includes(question.type) && (
-              <div style={S.passage}>{question.text}</div>
-            )}
-
-            {/* Comprehension question */}
-            {question.question && (
-              <p style={{ fontSize:'15px', fontWeight:500, color:'var(--text)', marginTop:'0.75rem', marginBottom:'1rem' }}>
-                {question.question}
-              </p>
-            )}
-
-            {/* Error sentence */}
-            {(question.type === 'fix_error' || question.type === 'error') && (
-              <div style={{ background:'#FEF2F2', border:'1.5px solid #FCA5A5', borderRadius:'var(--radius-md)', padding:'0.875rem 1rem', marginBottom:'1rem', fontStyle:'italic', color:'#991B1B', fontSize:'15px', fontWeight:500 }}>
-                "{question.sentence || question.text}"
-              </div>
-            )}
-
-            {/* Word highlight */}
-            {question.word && (
-              <div style={{ background:'var(--blue-light)', border:'1px solid var(--blue-medium)', borderRadius:'var(--radius-md)', padding:'0.875rem 1.25rem', marginBottom:'1rem', textAlign:'center' }}>
-                <span style={{ fontFamily:'var(--font-serif)', fontSize:'26px', color:'var(--blue-primary)' }}>{question.word}</span>
-              </div>
-            )}
-
-            {/* Answer area */}
-            {!feedback && (
-              <div>
-                {/* Multiple choice: mc, error */}
-                {(question.type === 'fill_blank' || question.type === 'choose_correct' || question.type === 'mc' || question.type === 'error') && question.options ? (
-                  <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'1rem' }} role="group" aria-label="Choose your answer">
-                    {question.options.map((opt, oi) => (
-                      <button key={opt} onClick={() => setAnswer(opt)} aria-pressed={answer===opt}
-                        style={{ padding:'0.7rem 1.375rem', border:'2px solid', borderRadius:'var(--radius-md)', fontSize:'15px', cursor:'pointer', fontFamily:'var(--font-sans)', transition:'all var(--transition)', minHeight:'44px', lineHeight:1.3,
-                          borderColor:answer===opt?'var(--blue-primary)':'var(--border)',
-                          background:answer===opt?'var(--blue-light)':'white',
-                          color:answer===opt?'var(--blue-primary)':'var(--text)',
-                          fontWeight:answer===opt?600:400
-                        }}>
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                ) : question.type === 'fill' && question.blanks ? (
-                  <div style={{ marginBottom:'1rem' }}>
-                    {question.parts && (
-                      <div style={{ background:'var(--bg)', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', padding:'0.875rem 1.125rem', marginBottom:'1rem', fontSize:'15px', lineHeight:1.8, color:'var(--text)' }}>
-                        {question.parts.map((part, i) => {
-                          const isBlank = part.startsWith('[') && part.endsWith(']');
-                          if (isBlank) {
-                            const clean = part.slice(1, -1);
-                            return <span key={i} style={{ display:'inline', borderBottom:'2px dashed var(--blue-primary)', color:'var(--blue-primary)', fontWeight:500, padding:'0 2px' }}>{clean}</span>;
-                          }
-                          return <span key={i}>{part}</span>;
-                        })}
-                      </div>
-                    )}
-                    {(() => {
-                      const blank = question.blanks[0];
-                      if (blank && blank.options) {
-                        return (
-                          <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }} role="group" aria-label="Choose the correct word">
-                            {blank.options.map((opt, oi) => (
-                              <button key={opt} onClick={() => setAnswer(opt)} aria-pressed={answer===opt}
-                                style={{ padding:'0.7rem 1.375rem', border:'2px solid', borderRadius:'var(--radius-md)', fontSize:'15px', cursor:'pointer', fontFamily:'var(--font-sans)', transition:'all var(--transition)', minHeight:'44px', lineHeight:1.3,
-                                  borderColor:answer===opt?'var(--blue-primary)':'var(--border)',
-                                  background:answer===opt?'var(--blue-light)':'white',
-                                  color:answer===opt?'var(--blue-primary)':'var(--text)',
-                                  fontWeight:answer===opt?600:400
-                                }}>
-                                {opt}
-                              </button>
-                            ))}
-                          </div>
-                        );
-                      }
-                      return (
-                        <>
-                          <input type="text" className="form-input" value={answer} onChange={e => setAnswer(e.target.value)} placeholder="Type your answer..." />
-                          <p style={{ fontSize:'12px', color:'var(--text-tertiary)', marginTop:'6px' }}>Press Enter to submit</p>
-                        </>
-                      );
-                    })()}
-                  </div>
-                ) : question.type === 'sort' && question.words ? (
-                  <div style={{ marginBottom:'1rem' }}>
-                    <p style={{ fontSize:'13px', color:'var(--text-secondary)', marginBottom:'0.5rem' }}>Click words in the correct order:</p>
-                    <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', minHeight:'40px', padding:'0.5rem', border:'1.5px dashed var(--border)', borderRadius:'var(--radius-md)' }}>
-                      {answer ? answer.split(' ').map((w, i) => (
-                        <button key={`${w}-${i}`} onClick={() => { const a = answer.split(' '); a.splice(i, 1); setAnswer(a.join(' ')); }}
-                          style={{ padding:'0.55rem 1rem', minHeight:'44px', border:'1.5px solid var(--blue-primary)', borderRadius:'var(--radius-md)', fontSize:'14px', background:'var(--blue-light)', color:'var(--blue-primary)', cursor:'pointer', transition:'all var(--transition)' }}>
-                          {w} ✕
-                        </button>
-                      )) : <span style={{ fontSize:'13px', color:'var(--text-tertiary)', padding:'0.25rem 0' }}>Select words below...</span>}
-                    </div>
-                    <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', marginTop:'0.5rem' }}>
-                      {(() => {
-                        const used = answer ? answer.split(' ') : [];
-                        const counts = {};
-                        used.forEach(w => { counts[w] = (counts[w] || 0) + 1; });
-                        const available = {};
-                        question.words.forEach(w => { available[w] = (available[w] || 0) + 1; });
-                        return question.words.filter(w => (counts[w] || 0) < available[w]);
-                      })().map((w, idx) => (
-                        <button key={`${w}-${idx}`} onClick={() => setAnswer(prev => (prev ? prev + ' ' : '') + w)}
-                          style={{ padding:'0.55rem 1rem', minHeight:'44px', border:'1.5px solid var(--border)', borderRadius:'var(--radius-md)', fontSize:'14px', background:'white', cursor:'pointer', transition:'all var(--transition)' }}>
-                          {w}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : question.type === 'free_write' ? (
-                  <div>
-                    <div style={{ background:'var(--blue-light)', border:'1px solid var(--blue-medium)', borderRadius:'var(--radius-md)', padding:'0.75rem 1rem', marginBottom:'0.875rem', fontSize:'13px', color:'var(--blue-primary)', lineHeight:1.6 }}>
-                      Write about a real experience — the more genuine, the more accurate your result will be. Aim for at least a paragraph.
-                    </div>
-                    <textarea className="form-input" value={answer} onChange={e => { setAnswer(e.target.value); setError(''); }}
-                      placeholder="Write your answer here..." rows={8} aria-label="Your written answer"
-                      style={{ fontSize:'15px', lineHeight:1.8 }} />
-                    <div style={{ display:'flex', justifyContent:'space-between', marginTop:'5px' }}>
-                      <span style={{ fontSize:'12px', color:'var(--text-tertiary)' }}>
-                        {wordCount} words
-                      </span>
-                      <span style={{ fontSize:'12px', color:'var(--text-tertiary)' }}>Suggested: 80–150 words</span>
-                    </div>
-                  </div>
-                ) : question.type === 'spot_fake' ? (
-                  <div>
-                    {/* Timer */}
-                    {timeLeft !== null && question?.timer && (
-                      <div style={{ marginBottom:'1rem' }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:'10px', padding:'0.625rem 0.875rem', background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'var(--radius-md)', borderBottomLeftRadius:0, borderBottomRightRadius:0 }}>
-                          <span style={{ fontSize:'22px', fontWeight:500, fontVariantNumeric:'tabular-nums', color:timeLeft <= 60 ? '#DC2626' : '#92400E' }}>
-                            {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-                          </span>
-                          <span style={{ fontSize:'12px', color:'#92400E' }}>remaining</span>
-                        </div>
-                        <div role="progressbar" aria-valuenow={Math.round((timeLeft / question.timer) * 100)} aria-valuemin={0} aria-valuemax={100} aria-label="Time remaining"
-                          style={{ height:'5px', background:'var(--border)', borderRadius:'0 0 var(--radius-md) var(--radius-md)', overflow:'hidden' }}>
-                          <div style={{ height:'100%', width:`${(timeLeft / question.timer) * 100}%`, background: timeLeft / question.timer > 0.5 ? 'var(--green-accent)' : timeLeft / question.timer > 0.25 ? '#D97706' : '#DC2626', transition:'width 1s linear, background 0.3s' }} />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Passage with clickable words */}
-                    {question.passage && (
-                      <div style={{ background:'var(--bg)', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', padding:'1rem 1.125rem', marginBottom:'1rem', fontSize:'15px', lineHeight:2, color:'var(--text)', fontFamily:'var(--font-serif)' }}>
-                        <p style={{ margin:0, fontSize:'13px', color:'var(--text-secondary)', marginBottom:'0.5rem', fontFamily:'var(--font-sans)' }}>Click any word you think is fake:</p>
-                        {question.passage.split(/(\s+)/).map((segment, i) => {
-                          if (!segment.trim()) return <span key={i}>{segment}</span>;
-                          const word = segment.replace(/[^a-zA-Z'-]/g, '').toLowerCase();
-                          if (!word) return <span key={i}>{segment}</span>;
-                          const selected = selectedWords.includes(word);
-                          const expired = timeLeft === 0;
-                          return (
-                            <span key={i} onClick={() => {
-                              if (expired) return;
-                              if (selected) {
-                                setSelectedWords(prev => prev.filter(w => w !== word));
-                              } else {
-                                setSelectedWords(prev => [...prev, word]);
-                              }
-                            }} style={{
-                              cursor: expired ? 'default' : 'pointer',
-                              padding:'0 2px',
-                              borderRadius:'3px',
-                              background: selected ? 'var(--blue-light)' : 'transparent',
-                              borderBottom: selected ? '2px solid var(--blue-primary)' : '2px solid transparent',
-                              color: selected ? 'var(--blue-primary)' : 'inherit',
-                              fontWeight: selected ? 600 : 400,
-                              transition:'all 0.12s'
-                            }}>
-                              {segment}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Selected chips */}
-                    {selectedWords.length > 0 && (
-                      <div style={{ marginBottom:'1rem' }}>
-                        <p style={{ fontSize:'12px', color:'var(--text-secondary)', marginBottom:'0.5rem', fontWeight:500 }}>
-                          Selected ({selectedWords.length}):
-                        </p>
-                        <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
-                          {selectedWords.map(w => (
-                            <span key={w} style={{ display:'inline-flex', alignItems:'center', gap:'4px', padding:'4px 10px', borderRadius:'14px', fontSize:'13px', background:'var(--blue-light)', border:'1px solid var(--blue-medium)', color:'var(--blue-primary)' }}>
-                              {w}
-                              <button onClick={() => setSelectedWords(prev => prev.filter(x => x !== w))}
-                                style={{ background:'none', border:'none', cursor:'pointer', fontSize:'14px', lineHeight:1, color:'var(--blue-primary)', opacity:0.7, padding:'6px' }}>
-                                ✕
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {timeLeft === 0 && (
-                      <p style={{ fontSize:'13px', color:'#DC2626', marginBottom:'0.5rem' }}>Time's up! Submit your selections.</p>
-                    )}
-                  </div>
-                ) : (
-                  <input type="text" className="form-input" value={answer}
-                    onChange={e => { setAnswer(e.target.value); setError(''); }}
-                    placeholder="Type your answer here..."
-                    onKeyDown={e => e.key==='Enter' && answer.trim() && !submitting && submitAnswer()}
-                    autoFocus aria-label="Your answer" style={{ fontSize:'15px' }} />
-                )}
-
-                {/* Submit */}
-                <button onClick={submitAnswer} disabled={submitting || (question.type !== 'spot_fake' ? !answer.trim() : selectedWords.length === 0)} className="btn btn-primary"
-                  style={{ width:'100%', marginTop:'1.125rem', padding:'0.7rem' }} aria-busy={submitting}>
-                  {submitting
-                    ? <><div className="spinner" style={{ borderTopColor:'white', borderColor:'rgba(255,255,255,0.3)', width:'15px', height:'15px' }} />
-                        {'Checking your answer...'}
-                      </>
-                    : question.type === 'free_write' ? 'Submit writing →' : 'Submit answer →'
-                  }
-                </button>
-              </div>
-            )}
-
-            {/* Feedback */}
-            {feedback && (
-              <div aria-live="polite">
-                {writingLevel ? (
-                  <div style={{ background:'var(--blue-light)', border:'1.5px solid var(--blue-medium)', borderRadius:'var(--radius-lg)', padding:'1.25rem' }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'10px' }}>
-                      <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:'var(--blue-primary)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                      </div>
-                      <div>
-                        <div style={{ fontSize:'14px', fontWeight:600, color:'var(--blue-primary)' }}>Writing analysed</div>
-                        <div style={{ fontSize:'13px', color:'var(--text-secondary)' }}>Detected level: <strong>{writingLevel}</strong></div>
-                      </div>
-                    </div>
-                    <p style={{ fontSize:'13px', color:'var(--text-secondary)', margin:0, lineHeight:1.7 }}>{feedback.feedback}</p>
-                  </div>
-                ) : (
-                  <div style={{ border:'2px solid', borderRadius:'var(--radius-lg)', padding:'1.25rem',
-                    borderColor:feedback.correct?'#86EFAC':'#FECACA',
-                    background:feedback.correct?'#F0FDF4':'#FFF1F2'
-                  }} role="alert">
-                    <div style={{ display:'flex', alignItems:'flex-start', gap:'10px' }}>
-                      <div style={{ width:'26px', height:'26px', borderRadius:'50%', background:feedback.correct?'var(--green-accent)':'#EF4444', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:'1px', fontSize:'13px' }} aria-hidden="true">
-                        {feedback.correct ? '✓' : '✗'}
-                      </div>
-                      <div style={{ flex:1 }}>
-                        <div style={{ fontSize:'15px', fontWeight:600, color:feedback.correct?'var(--green-accent)':'#DC2626', marginBottom:'4px' }}>
-                          {feedback.correct ? 'Correct!' : 'Not quite'}
-                        </div>
-                        {feedback.feedback && (
-                          <p style={{ fontSize:'14px', color:'var(--text)', margin:0, lineHeight:1.65 }}>
-                            {feedback.feedback}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {feedback.correction && (
-                      <div style={{ background:'rgba(255,255,255,0.8)', borderRadius:'var(--radius-md)', padding:'10px 12px', marginTop:'10px', border:'1px solid rgba(0,0,0,0.05)' }}>
-                        <div style={{ fontSize:'11px', fontWeight:600, color:'var(--text-secondary)', marginBottom:'3px', textTransform:'uppercase', letterSpacing:'0.04em' }}>Correct answer</div>
-                        <div style={{ fontSize:'15px', fontWeight:600, color:'var(--text)' }}>{feedback.correction}</div>
-                      </div>
-                    )}
-                    {feedback.rule && (
-                      <div style={{ background:'rgba(255,255,255,0.8)', borderRadius:'var(--radius-md)', padding:'10px 12px', marginTop:'8px', border:'1px solid rgba(0,0,0,0.05)' }}>
-                        <div style={{ fontSize:'11px', fontWeight:600, color:'var(--text-secondary)', marginBottom:'3px', textTransform:'uppercase', letterSpacing:'0.04em' }}>The rule</div>
-                        <div style={{ fontSize:'13px', color:'var(--text-secondary)' }}>{feedback.rule}</div>
-                      </div>
-                    )}
-                  </div>
-                )}
-                <button onClick={() => fetchQuestion()} className="btn btn-primary" style={{ width:'100%', marginTop:'0.875rem', padding:'0.7rem' }} aria-label="Next question">
-                  Next question →
-                </button>
-              </div>
-            )}
-          </div>
-        ) : null}
+    <div>
+      <div style={{ fontSize: 13, color: "#888", marginBottom: 20 }}>
+        Stage {stageIndex + 1} of {stages.length} — {stage.targetLevel}
       </div>
-    </div>
-  );
-}
-
-function Welcome({ onStart, loading, serverWaking, error }) {
-  return (
-    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', padding:'2rem 1rem' }}>
-      <div style={{ maxWidth:'500px', width:'100%' }}>
-        <div style={{ fontFamily:'var(--font-serif)', fontSize:'26px', color:'var(--blue-primary)', letterSpacing:'-0.02em', marginBottom:'2rem', textAlign:'center' }}>Engrow</div>
-        <h1 style={{ fontSize:'24px', fontWeight:500, marginBottom:'0.875rem', letterSpacing:'-0.02em', textAlign:'center' }}>Your placement test</h1>
-        <p style={{ color:'var(--text-secondary)', fontSize:'14px', lineHeight:1.75, marginBottom:'1.5rem', textAlign:'center' }}>
-          This test checks 6 skills separately. It adapts to your level as you go. Takes about <strong>14–22 minutes</strong>.
-        </p>
-
-        <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--radius-lg)', padding:'1.125rem 1.375rem', marginBottom:'1.25rem' }} role="list" aria-label="Skills tested">
-          {[
-            ['Grammar','Fix errors and write sentences — tests real knowledge'],
-            ['Vocabulary','Define words and use them — tests depth, not guessing'],
-            ['Reading','Passages that get harder — tests real comprehension'],
-            ['Writing','Write 80–150 words — AI reads and assesses your level'],
-            ['Dialogue','Real conversations — tests meaning and tone'],
-            ['Listening','Understand spoken English — tests your ear']
-          ].map(([skill, desc], i) => {
-            const colors = ['#1B4FD8','#4A9B7F','#D97706','#7C3AED','#DC2626','#0891B2'];
-            return (
-              <div key={skill} role="listitem" style={{ display:'flex', gap:'10px', alignItems:'flex-start', marginBottom: i < 4 ? '10px' : 0 }}>
-                <div style={{ width:'24px', height:'24px', borderRadius:'50%', background:colors[i], color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:700, flexShrink:0, marginTop:'2px' }} aria-hidden="true">{i+1}</div>
-                <div>
-                  <div style={{ fontSize:'13px', fontWeight:500, color:'var(--text)' }}>{skill}</div>
-                  <div style={{ fontSize:'12px', color:'var(--text-tertiary)', marginTop:'1px' }}>{desc}</div>
-                </div>
-              </div>
-            );
-          })}
+      <div style={S.detectiveBubble}>
+        <div style={S.detectiveLabel}>🕵️ Detective Harris</div>
+        <div style={{ fontStyle: "italic" }}>"{stage.line}"</div>
+      </div>
+      <textarea
+        style={S.textArea}
+        placeholder="Type your response here..."
+        value={current}
+        onChange={e => setCurrent(e.target.value)}
+        disabled={!!feedback || evaluating}
+      />
+      {feedback && (
+        <div style={S.feedbackBox(feedback.verdict === "CORRECT")}>
+          {feedback.verdict === "CORRECT" ? "✓ " : feedback.verdict === "PARTIAL" ? "◐ " : "✗ "}
+          {feedback.message}
         </div>
-
-        <div style={{ background:'var(--blue-light)', border:'1px solid var(--blue-medium)', borderRadius:'var(--radius-md)', padding:'0.75rem 1rem', marginBottom:'1.25rem', fontSize:'13px', color:'var(--blue-primary)', lineHeight:1.6 }}>
-          The test gets harder near the end on purpose — this is how we find your real ceiling. If it feels hard, that is correct.
-        </div>
-
-        {serverWaking && (
-          <div style={{ background:'#FFFBEB', border:'1px solid #FCD34D', borderRadius:'var(--radius-md)', padding:'0.75rem 1rem', marginBottom:'1rem', fontSize:'13px', color:'#92400E', display:'flex', alignItems:'center', gap:'8px' }}>
-            <div className="spinner" style={{ width:'14px', height:'14px', borderWidth:'2px', borderColor:'#FCD34D', borderTopColor:'#D97706' }} />
-            Server is waking up — please wait up to 30 seconds. Do not refresh.
-          </div>
-        )}
-
-        {error && !serverWaking && (
-          <div className="alert alert-error" style={{ marginBottom:'1rem' }} role="alert">{error}
-            <button onClick={onStart} style={{ marginLeft:'10px', background:'none', border:'none', color:'var(--amber-error)', textDecoration:'underline', cursor:'pointer', fontFamily:'var(--font-sans)', fontSize:'13px' }}>
-              Try again
-            </button>
-          </div>
-        )}
-
-        <button onClick={onStart} disabled={loading} className="btn btn-primary btn-lg" style={{ width:'100%' }}>
-          {loading && !serverWaking
-            ? <><div className="spinner" style={{ borderTopColor:'white', borderColor:'rgba(255,255,255,0.3)' }} />Connecting...</>
-            : loading && serverWaking
-            ? <><div className="spinner" style={{ borderTopColor:'white', borderColor:'rgba(255,255,255,0.3)' }} />Waiting for server...</>
-            : 'Start placement test'}
+      )}
+      {!feedback && (
+        <button style={{ ...S.nextBtn, opacity: current.trim() && !evaluating ? 1 : 0.4 }} onClick={evaluate} disabled={!current.trim() || evaluating}>
+          {evaluating ? "Evaluating..." : "Submit Response"}
         </button>
-        <p style={{ textAlign:'center', fontSize:'12px', color:'var(--text-tertiary)', marginTop:'0.875rem' }}>
-          Free — progress is saved if you need to stop
-        </p>
-      </div>
+      )}
+      {feedback && (
+        <button style={S.nextBtn} onClick={next}>
+          {stageIndex + 1 >= stages.length ? "Finish Test" : "Next Question →"}
+        </button>
+      )}
     </div>
   );
 }
 
-function SkillDone({ info, onContinue }) {
-  const skillIndex = SKILL_ORDER.indexOf(info?.skill);
-  return (
-    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', padding:'2rem 1rem' }}>
-      <div style={{ maxWidth:'440px', width:'100%', textAlign:'center' }}>
-        <div style={{ width:'52px', height:'52px', borderRadius:'50%', background:'#DCFCE7', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 1.25rem' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#15803D" strokeWidth="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <h2 style={{ fontSize:'20px', fontWeight:500, marginBottom:'0.5rem' }}>{SKILL_LABELS[info?.skill]} complete</h2>
-        <p style={{ fontSize:'12px', color:'var(--text-tertiary)', marginBottom:'0.5rem' }}>
-          Skill {skillIndex + 1} of {SKILL_ORDER.length}
-        </p>
-        <p style={{ color:'var(--text-secondary)', fontSize:'14px', lineHeight:1.75, marginBottom:'1.5rem' }}>
-          Next: <strong>{SKILL_LABELS[info?.next]}</strong> — {SKILL_DESCRIPTIONS[info?.next]}
-        </p>
-        <button onClick={onContinue} className="btn btn-primary btn-lg" style={{ width:'100%' }}>Continue →</button>
-      </div>
-    </div>
-  );
-}
+// ─── RESULTS SCREEN ───────────────────────────────────────────────────────────
+function Results({ scores, totalScore }) {
+  const finalLevel = () => {
+    if (totalScore >= 90) return "C2";
+    if (totalScore >= 80) return "C1";
+    if (totalScore >= 66) return "B2";
+    if (totalScore >= 46) return "B1";
+    if (totalScore >= 26) return "A2";
+    return "A1";
+  };
 
-function Completing() {
-  const [dotCount, setDotCount] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setDotCount(prev => (prev + 1) % 4), 500);
-    return () => clearInterval(t);
-  }, []);
+  const level = finalLevel();
+  const descriptions = {
+    A1: "You're just starting out. Every expert was once a beginner.",
+    A2: "You know the basics. Now it's time to build.",
+    B1: "You can communicate. Let's sharpen the details.",
+    B2: "You're independent. Push toward fluency.",
+    C1: "You're advanced. Work on mastery and precision.",
+    C2: "Near-native. You think in English."
+  };
+
   return (
-    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', flexDirection:'column', gap:'1rem' }}>
-      <div className="spinner" style={{ width:'28px', height:'28px', borderWidth:'2.5px' }} />
-      <p style={{ color:'var(--text-secondary)', fontSize:'15px' }}>Analysing your results{'.'.repeat(dotCount)}</p>
-      <div style={{ display:'flex', gap:'6px', alignItems:'center' }}>
-        {[0,1,2,3,4].map(i => (
-          <div key={i} style={{ width:'8px', height:'8px', borderRadius:'50%', background:i <= dotCount ? 'var(--blue-primary)' : 'var(--border)', transition:'background 0.3s' }} />
+    <div style={S.resultCard}>
+      <div style={{ fontSize: 13, color: "#666", textTransform: "uppercase", letterSpacing: 2, marginBottom: 16 }}>Your English Level</div>
+      <div style={S.levelDisplay}>{level}</div>
+      <div style={S.resultLabel}>{descriptions[level]}</div>
+
+      <div style={S.skillGrid}>
+        {Object.entries(scores).map(([section, data]) => (
+          <div key={section} style={S.skillBox}>
+            <div style={S.skillName}>{SECTION_LABELS[section] || section}</div>
+            <div style={S.skillLevel}>{data.level || "—"}</div>
+            <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{data.correct}/{data.total} correct</div>
+          </div>
         ))}
       </div>
-      <p style={{ color:'var(--text-tertiary)', fontSize:'13px' }}>This takes about 15 seconds</p>
+
+      <button style={{ ...S.nextBtn, marginTop: 32 }} onClick={() => window.location.reload()}>
+        Take the test again
+      </button>
     </div>
   );
 }
 
-function Skeleton() {
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
+export default function PlacementTest() {
+  const [phase, setPhase] = useState("start"); // start | test | results
+  const [sectionIndex, setSectionIndex] = useState(0);
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [currentLevel, setCurrentLevel] = useState("A2");
+  const [streak, setStreak] = useState(0); // positive = correct streak, negative = wrong streak
+  const [sectionQuestions, setSectionQuestions] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [confirmed, setConfirmed] = useState(false);
+  const [scores, setScores] = useState({});
+  const [sectionCorrect, setSectionCorrect] = useState(0);
+  const [totalScore, setTotalScore] = useState(0);
+
+  const section = SECTIONS[sectionIndex];
+
+  const initSection = (sec, level) => {
+    if (sec === "vocabulary") setSectionQuestions(getQuestionsForSection(VOCABULARY, level));
+    else if (sec === "grammar") setSectionQuestions(getQuestionsForSection(GRAMMAR, level));
+    else if (sec === "comprehension") {
+      const li = LEVELS.indexOf(level);
+      if (li >= 3) {
+        const fw = FAKE_WORD_QUESTIONS.find(q => q.level === level) || FAKE_WORD_QUESTIONS[0];
+        const mc = COMPREHENSION.filter(q => LEVELS.indexOf(q.level) <= li).slice(-1);
+        setSectionQuestions([...mc, fw]);
+      } else {
+        setSectionQuestions(getQuestionsForSection(COMPREHENSION, level));
+      }
+    }
+    else if (sec === "listening") setSectionQuestions([]);
+    else if (sec === "writing") setSectionQuestions([{ id: "writing", type: "detective" }]);
+  };
+
+  const startTest = () => {
+    setPhase("test");
+    initSection(SECTIONS[0], "A2");
+    setSectionIndex(0);
+    setQuestionIndex(0);
+    setCurrentLevel("A2");
+  };
+
+  const handleMCAnswer = (option) => {
+    if (confirmed) return;
+    setSelected(option);
+  };
+
+  const confirmAnswer = () => {
+    if (!selected || confirmed) return;
+    setConfirmed(true);
+    const q = sectionQuestions[questionIndex];
+    const correct = selected === q.answer;
+
+    const points = { A1: 10, A2: 20, B1: 35, B2: 50, C1: 70, C2: 90 }[q.level] || 20;
+    if (correct) setTotalScore(s => s + points);
+
+    const newStreak = correct ? (streak >= 0 ? streak + 1 : 1) : (streak <= 0 ? streak - 1 : -1);
+    setStreak(newStreak);
+    if (correct) setSectionCorrect(s => s + 1);
+
+    // Adaptive level change
+    if (newStreak >= 2) {
+      const li = LEVELS.indexOf(currentLevel);
+      if (li < LEVELS.length - 1) setCurrentLevel(LEVELS[li + 1]);
+      setStreak(0);
+    } else if (newStreak <= -2) {
+      const li = LEVELS.indexOf(currentLevel);
+      if (li > 0) setCurrentLevel(LEVELS[li - 1]);
+      setStreak(0);
+    }
+  };
+
+  const nextQuestion = () => {
+    const isLastQuestion = questionIndex >= sectionQuestions.length - 1;
+    if (isLastQuestion || sectionQuestions.length === 0) {
+      // Record section score
+      setScores(prev => ({
+        ...prev,
+        [section]: { correct: sectionCorrect, total: sectionQuestions.length, level: currentLevel }
+      }));
+      setSectionCorrect(0);
+
+      if (sectionIndex >= SECTIONS.length - 1) {
+        setPhase("results");
+      } else {
+        const nextSection = SECTIONS[sectionIndex + 1];
+        setSectionIndex(i => i + 1);
+        setQuestionIndex(0);
+        setSelected(null);
+        setConfirmed(false);
+        initSection(nextSection, currentLevel);
+      }
+    } else {
+      setQuestionIndex(i => i + 1);
+      setSelected(null);
+      setConfirmed(false);
+    }
+  };
+
+  const progress = phase === "test"
+    ? ((sectionIndex * 20) + ((questionIndex / Math.max(sectionQuestions.length, 1)) * 20))
+    : phase === "results" ? 100 : 0;
+
+  const currentQ = sectionQuestions[questionIndex];
+  const isListening = section === "listening";
+  const isWriting = section === "writing";
+  const isFakeWord = currentQ?.type === "fake_word_hunt";
+  const isDetective = currentQ?.type === "detective";
+
+  if (phase === "start") {
+    return (
+      <div style={S.wrap}>
+        <div style={S.header}>
+          <div style={S.logo}>engrow</div>
+        </div>
+        <div style={{ ...S.card, ...S.startCard }}>
+          <div style={S.startTitle}>Find your level.</div>
+          <p style={{ ...S.startSub, color: "#888", fontSize: 15, lineHeight: 1.7, maxWidth: 400, margin: "0 auto 32px" }}>
+            25 questions across vocabulary, grammar, comprehension, listening, and writing.
+            Gets harder as you go. Takes about 15 minutes.
+          </p>
+          <div style={S.infoRow}>
+            {["5 sections", "Adaptive difficulty", "~15 minutes", "A1 → C2"].map(t => (
+              <div key={t} style={S.infoPill}>{t}</div>
+            ))}
+          </div>
+          <button style={S.startBtn} onClick={startTest}>Start the test →</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "results") {
+    return (
+      <div style={S.wrap}>
+        <div style={S.header}><div style={S.logo}>engrow</div></div>
+        <div style={S.card}>
+          <Results scores={scores} totalScore={totalScore} />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--radius-xl)', padding:'2rem' }}>
-      <div className="skeleton" style={{ height:'12px', width:'40%', marginBottom:'1.5rem' }} />
-      <div className="skeleton" style={{ height:'16px', width:'75%', marginBottom:'1rem' }} />
-      <div className="skeleton" style={{ height:'80px', marginBottom:'1.5rem' }} />
-      <div className="skeleton" style={{ height:'40px', width:'55%' }} />
+    <div style={S.wrap}>
+      <div style={S.header}>
+        <div style={S.logo}>engrow</div>
+        <div style={{ fontSize: 13, color: "#555", fontWeight: 500 }}>
+          {sectionIndex + 1} / {SECTIONS.length}
+        </div>
+      </div>
+
+      <div style={S.progressBar}>
+        <div style={S.progressFill(progress)} />
+      </div>
+
+      <div style={S.card}>
+        <div>
+          <span style={S.sectionTag}>{SECTION_LABELS[section]}</span>
+          <span style={S.levelBadge}>{currentLevel}</span>
+        </div>
+
+        {/* LISTENING PLACEHOLDER */}
+        {isListening && (
+          <div style={{ textAlign: "center", padding: "40px 0" }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🎧</div>
+            <div style={{ fontSize: 16, color: "#888", marginBottom: 24 }}>Listening section</div>
+            <div style={{ fontSize: 14, color: "#555", marginBottom: 32 }}>Audio files will load here from your /listening/ folder.</div>
+            <button style={S.nextBtn} onClick={nextQuestion}>Continue →</button>
+          </div>
+        )}
+
+        {/* DETECTIVE WRITING */}
+        {isDetective && (
+          <div>
+            <div style={S.question}>The Missing Briefcase — Detective Roleplay</div>
+            <DetectiveWriting userLevel={currentLevel} onComplete={(responses) => {
+              setScores(prev => ({ ...prev, writing: { correct: responses.filter(r => r.verdict === "CORRECT").length, total: responses.length, level: currentLevel } }));
+              nextQuestion();
+            }} />
+          </div>
+        )}
+
+        {/* FAKE WORD HUNT */}
+        {isFakeWord && !isDetective && (
+          <div>
+            <div style={S.question}>{currentQ.instructions}</div>
+            <FakeWordHunt question={currentQ} onAnswer={({ correct, total }) => {
+              const points = { B2: 50, C1: 70, C2: 90 }[currentQ.level] || 50;
+              setTotalScore(s => s + Math.round((correct / total) * points));
+              setSectionCorrect(c => c + (correct === total ? 1 : 0));
+              setConfirmed(true);
+            }} />
+            {confirmed && <button style={S.nextBtn} onClick={nextQuestion}>Next →</button>}
+          </div>
+        )}
+
+        {/* STANDARD MC */}
+        {!isListening && !isDetective && !isFakeWord && currentQ && (
+          <div>
+            {currentQ.passage && <div style={S.passage}>{currentQ.passage}</div>}
+            <div style={S.question}>{currentQ.question}</div>
+
+            {currentQ.options.map((opt, i) => {
+              const isSelected = selected === opt;
+              const isCorrect = confirmed && opt === currentQ.answer;
+              const isWrong = confirmed && isSelected && opt !== currentQ.answer;
+              return (
+                <button
+                  key={opt}
+                  style={S.optionBtn(isSelected, isCorrect, isWrong, confirmed)}
+                  onClick={() => handleMCAnswer(opt)}
+                >
+                  <span style={S.optionLetter(isSelected, isCorrect, isWrong)}>{LETTERS[i]}</span>
+                  {opt}
+                  {isCorrect && <span style={{ marginLeft: "auto", fontSize: 16 }}>✓</span>}
+                  {isWrong && <span style={{ marginLeft: "auto", fontSize: 16 }}>✗</span>}
+                </button>
+              );
+            })}
+
+            {confirmed && (
+              <div style={S.feedbackBox(selected === currentQ.answer)}>
+                {selected === currentQ.answer
+                  ? "✓ Correct."
+                  : `✗ The correct answer is: "${currentQ.answer}"`}
+              </div>
+            )}
+
+            {!confirmed && (
+              <button
+                style={{ ...S.nextBtn, opacity: selected ? 1 : 0.35 }}
+                onClick={confirmAnswer}
+                disabled={!selected}
+              >
+                Confirm answer
+              </button>
+            )}
+
+            {confirmed && (
+              <button style={S.nextBtn} onClick={nextQuestion}>
+                {questionIndex >= sectionQuestions.length - 1 ? `Next: ${SECTION_LABELS[SECTIONS[sectionIndex + 1]] || "Results"} →` : "Next question →"}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
-const S = {
-  page: { minHeight:'100vh', background:'var(--bg)', display:'flex', flexDirection:'column', alignItems:'center', padding:'1.5rem 1rem 3rem' },
-  container: { width:'100%', maxWidth:'620px' },
-  skillBar: { display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap', marginBottom:'1.25rem' },
-  skillChip: { padding:'3px 10px', borderRadius:'var(--radius-full)', fontSize:'12px', border:'1px solid', transition:'all 0.15s' },
-  exitBtn: { marginLeft:'auto', background:'none', border:'none', fontSize:'12px', color:'var(--text-tertiary)', cursor:'pointer', fontFamily:'var(--font-sans)', padding:'3px 6px' },
-  card: { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--radius-xl)', padding:'2rem', boxShadow:'var(--shadow-md)' },
-  passage: { background:'var(--bg)', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', padding:'1rem 1.125rem', fontSize:'14px', lineHeight:1.85, color:'var(--text)', marginBottom:'1rem', whiteSpace:'pre-line' }
-};
