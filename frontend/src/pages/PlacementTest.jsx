@@ -40,6 +40,33 @@ const COMPREHENSION = [
   { id: "c-b2-1", level: "B2", type: "mc", passage: "The paradox of choice suggests that having more options does not necessarily lead to greater satisfaction. In fact, an abundance of choices can cause decision paralysis — a state where individuals become so overwhelmed by possibilities that they fail to make any decision at all. Furthermore, even when a decision is made, the awareness of unchosen alternatives can generate lingering regret.", question: "What does 'decision paralysis' mean in this passage?", options: ["Making quick decisions without thinking", "Being physically unable to move", "Feeling unable to choose because there are too many options", "Regretting a decision after making it"], answer: "Feeling unable to choose because there are too many options" },
 ];
 
+const LISTENING = [
+  // A1
+  { id: "l-a1-1", level: "A1", audio: "/audio/voice-a1.mp3", question: "How does the person truly feel about the bus being late?", options: ["They hate it because it makes them late for work", "They don't mind it because it gives them time to rest", "They enjoy it because they can eat breakfast on the bus", "They are confused because the bus is never on time"], answer: 1 },
+  { id: "l-a1-2", level: "A1", audio: "/audio/voice-a1.mp3", question: "What does the narrator do during the morning commute?", options: ["Eat a big breakfast and read the news", "Drink coffee, run to the bus, and sleep on the way", "Walk slowly while listening to music", "Take a taxi to avoid being late"], answer: 1 },
+  { id: "l-a1-3", level: "A1", audio: "/audio/voice-a1-a2.mp3", question: "Why didn't the person buy any shoes?", options: ["They decided they didn't need new shoes after all", "The store was closed when they arrived", "They only like wearing sneakers", "The nice shoes were too expensive and the cheap ones were uncomfortable"], answer: 3 },
+  // A2
+  { id: "l-a2-1", level: "A2", audio: "/audio/voice-a2.mp3", question: "What is the real reason the person left the dishes in the sink?", options: ["They wanted to relax and watch their game because it was getting late", "They broke the kitchen light and couldn't see to clean", "They expected someone else to wash them", "They realized they needed to buy soap the next morning"], answer: 0 },
+  { id: "l-a2-2", level: "A2", audio: "/audio/voice-a2.mp3", question: "What can be inferred about the narrator's priorities at that moment?", options: ["They felt guilty about not cleaning up", "They valued their own comfort and leisure over the chore", "They planned to wake up early and do the dishes", "They were angry about having to cook dinner"], answer: 1 },
+  { id: "l-a2-3", level: "A2", audio: "/audio/voice-a2-b1.mp3", question: "What can be inferred about Sarah's departure from the party?", options: ["She suddenly became very ill and needed medical attention", "She was not enjoying the loud crowded environment", "Her brother had an emergency and forced her to leave", "She was angry because the host played bad music"], answer: 1 },
+  // B1
+  { id: "l-b1-1", level: "B1", audio: "/audio/voice-b1.mp3", question: "What is the underlying problem the narrator is facing in the new office?", options: ["They are unhappy that the new office is too far from home", "They dislike the taste of the new espresso machine", "The open office design lacks the privacy and quiet needed to concentrate", "They are trying to avoid a specific coworker"], answer: 2 },
+  { id: "l-b1-2", level: "B1", audio: "/audio/voice-b1.mp3", question: "Why did the narrator schedule a meeting with their manager?", options: ["To complain about the printer placement", "To request permission to work remotely on certain days", "To ask for a desk relocation away from the hallway", "To discuss getting a promotion"], answer: 1 },
+  { id: "l-b1-3", level: "B1", audio: "/audio/voice-b1-b2.mp3", question: "Why did the narrator suggest taking the train instead of driving?", options: ["They wanted to enjoy the snowy scenery without focusing on the road", "They recognized that driving in heavy snow would be dangerous", "They thought the extra bags would be too heavy for the car", "Their partner dislikes driving long distances in winter"], answer: 1 },
+  // B2
+  { id: "l-b2-1", level: "B2", audio: "/audio/voice-b2.mp3", question: "What do the senior employees anticipate will happen after the merger?", options: ["They expect to be promoted to middle management", "They anticipate that the merger will result in layoffs", "They think the CEO is planning to leave the company", "They believe the rival firm will cancel the merger"], answer: 1 },
+  { id: "l-b2-2", level: "B2", audio: "/audio/voice-b2.mp3", question: "Why are the senior employees speaking in hushed tones?", options: ["They don't want the CEO to hear their concerns", "They are discussing a secret project", "They are afraid of being overheard by rival firm spies", "The breakroom has a quiet policy"], answer: 0 },
+  { id: "l-b2-3", level: "B2", audio: "/audio/voice-b2.mp3", question: "What does the CEO's enthusiastic email suggest?", options: ["The company is honestly preparing employees for changes", "The company is using positive language to hide potential negative outcomes", "The company wants everyone to celebrate the merger", "The company is excited about new business partnerships"], answer: 1 },
+  // C1
+  { id: "l-c1-1", level: "C1", audio: "/audio/voice-c1.mp3", question: "What is the implicit message regarding the restaurant's business practices?", options: ["The restaurant is expanding to serve out-of-state customers", "The owner is buying the regional farms to ensure supply", "The restaurant relies on commercial suppliers despite its local branding", "The restaurant's farm-to-table marketing is deceptive"], answer: 3 },
+  { id: "l-c1-2", level: "C1", audio: "/audio/voice-c1.mp3", question: "How does the owner's response to the food blogger reveal the truth?", options: ["It demonstrates a genuine commitment to quality ingredients", "The vague justification suggests an attempt to deflect scrutiny", "It shows the restaurant is transparent about its supply chain", "The owner is proud of the seasonal menu variety"], answer: 1 },
+  { id: "l-c1-3", level: "C1", audio: "/audio/voice-c1-c2.mp3", question: "What is the author's primary underlying criticism of the new library project?", options: ["It prioritized modern aesthetics over essential community support services", "The glass and steel design is inferior to the historic brick building", "The politicians failed to provide enough books for the library", "The silent atmosphere is too intimidating for local children"], answer: 0 },
+  // C2
+  { id: "l-c2-1", level: "C2", audio: "/audio/voice-c2.mp3", question: "According to the passage, what was the actual result of the educational reform?", options: ["A truly equal educational system that closed the socioeconomic gap", "Higher levels of critical thinking among students", "The complete abandonment of standardized testing", "A superficial statistical success that stifled genuine learning"], answer: 3 },
+  { id: "l-c2-2", level: "C2", audio: "/audio/voice-c2.mp3", question: "What does the author imply about the phrase 'standardize excellence'?", options: ["It accurately describes the reform's successful outcomes", "It is a misleading slogan used to promote a flawed policy", "It represents a breakthrough in educational measurement", "It helped teachers focus on what matters most"], answer: 1 },
+  { id: "l-c2-3", level: "C2", audio: "/audio/voice-c2.mp3", question: "What was the 'profound unmeasured casualty' of the reform?", options: ["The loss of funding for arts programs", "The decline in teacher morale and retention", "The sacrifice of intellectual curiosity and deep learning", "The increase in dropout rates among disadvantaged students"], answer: 2 },
+];
+
 const FAKE_WORD_QUESTIONS = [
   {
     id: "fw-b2-1", level: "B2", type: "fake_word_hunt", timeLimit: 600,
@@ -390,7 +417,7 @@ export default function PlacementTest() {
         setSectionQuestions(getQuestionsForSection(COMPREHENSION, level));
       }
     }
-    else if (sec === "listening") setSectionQuestions([]);
+    else if (sec === "listening") setSectionQuestions(getQuestionsForSection(LISTENING, level));
     else if (sec === "writing") setSectionQuestions([{ id: "writing", type: "detective" }]);
   };
 
@@ -522,13 +549,57 @@ export default function PlacementTest() {
           <span style={S.levelBadge}>{currentLevel}</span>
         </div>
 
-        {/* LISTENING PLACEHOLDER */}
-        {isListening && (
-          <div style={{ textAlign: "center", padding: "40px 0" }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🎧</div>
-            <div style={{ fontSize: 16, color: "#888", marginBottom: 24 }}>Listening section</div>
-            <div style={{ fontSize: 14, color: "#555", marginBottom: 32 }}>Audio files will load here from your /listening/ folder.</div>
-            <button style={S.nextBtn} onClick={nextQuestion}>Continue →</button>
+        {/* LISTENING */}
+        {isListening && currentQ && (
+          <div>
+            <div style={{ background: "#1a1a27", borderRadius: 14, padding: "20px", marginBottom: 24, border: "1px solid #2a2a3a" }}>
+              <div style={{ fontSize: 12, color: "#7c3aed", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>🎧 Listen carefully</div>
+              <audio
+                controls
+                src={`https://engrow-1.onrender.com${currentQ.audio}`}
+                style={{ width: "100%", borderRadius: 8, accentColor: "#7c3aed" }}
+              />
+              <div style={{ fontSize: 12, color: "#555", marginTop: 10 }}>You can replay the audio as many times as you need.</div>
+            </div>
+            <div style={S.question}>{currentQ.question}</div>
+            {currentQ.options.map((opt, i) => {
+              const isSelected = selected === i;
+              const isCorrect = confirmed && i === currentQ.answer;
+              const isWrong = confirmed && isSelected && i !== currentQ.answer;
+              return (
+                <button key={i} style={S.optionBtn(isSelected, isCorrect, isWrong, confirmed)} onClick={() => !confirmed && setSelected(i)}>
+                  <span style={S.optionLetter(isSelected, isCorrect, isWrong)}>{LETTERS[i]}</span>
+                  {opt}
+                  {isCorrect && <span style={{ marginLeft: "auto" }}>✓</span>}
+                  {isWrong && <span style={{ marginLeft: "auto" }}>✗</span>}
+                </button>
+              );
+            })}
+            {confirmed && (
+              <div style={S.feedbackBox(selected === currentQ.answer)}>
+                {selected === currentQ.answer ? "✓ Correct." : `✗ The correct answer is: "${currentQ.options[currentQ.answer]}"`}
+              </div>
+            )}
+            {!confirmed && (
+              <button style={{ ...S.nextBtn, opacity: selected !== null ? 1 : 0.35 }} onClick={() => {
+                if (selected === null) return;
+                setConfirmed(true);
+                const correct = selected === currentQ.answer;
+                const points = { A1: 10, A2: 20, B1: 35, B2: 50, C1: 70, C2: 90 }[currentQ.level] || 20;
+                if (correct) { setTotalScore(s => s + points); setSectionCorrect(c => c + 1); }
+                const newStreak = correct ? (streak >= 0 ? streak + 1 : 1) : (streak <= 0 ? streak - 1 : -1);
+                setStreak(newStreak);
+                if (newStreak >= 2) { const li = LEVELS.indexOf(currentLevel); if (li < LEVELS.length - 1) setCurrentLevel(LEVELS[li + 1]); setStreak(0); }
+                else if (newStreak <= -2) { const li = LEVELS.indexOf(currentLevel); if (li > 0) setCurrentLevel(LEVELS[li - 1]); setStreak(0); }
+              }} disabled={selected === null}>
+                Confirm answer
+              </button>
+            )}
+            {confirmed && (
+              <button style={S.nextBtn} onClick={nextQuestion}>
+                {questionIndex >= sectionQuestions.length - 1 ? `Next: ${SECTION_LABELS[SECTIONS[sectionIndex + 1]] || "Results"} →` : "Next question →"}
+              </button>
+            )}
           </div>
         )}
 
