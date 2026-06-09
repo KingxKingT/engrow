@@ -708,10 +708,25 @@
       },
       {
         "id": "v-a1-5",
-        "type": "free_write",
-        "instruction": "Write ONE sentence using the word happy. Describe a moment or feeling.",
-        "ai": true,
-        "placeholder": "e.g. I feel happy when I am with my family."
+        "type": "fill",
+        "instruction": "Choose the correct word to complete the sentence:",
+        "parts": [
+          "I feel ",
+          "[happy/angry/cold/sick]",
+          " when I see my family."
+        ],
+        "blanks": [
+          {
+            "answer": "happy",
+            "options": [
+              "happy",
+              "angry",
+              "cold",
+              "sick"
+            ]
+          }
+        ],
+        "correct": "happy"
       }
     ],
     "A2": [
@@ -778,10 +793,25 @@
       },
       {
         "id": "v-a2-5",
-        "type": "free_write",
-        "instruction": "Write ONE sentence using the word unfortunately. It should describe something that went wrong.",
-        "ai": true,
-        "placeholder": "e.g. Unfortunately, I missed the last bus home."
+        "type": "fill",
+        "instruction": "Choose the correct word to complete the sentence:",
+        "parts": [
+          "",
+          "[Unfortunately/Unfortunate/Unluckily/Fortunate]",
+          ", I missed the last bus home."
+        ],
+        "blanks": [
+          {
+            "answer": "Unfortunately",
+            "options": [
+              "Unfortunately",
+              "Unfortunate",
+              "Unluckily",
+              "Fortunate"
+            ]
+          }
+        ],
+        "correct": "Unfortunately"
       }
     ],
     "B1": [
@@ -836,10 +866,25 @@
       },
       {
         "id": "v-b1-4",
-        "type": "free_write",
-        "instruction": "Write ONE sentence using the word consequently. Show cause and effect.",
-        "ai": true,
-        "placeholder": "e.g. She didn't study for the exam; consequently, she failed."
+        "type": "fill",
+        "instruction": "Choose the correct word to complete the sentence:",
+        "parts": [
+          "She didn't study for the exam; ",
+          "[consequently/therefore/so/however]",
+          ", she failed."
+        ],
+        "blanks": [
+          {
+            "answer": "consequently",
+            "options": [
+              "consequently",
+              "therefore",
+              "so",
+              "however"
+            ]
+          }
+        ],
+        "correct": "consequently"
       },
       {
         "id": "v-b1-5",
