@@ -335,7 +335,6 @@ export default function PlacementTest() {
                           color:answer===opt?'var(--blue-primary)':'var(--text)',
                           fontWeight:answer===opt?600:400
                         }}>
-                        <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:'20px', height:'20px', borderRadius:'50%', border:'1.5px solid', borderColor:answer===opt?'var(--blue-primary)':'var(--border)', marginRight:'8px', fontSize:'11px', fontWeight:600, flexShrink:0, color:answer===opt?'var(--blue-primary)':'var(--text-tertiary)' }} aria-hidden="true">{String.fromCharCode(65+oi)}</span>
                         {opt}
                       </button>
                     ))}
@@ -367,7 +366,6 @@ export default function PlacementTest() {
                                   color:answer===opt?'var(--blue-primary)':'var(--text)',
                                   fontWeight:answer===opt?600:400
                                 }}>
-                                <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:'20px', height:'20px', borderRadius:'50%', border:'1.5px solid', borderColor:answer===opt?'var(--blue-primary)':'var(--border)', marginRight:'8px', fontSize:'11px', fontWeight:600, flexShrink:0, color:answer===opt?'var(--blue-primary)':'var(--text-tertiary)' }} aria-hidden="true">{String.fromCharCode(65+oi)}</span>
                                 {opt}
                               </button>
                             ))}
