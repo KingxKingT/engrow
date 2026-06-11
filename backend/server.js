@@ -34,6 +34,7 @@ app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/signup', authLimiter);
 
 // Static files (audio, etc.)
+app.use('/audio', (req, res, next) => { res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'); next(); }, express.static(path.join(__dirname, 'public/audio')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes

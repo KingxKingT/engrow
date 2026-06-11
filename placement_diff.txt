@@ -1,0 +1,1028 @@
+﻿diff --git a/frontend/src/pages/PlacementTest.jsx b/frontend/src/pages/PlacementTest.jsx
+index 67e6345..bdbb514 100644
+--- a/frontend/src/pages/PlacementTest.jsx
++++ b/frontend/src/pages/PlacementTest.jsx
+@@ -1,680 +1,454 @@
+-import { useState, useEffect, useRef } from "react";
++import { useState, useRef } from "react";
+ 
+-// ÔöÇÔöÇÔöÇ QUESTION BANK (inline for now, move to API later) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+ const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+ 
++const GRAMMAR = [
++  { id:"gr-a1-1", level:"A1", question:"I ___ from Tunisia, but I live in Paris now.", options:["am","is","are","be"], answer:"am" },
++  { id:"gr-a1-2", level:"A1", question:"My brother ___ like to eat fish.", options:["don't","doesn't","isn't","aren't"], answer:"doesn't" },
++  { id:"gr-a1-3", level:"A1", question:"There ___ three apples on the table.", options:["is","are","am","be"], answer:"are" },
++  { id:"gr-a1-4", level:"A1", question:"Whose jacket is this? It is ___.", options:["my","me","mine","I"], answer:"mine" },
++  { id:"gr-a1-5", level:"A1", question:"We have English class ___ Tuesday mornings.", options:["on","in","at","by"], answer:"on" },
++  { id:"gr-a1-6", level:"A1", question:"She ___ in a bank near the city center.", options:["work","works","working","worked"], answer:"works" },
++  { id:"gr-a2-1", level:"A2", question:"This phone is ___ than my old one.", options:["more expensive","expensiver","most expensive","the most expensive"], answer:"more expensive" },
++  { id:"gr-a2-2", level:"A2", question:"I was reading when the phone suddenly ___.", options:["ring","rang","was ringing","has rung"], answer:"rang" },
++  { id:"gr-a2-3", level:"A2", question:"You ___ park here ÔÇö it is an emergency exit.", options:["don't have to","mustn't","needn't","shouldn't have to"], answer:"mustn't" },
++  { id:"gr-a2-4", level:"A2", question:"She hasn't seen her friend ___ three years.", options:["since","for","in","during"], answer:"for" },
++  { id:"gr-a2-5", level:"A2", question:"If it rains tomorrow, we ___ inside and watch a movie.", options:["stay","will stay","would stay","stayed"], answer:"will stay" },
++  { id:"gr-a2-6", level:"A2", question:"While we ___ in the park, we saw a rare bird.", options:["walked","were walking","are walking","walk"], answer:"were walking" },
++  { id:"gr-b1-1", level:"B1", question:"By the time we arrived, the film ___ already.", options:["started","has already started","had already started","was starting already"], answer:"had already started" },
++  { id:"gr-b1-2", level:"B1", question:"You won't pass the exam ___ you study harder.", options:["if","unless","incase","although"], answer:"unless" },
++  { id:"gr-b1-3", level:"B1", question:"She asked me where ___.", options:["was the station","the station was","is the station","the station is being"], answer:"the station was" },
++  { id:"gr-b1-4", level:"B1", question:"I am really looking forward ___ you at the conference.", options:["to see","to seeing","seeing","for seeing"], answer:"to seeing" },
++  { id:"gr-b1-5", level:"B1", question:"The bridge ___ by the Romans two thousand years ago.", options:["built","was built","has been built","is built"], answer:"was built" },
++  { id:"gr-b1-6", level:"B1", question:"If I ___ you, I would tell her the truth immediately.", options:["am","was","were","had been"], answer:"were" },
++  { id:"gr-b2-1", level:"B2", question:"He is believed ___ the country under a false name last week.", options:["to leave","to be leaving","to have left","having left"], answer:"to have left" },
++  { id:"gr-b2-2", level:"B2", question:"The company, ___ headquarters are in Geneva, announced a layoff.", options:["which","that","whose","who"], answer:"whose" },
++  { id:"gr-b2-3", level:"B2", question:"I'd rather we ___ this privately rather than in front of the team.", options:["discuss","discussed","have discussed","will discuss"], answer:"discussed" },
++  { id:"gr-b2-4", level:"B2", question:"Despite ___ overtime every day, she still couldn't meet the deadline.", options:["to work","working","worked","having to work"], answer:"working" },
++  { id:"gr-b2-5", level:"B2", question:"The manager insisted that all employees ___ formal attire to the gala.", options:["wear","wore","wearing","to wear"], answer:"wear" },
++  { id:"gr-b2-6", level:"B2", question:"It's high time you ___ your career more seriously.", options:["start","started","will start","have started"], answer:"started" },
++  { id:"gr-b2-7", level:"B2", question:"The project would have succeeded if the team ___ the error earlier.", options:["caught","would catch","had caught","has caught"], answer:"had caught" },
++  { id:"gr-c1-1", level:"C1", question:"Scarcely ___ down to dinner when the phone rang urgently.", options:["had she sat","she had sat","did she sit","she sat"], answer:"had she sat" },
++  { id:"gr-c1-2", level:"C1", question:"I was at a disadvantage ___ that I lacked the software training required.", options:["for","in","by","at"], answer:"in" },
++  { id:"gr-c1-3", level:"C1", question:"If you ___ happen to see Marco, tell him the meeting is canceled.", options:["will","should","would","could"], answer:"should" },
++  { id:"gr-c1-4", level:"C1", question:"Not only ___ to deliver on time, but they also exceeded the budget.", options:["did they fail","they failed","had they failed","they did fail"], answer:"did they fail" },
++  { id:"gr-c1-5", level:"C1", question:"But for your intervention, our startup ___ bankrupt months ago.", options:["would go","would have gone","had gone","was going"], answer:"would have gone" },
++  { id:"gr-c1-6", level:"C1", question:"The suspect denied ___ in the robbery, claiming he was out of town.", options:["to involve","being involved","having involve","to be involved"], answer:"being involved" },
++  { id:"gr-c2-1", level:"C2", question:"Her calm demeanor ___ the intense panic she was actually feeling.", options:["belied","exacerbated","bolstered","concealed"], answer:"belied" },
++  { id:"gr-c2-2", level:"C2", question:"Be that as it ___, we still have a contractual obligation to fulfill.", options:["can","may","will","might"], answer:"may" },
++  { id:"gr-c2-3", level:"C2", question:"The committee requires that the building ___ using sustainable materials.", options:["is","be","will be","has been"], answer:"be" },
++  { id:"gr-c2-4", level:"C2", question:"He took umbrage ___ the implication that he had misled the shareholders.", options:["to","at","with","for"], answer:"at" },
++  { id:"gr-c2-5", level:"C2", question:"___ it not for the capital injection, the firm would be in liquidation.", options:["Were","Had","Should","Would"], answer:"Were" },
++  { id:"gr-c2-6", level:"C2", question:"She prides herself on ___ the same administrative mistake twice.", options:["never making","never make","not to make","never made"], answer:"never making" },
++];
++
+ const VOCABULARY = [
+-  { id: "v-a1-1", level: "A1", question: "Which word means a place where you sleep when you travel?", options: ["hotel", "factory", "library", "stadium"], answer: "hotel" },
+-  { id: "v-a1-2", level: "A1", question: "What do you use to write on paper?", options: ["pen", "cup", "door", "clock"], answer: "pen" },
+-  { id: "v-a2-1", level: "A2", question: "She felt very _____ after running five kilometers.", options: ["exhausted", "enormous", "elegant", "essential"], answer: "exhausted" },
+-  { id: "v-a2-2", level: "A2", question: "The store was closed, so we had to come back the next _____.", options: ["morning", "color", "weather", "number"], answer: "morning" },
+-  { id: "v-b1-1", level: "B1", question: "The new policy will _____ all employees starting next month.", options: ["affect", "afford", "attempt", "admit"], answer: "affect" },
+-  { id: "v-b1-2", level: "B1", question: "He gave a very _____ speech that made everyone think deeply.", options: ["thought-provoking", "good-looking", "well-known", "easy-going"], answer: "thought-provoking" },
+-  { id: "v-b2-1", level: "B2", question: "The scientist's findings were _____, challenging everything experts believed.", options: ["groundbreaking", "straightforward", "time-consuming", "well-established"], answer: "groundbreaking" },
+-  { id: "v-b2-2", level: "B2", question: "Which word best fits: 'The government needs to _____ the issue of rising costs.'", options: ["tackle", "glance", "wander", "whisper"], answer: "tackle" },
+-  { id: "v-c1-1", level: "C1", question: "The lawyer's argument was so _____ that even the judge seemed convinced.", options: ["compelling", "complying", "compiling", "competing"], answer: "compelling" },
+-  { id: "v-c1-2", level: "C1", question: "Her _____ approach to management meant she gave staff very little freedom.", options: ["autocratic", "aristocratic", "acrobatic", "automatic"], answer: "autocratic" },
+-  { id: "v-c2-1", level: "C2", question: "The philosopher's writing was known for its _____ ÔÇö every sentence carried layers of meaning.", options: ["profundity", "proximity", "prolixity", "proclivity"], answer: "profundity" },
+-  { id: "v-c2-2", level: "C2", question: "The new law was criticized for its _____ ÔÇö it could be interpreted in too many ways.", options: ["ambiguity", "animosity", "anonymity", "antiquity"], answer: "ambiguity" },
++  { id:"vo-a1-1", level:"A1", question:"I eat eggs and toast for ___ every morning.", options:["breakfast","dinner","supper","brunch"], answer:"breakfast" },
++  { id:"vo-a1-2", level:"A1", question:"Please take your ___ because it is raining outside.", options:["umbrella","coat","hat","gloves"], answer:"umbrella" },
++  { id:"vo-a1-3", level:"A1", question:"The train leaves from the central ___ in ten minutes.", options:["station","airport","port","terminal"], answer:"station" },
++  { id:"vo-a2-1", level:"A2", question:"I can't find my keys ___; I have looked in every room.", options:["anywhere","everywhere","nowhere","somewhere"], answer:"anywhere" },
++  { id:"vo-a2-2", level:"A2", question:"The flight attendant asked all the ___ to fasten their seatbelts.", options:["passengers","customers","clients","travellers"], answer:"passengers" },
++  { id:"vo-a2-3", level:"A2", question:"Taking the bus is much ___ than taking a taxi to the airport.", options:["cheaper","less costly","affordable","economical"], answer:"cheaper" },
++  { id:"vo-b1-1", level:"B1", question:"I didn't ___ how late it was until my alarm went off.", options:["realize","recognize","remind","recall"], answer:"realize" },
++  { id:"vo-b1-2", level:"B1", question:"This is only a ___ solution; we need to fix it properly next week.", options:["temporary","short","brief","quick"], answer:"temporary" },
++  { id:"vo-b1-3", level:"B1", question:"I can't ___ the ticket price for that concert right now.", options:["afford","spend","pay","manage"], answer:"afford" },
++  { id:"vo-b2-1", level:"B2", question:"The outdoor festival had to be ___ due to the severe weather warnings.", options:["postponed","cancelled","suspended","delayed"], answer:"postponed" },
++  { id:"vo-b2-2", level:"B2", question:"Having lived in Berlin for a decade, she now speaks German ___.", options:["fluently","perfectly","accurately","precisely"], answer:"fluently" },
++  { id:"vo-b2-3", level:"B2", question:"If something is ___, it is open to more than one interpretation.", options:["ambiguous","vague","unclear","equivocal"], answer:"ambiguous" },
++  { id:"vo-c1-1", level:"C1", question:"The con artist ___ the elderly couple out of their entire life savings.", options:["swindled","robbed","stole","cheated"], answer:"swindled" },
++  { id:"vo-c1-2", level:"C1", question:"Despite our best efforts, he ___ arrives at least twenty minutes late.", options:["invariably","always","constantly","typically"], answer:"invariably" },
++  { id:"vo-c1-3", level:"C1", question:"It is difficult to ___ the exact moment when public trust collapsed.", options:["pinpoint","identify","locate","determine"], answer:"pinpoint" },
++  { id:"vo-c2-1", level:"C2", question:"In modern cities, surveillance cameras have become nearly ___.", options:["ubiquitous","prevalent","common","widespread"], answer:"ubiquitous" },
++  { id:"vo-c2-2", level:"C2", question:"Refusing to sign the NDA is ___ to resigning from the firm.", options:["tantamount","equivalent","similar","comparable"], answer:"tantamount" },
++  { id:"vo-c2-3", level:"C2", question:"Pouring water on a grease fire will only ___ the danger.", options:["exacerbate","worsen","increase","amplify"], answer:"exacerbate" },
+ ];
+ 
+-const GRAMMAR = [
+-  { id: "g-a1-1", level: "A1", question: "_____ name is Maria.", options: ["Her", "She", "Hers", "He"], answer: "Her" },
+-  { id: "g-a1-2", level: "A1", question: "There _____ two cats in the garden.", options: ["are", "is", "am", "be"], answer: "are" },
+-  { id: "g-a2-1", level: "A2", question: "I _____ to the market yesterday but it was closed.", options: ["went", "go", "gone", "going"], answer: "went" },
+-  { id: "g-a2-2", level: "A2", question: "She _____ English for three years now.", options: ["has been studying", "studied", "is studying", "studies"], answer: "has been studying" },
+-  { id: "g-b1-1", level: "B1", question: "If I _____ more time, I would learn a new language.", options: ["had", "have", "would have", "will have"], answer: "had" },
+-  { id: "g-b1-2", level: "B1", question: "The report _____ by the team before the deadline.", options: ["was completed", "completed", "has completed", "completing"], answer: "was completed" },
+-  { id: "g-b2-1", level: "B2", question: "_____ she had studied harder, she might have passed the exam.", options: ["Had", "If", "Were", "Should"], answer: "Had" },
+-  { id: "g-b2-2", level: "B2", question: "He spoke so quietly that I could barely _____ what he was saying.", options: ["make out", "make up", "make off", "make over"], answer: "make out" },
+-  { id: "g-c1-1", level: "C1", question: "Not until she arrived _____ we realize how serious the situation was.", options: ["did", "had", "were", "would"], answer: "did" },
+-  { id: "g-c1-2", level: "C1", question: "The suspect denied _____ at the scene of the crime.", options: ["having been", "to have been", "to be", "being have"], answer: "having been" },
+-  { id: "g-c2-1", level: "C2", question: "_____ the circumstances been different, the outcome would have surprised us all.", options: ["Had", "Were", "Should", "Would"], answer: "Had" },
+-  { id: "g-c2-2", level: "C2", question: "She is said _____ the most influential thinker of her generation.", options: ["to have been", "to be having been", "having been", "to have being"], answer: "to have been" },
++const READING = [
++  { id:"rd-a1-1", level:"A1", passage:"Anna works in a hospital from Monday to Friday. She usually wakes up at 6 AM, but on weekends she sleeps until 10 AM. She loves cooking Italian food. Last Saturday, she made pizza for her friends, but she didn't have any tomatoes, so she used extra cheese instead.", questions:[{ q:"What time does Anna wake up on Sunday?", options:["At 6 AM exactly","Before 6 AM","At 10 AM","Around noon"], answer:2 },{ q:"Why was Anna's pizza different last Saturday?", options:["She cooked Italian food","She missed an ingredient","She invited her friends","She worked all weekend"], answer:1 }] },
++  { id:"rd-a2-1", level:"A2", passage:"When Mark started learning Spanish, he translated every word in his head. This made speaking very slow and stressful. His teacher suggested watching Spanish TV shows with subtitles and guessing the meaning of words from context. After three months, Mark still makes mistakes, but he feels much more comfortable talking to locals.", questions:[{ q:"What was Mark's initial problem with learning Spanish?", options:["He hated watching TV","He translated every word in his head","He couldn't find a good teacher","He had no time to practice"], answer:1 },{ q:"What is the result of following his teacher's advice?", options:["He never makes mistakes","He speaks faster but worse","He feels more confident speaking","He watches TV all day"], answer:2 }] },
++  { id:"rd-b1-1", level:"B1", passage:"The shift towards remote work has altered how employees view productivity. Historically, managers equated time at the desk with actual work done. However, recent surveys show workers feel 30% more productive when they control their own schedules. Despite this data, many executives want to mandate a return to the office, citing a loss of company culture. Critics argue these executives are simply uncomfortable losing visible control over their staff.", questions:[{ q:"How did managers traditionally measure productivity?", options:["By quality of output","By time spent at their desk","By communication skills","By survey responses"], answer:1 },{ q:"What do critics believe is the real reason executives want staff back in the office?", options:["They miss company culture","They want to monitor employees directly","They want to increase workflow","They believe remote data is unreliable"], answer:1 }] },
++  { id:"rd-b2-1", level:"B2", passage:"The integration of AI into creative industries has sparked fierce debate. Technologists champion these tools as democratising art, while professional artists warn that AI models are trained on copyrighted works without permission. Critics further suggest that overreliance on algorithmic generation will lead to a homogenisation of style ÔÇö raw human creativity replaced by mathematically averaged, derivative content.", questions:[{ q:"Why do professional artists object to AI creative tools?", options:["The software is too difficult","AI exploits their work without permission","The art lacks emotion","They want everyone to paint manually"], answer:1 },{ q:"What does 'homogenisation of style' imply?", options:["Art becomes visually boring and uniform","Art becomes more diverse","AI perfectly replicates emotion","Artists will all use the same software"], answer:0 }] },
++  { id:"rd-c1-1", level:"C1", passage:"The pervasive narrative that automation replaces only routine tasks while leaving cognitive work untouched is increasingly untenable. Advanced machine learning is encroaching on domains such as legal analysis, medical diagnostics, and creative writing. If an algorithmic tool can perform 80% of a junior associate's workload at a fraction of the cost, the structural incentive is not to upskill the associate, but to eliminate the role ÔÇö thereby hollowing out the pipeline for future expertise.", questions:[{ q:"What is the primary argument against the optimists?", options:["They underestimate AI software costs","They fail to grasp corporate financial motives","They believe cognitive work is entirely safe","They assume professionals want to be upskilled"], answer:1 },{ q:"What does 'hollowing out the pipeline' suggest?", options:["Senior professionals will work harder","Office infrastructure will decline","Entry-level opportunities needed to develop experts will vanish","Companies will lose data"], answer:2 }] },
++  { id:"rd-c2-1", level:"C2", passage:"The epistemological crisis of the digital age is not merely that falsehoods proliferate, but that the mechanisms by which a society arbitrates truth have been systematically undermined. When information is subject to algorithmic amplification based on engagement metrics rather than veracity, expertise itself is recast as partisan elitism. Attempting to counter misinformation with empirical fact-checking is practically futile ÔÇö the opposing faction does not merely dispute the facts, but rejects the underlying institutional framework that generated them.", questions:[{ q:"What is the core issue of the epistemological crisis?", options:["Algorithms are too intelligent to control","Society no longer has a shared method for determining truth","Fact-checkers are biased and partisan","There is too much information on the internet"], answer:1 },{ q:"Why is fact-checking 'practically futile'?", options:["People are too distracted to read data","Algorithms hide fact-checked content","The opposing side rejects the authority of the sources themselves","Fact-checkers frequently make errors"], answer:2 }] },
+ ];
+ 
+-const COMPREHENSION = [
+-  { id: "c-a1-1", level: "A1", type: "mc", passage: "Tom wakes up at seven every morning. He eats breakfast and then walks to school. He likes school because he has many friends there.", question: "Why does Tom like school?", options: ["Because it is close to his house", "Because he has many friends there", "Because the food is good", "Because he wakes up early"], answer: "Because he has many friends there" },
+-  { id: "c-a2-1", level: "A2", type: "mc", passage: "Maria moved to a new city last year. At first she felt lonely because she didn't know anyone. But after joining a dance class, she made many new friends and now loves living there.", question: "What helped Maria feel better in the new city?", options: ["Getting a new job", "Moving back to her old city", "Joining a dance class", "Calling her family every day"], answer: "Joining a dance class" },
+-  { id: "c-b1-1", level: "B1", type: "mc", passage: "Remote work has changed the way people think about their careers. Many employees now value flexibility over salary. Companies that refuse to offer remote options often struggle to hire talented workers, while those that embrace it report higher productivity and lower staff turnover.", question: "What happens to companies that don't offer remote work?", options: ["They save more money on office space", "They struggle to find talented workers", "Their employees become more productive", "They report lower staff turnover"], answer: "They struggle to find talented workers" },
+-  { id: "c-b2-1", level: "B2", type: "mc", passage: "The paradox of choice suggests that having more options does not necessarily lead to greater satisfaction. In fact, an abundance of choices can cause decision paralysis ÔÇö a state where individuals become so overwhelmed by possibilities that they fail to make any decision at all. Furthermore, even when a decision is made, the awareness of unchosen alternatives can generate lingering regret.", question: "What does 'decision paralysis' mean in this passage?", options: ["Making quick decisions without thinking", "Being physically unable to move", "Feeling unable to choose because there are too many options", "Regretting a decision after making it"], answer: "Feeling unable to choose because there are too many options" },
++const DIALOGUE = [
++  { id:"dl-a1-1", level:"A1", passage:"Waiter: Are you ready to order, sir?\nCustomer: Yes. I would like the chicken soup and a black coffee, please.\nWaiter: I'm sorry, we don't have chicken soup today. We only have tomato soup.\nCustomer: Oh, I don't like tomatoes. I'll just have the coffee, then.", questions:[{ q:"What will the customer actually have?", options:["Chicken soup and coffee","Tomato soup and coffee","Only a black coffee","Nothing at all"], answer:2 },{ q:"Why didn't the customer order food?", options:["He wasn't hungry","He forgot his money","He disliked the available option","He only ever drinks coffee"], answer:2 }] },
++  { id:"dl-a2-1", level:"A2", passage:"Clerk: Hello, how can I help you?\nCustomer: Hi, I bought this printer yesterday, but it keeps jamming. Can I return it?\nClerk: I can process a return, but only if you have the original receipt and the box.\nCustomer: I have the receipt, but I threw the box away this morning.\nClerk: Unfortunately, company policy requires the packaging for a full refund. I can offer you a repair instead.", questions:[{ q:"Why won't the customer receive a refund?", options:["The printer works perfectly","They lost the receipt","They discarded the packaging","They bought it too long ago"], answer:2 },{ q:"What does the clerk offer instead?", options:["A brand new box","To fix the printer","To call the manager","A partial refund"], answer:1 }] },
++  { id:"dl-b1-1", level:"B1", passage:"Emma: Did you see the memo about the new software update?\nDavid: I did. To be honest, I'm dreading it. Last time IT updated our systems, we lost half our client database for two days.\nEmma: True, but they assure us they've backed everything up to the cloud this time.\nDavid: They said that last time too. I'm going to manually export my files to a hard drive before I leave today, just in case.", questions:[{ q:"What is David's attitude toward the upcoming update?", options:["Excited for new features","Confused by the process","Suspicious and worried based on past experience","Completely trusts the IT team"], answer:2 },{ q:"Why is David backing up his files manually?", options:["He doesn't trust the cloud backup","He wants to work from home","His manager ordered him to","He is leaving the company"], answer:0 }] },
++  { id:"dl-b2-1", level:"B2", passage:"Interviewer: Your CV notes a six-month employment gap last year. Could you walk me through that?\nCandidate: Certainly. My department was made redundant during a major restructuring. However, I immediately enrolled in an intensive data analytics bootcamp and earned my certification.\nInterviewer: That's quite a pivot from marketing. What prompted that specific choice?\nCandidate: I'd noticed that marketing decisions were becoming entirely data-driven. Without quantitative skills, my strategic value would eventually plateau.", questions:[{ q:"Why did the candidate leave their previous job?", options:["They quit to study","They were fired for poor performance","Their position was eliminated in a restructuring","They wanted a new career"], answer:2 },{ q:"What does 'my strategic value would eventually plateau' mean?", options:["They would eventually be promoted","Their career growth would stall","They would need to switch companies","Their salary would increase rapidly"], answer:1 }] },
++  { id:"dl-c1-1", level:"C1", passage:"Investigator: You signed off on the safety report stating the bridge was structurally sound. Yet, within six months, critical stress fractures appeared.\nEngineer: I signed off on data provided by the primary contractor. My mandate was to verify their mathematical models, not to conduct secondary field testing.\nInvestigator: So your assessment was purely theoretical? Your mandate didn't require you to verify if materials matched the models?\nEngineer: Standard industry practice dictates that material compliance is the purview of the site inspector. I was acting strictly as a consulting analyst.", questions:[{ q:"What is the engineer's primary defense?", options:["The fractures are not dangerous","He was given fabricated data","His responsibilities did not include physical site checks","He explicitly warned them about the materials"], answer:2 },{ q:"What is the investigator trying to establish?", options:["That the engineer is poorly qualified","That the engineer's interpretation of his role is too narrow","That the contractor lied to the government","That standard practice is illegal"], answer:1 }] },
++  { id:"dl-c2-1", level:"C2", passage:"Moderator: Professor, your paper asserts the correlation is spurious. Yet, the Oxford longitudinal study controls for the exact confounds you mentioned.\nProfessor: They controlled for baseline socio-economic status, yes, but their methodology relied on self-reported retrospective data, which introduces massive recall bias.\nModerator: Even conceding a margin of recall bias, the effect size was highly robust across three different cohorts.\nProfessor: A robust effect size derived from systematically flawed data merely gives you a highly precise measurement of the wrong thing.", questions:[{ q:"What is the professor's primary critique of the Oxford study?", options:["They failed to control for socio-economic status","The cohorts were too small","The data collection method was inherently flawed","They misinterpreted the effect size"], answer:2 },{ q:"What does 'a highly precise measurement of the wrong thing' mean?", options:["Large effect sizes are automatically suspicious","The researchers used advanced methods but started with bad data","The researchers manipulated outcomes deliberately","Statistical precision is useless in sociology"], answer:1 }] },
+ ];
+ 
+ const LISTENING = [
+-  // A1
+-  { id: "l-a1-1", level: "A1", audio: "/audio/voice-a1.mp3", question: "How does the person truly feel about the bus being late?", options: ["They hate it because it makes them late for work", "They don't mind it because it gives them time to rest", "They enjoy it because they can eat breakfast on the bus", "They are confused because the bus is never on time"], answer: 1 },
+-  { id: "l-a1-2", level: "A1", audio: "/audio/voice-a1.mp3", question: "What does the narrator do during the morning commute?", options: ["Eat a big breakfast and read the news", "Drink coffee, run to the bus, and sleep on the way", "Walk slowly while listening to music", "Take a taxi to avoid being late"], answer: 1 },
+-  { id: "l-a1-3", level: "A1", audio: "/audio/voice-a1-a2.mp3", question: "Why didn't the person buy any shoes?", options: ["They decided they didn't need new shoes after all", "The store was closed when they arrived", "They only like wearing sneakers", "The nice shoes were too expensive and the cheap ones were uncomfortable"], answer: 3 },
+-  // A2
+-  { id: "l-a2-1", level: "A2", audio: "/audio/voice-a2.mp3", question: "What is the real reason the person left the dishes in the sink?", options: ["They wanted to relax and watch their game because it was getting late", "They broke the kitchen light and couldn't see to clean", "They expected someone else to wash them", "They realized they needed to buy soap the next morning"], answer: 0 },
+-  { id: "l-a2-2", level: "A2", audio: "/audio/voice-a2.mp3", question: "What can be inferred about the narrator's priorities at that moment?", options: ["They felt guilty about not cleaning up", "They valued their own comfort and leisure over the chore", "They planned to wake up early and do the dishes", "They were angry about having to cook dinner"], answer: 1 },
+-  { id: "l-a2-3", level: "A2", audio: "/audio/voice-a2-b1.mp3", question: "What can be inferred about Sarah's departure from the party?", options: ["She suddenly became very ill and needed medical attention", "She was not enjoying the loud crowded environment", "Her brother had an emergency and forced her to leave", "She was angry because the host played bad music"], answer: 1 },
+-  // B1
+-  { id: "l-b1-1", level: "B1", audio: "/audio/voice-b1.mp3", question: "What is the underlying problem the narrator is facing in the new office?", options: ["They are unhappy that the new office is too far from home", "They dislike the taste of the new espresso machine", "The open office design lacks the privacy and quiet needed to concentrate", "They are trying to avoid a specific coworker"], answer: 2 },
+-  { id: "l-b1-2", level: "B1", audio: "/audio/voice-b1.mp3", question: "Why did the narrator schedule a meeting with their manager?", options: ["To complain about the printer placement", "To request permission to work remotely on certain days", "To ask for a desk relocation away from the hallway", "To discuss getting a promotion"], answer: 1 },
+-  { id: "l-b1-3", level: "B1", audio: "/audio/voice-b1-b2.mp3", question: "Why did the narrator suggest taking the train instead of driving?", options: ["They wanted to enjoy the snowy scenery without focusing on the road", "They recognized that driving in heavy snow would be dangerous", "They thought the extra bags would be too heavy for the car", "Their partner dislikes driving long distances in winter"], answer: 1 },
+-  // B2
+-  { id: "l-b2-1", level: "B2", audio: "/audio/voice-b2.mp3", question: "What do the senior employees anticipate will happen after the merger?", options: ["They expect to be promoted to middle management", "They anticipate that the merger will result in layoffs", "They think the CEO is planning to leave the company", "They believe the rival firm will cancel the merger"], answer: 1 },
+-  { id: "l-b2-2", level: "B2", audio: "/audio/voice-b2.mp3", question: "Why are the senior employees speaking in hushed tones?", options: ["They don't want the CEO to hear their concerns", "They are discussing a secret project", "They are afraid of being overheard by rival firm spies", "The breakroom has a quiet policy"], answer: 0 },
+-  { id: "l-b2-3", level: "B2", audio: "/audio/voice-b2.mp3", question: "What does the CEO's enthusiastic email suggest?", options: ["The company is honestly preparing employees for changes", "The company is using positive language to hide potential negative outcomes", "The company wants everyone to celebrate the merger", "The company is excited about new business partnerships"], answer: 1 },
+-  // C1
+-  { id: "l-c1-1", level: "C1", audio: "/audio/voice-c1.mp3", question: "What is the implicit message regarding the restaurant's business practices?", options: ["The restaurant is expanding to serve out-of-state customers", "The owner is buying the regional farms to ensure supply", "The restaurant relies on commercial suppliers despite its local branding", "The restaurant's farm-to-table marketing is deceptive"], answer: 3 },
+-  { id: "l-c1-2", level: "C1", audio: "/audio/voice-c1.mp3", question: "How does the owner's response to the food blogger reveal the truth?", options: ["It demonstrates a genuine commitment to quality ingredients", "The vague justification suggests an attempt to deflect scrutiny", "It shows the restaurant is transparent about its supply chain", "The owner is proud of the seasonal menu variety"], answer: 1 },
+-  { id: "l-c1-3", level: "C1", audio: "/audio/voice-c1-c2.mp3", question: "What is the author's primary underlying criticism of the new library project?", options: ["It prioritized modern aesthetics over essential community support services", "The glass and steel design is inferior to the historic brick building", "The politicians failed to provide enough books for the library", "The silent atmosphere is too intimidating for local children"], answer: 0 },
+-  // C2
+-  { id: "l-c2-1", level: "C2", audio: "/audio/voice-c2.mp3", question: "According to the passage, what was the actual result of the educational reform?", options: ["A truly equal educational system that closed the socioeconomic gap", "Higher levels of critical thinking among students", "The complete abandonment of standardized testing", "A superficial statistical success that stifled genuine learning"], answer: 3 },
+-  { id: "l-c2-2", level: "C2", audio: "/audio/voice-c2.mp3", question: "What does the author imply about the phrase 'standardize excellence'?", options: ["It accurately describes the reform's successful outcomes", "It is a misleading slogan used to promote a flawed policy", "It represents a breakthrough in educational measurement", "It helped teachers focus on what matters most"], answer: 1 },
+-  { id: "l-c2-3", level: "C2", audio: "/audio/voice-c2.mp3", question: "What was the 'profound unmeasured casualty' of the reform?", options: ["The loss of funding for arts programs", "The decline in teacher morale and retention", "The sacrifice of intellectual curiosity and deep learning", "The increase in dropout rates among disadvantaged students"], answer: 2 },
++  { id:"ls-a1-1", level:"A1", audio:"/audio/voice-a1.mp3", question:"How does the person truly feel about the bus being late?", options:["They hate it because it makes them late","They don't mind ÔÇö it gives them time to rest","They enjoy it because they eat on the bus","They are confused because the bus is never on time"], answer:1 },
++  { id:"ls-a1-2", level:"A1", audio:"/audio/voice-a1-a2.mp3", question:"Why didn't the person buy any shoes?", options:["They decided they didn't need new ones","The store was closed","They only wear sneakers","The nice shoes were too expensive and the cheap ones were uncomfortable"], answer:3 },
++  { id:"ls-a2-1", level:"A2", audio:"/audio/voice-a2.mp3", question:"What is the real reason the person left the dishes in the sink?", options:["They wanted to watch their game because it was late","They broke the kitchen light","They expected someone else to clean","They needed to buy soap"], answer:0 },
++  { id:"ls-a2-2", level:"A2", audio:"/audio/voice-a2-b1.mp3", question:"What can be inferred about Sarah's departure from the party?", options:["She suddenly became very ill","She was not enjoying the loud crowded environment","Her brother had an emergency","She was angry about the music"], answer:1 },
++  { id:"ls-b1-1", level:"B1", audio:"/audio/voice-b1.mp3", question:"What is the underlying problem the narrator faces in the new office?", options:["The office is too far from home","They dislike the espresso machine","The open design lacks privacy needed to concentrate","They are avoiding a specific coworker"], answer:2 },
++  { id:"ls-b1-2", level:"B1", audio:"/audio/voice-b1-b2.mp3", question:"Why did the narrator suggest taking the train instead of driving?", options:["To enjoy the scenery","Driving in heavy snow would be dangerous","The bags would be too heavy for the car","Their partner dislikes driving in winter"], answer:1 },
++  { id:"ls-b2-1", level:"B2", audio:"/audio/voice-b2.mp3", question:"What do the senior employees anticipate will happen after the merger?", options:["Promotions to management","Layoffs and job losses","The CEO is leaving","The rival firm will cancel the merger"], answer:1 },
++  { id:"ls-b2-2", level:"B2", audio:"/audio/voice-b2.mp3", question:"What does the CEO's enthusiastic email suggest about the company's communication style?", options:["Honest and transparent preparation","Positive language used to obscure negative outcomes","Genuine excitement about new partnerships","A desire for all staff to celebrate"], answer:1 },
++  { id:"ls-c1-1", level:"C1", audio:"/audio/voice-c1.mp3", question:"What is the implicit message about the restaurant's business practices?", options:["It is expanding to serve more customers","The owner is buying regional farms","It relies on commercial suppliers despite its local branding","Its farm-to-table marketing is completely honest"], answer:2 },
++  { id:"ls-c1-2", level:"C1", audio:"/audio/voice-c1-c2.mp3", question:"What is the author's primary underlying criticism of the new library project?", options:["It prioritized aesthetics over essential community services","The modern design is architecturally inferior","Politicians failed to provide enough books","The silent atmosphere intimidates local children"], answer:0 },
++  { id:"ls-c2-1", level:"C2", audio:"/audio/voice-c2.mp3", question:"According to the passage, what was the actual result of the educational reform?", options:["A genuinely equal educational system","Higher critical thinking among students","Abandonment of standardized testing","A superficial statistical success that stifled genuine learning"], answer:3 },
++  { id:"ls-c2-2", level:"C2", audio:"/audio/voice-c2.mp3", question:"What was the 'profound unmeasured casualty' of the reform?", options:["Loss of arts funding","Decline in teacher morale","The sacrifice of intellectual curiosity and deep learning","Increase in dropout rates"], answer:2 },
+ ];
+ 
+-const FAKE_WORD_QUESTIONS = [
++// Fake word hunt ÔÇö each uses a DIFFERENT trick so users can't spot a pattern
++const FAKE_WORD_HUNT = [
+   {
+-    id: "fw-b2-1", level: "B2", type: "fake_word_hunt", timeLimit: 600,
+-    instructions: "Read carefully. Find the 4 words that DO NOT exist in real English. They follow English patterns but are invented.",
+-    passage: "The research team carefully documented their observations over several months. Each member was responsible for a specific area of the study. The lead scientist, known for her meticulous approach, reviewed every report with great thorness. Her colleagues admired her dedicacy to the project, even when the work became repetulous and tiring. Despite the challenges, the team maintained their professionness throughout.",
+-    fakeWords: ["thorness", "dedicacy", "repetulous", "professionness"],
+-    wordCount: 4
++    id:"fw-b2-1", level:"B2", timeLimit:600, wordCount:5,
++    instructions:"Read carefully. Find exactly 5 words that do NOT exist in real English. They follow English spelling rules but are invented. Tip: they all use a wrong suffix ending.",
++    passage:"The research team carefully documented their observations over several months. Each member was responsible for a specific area of study, ensuring no detail went unnoticed. The lead scientist, known for her meticulous approach, reviewed every report with remarkable thoroughtion. Her colleagues admired her dedicateness to the project, even when the work became repetitional and tiring. Despite the challenges, the team maintained their professiontion throughout the entire process. Their findings were later published in a respected journal, where they received widespread recognization from the broader academic community. The study was praised for its clarition of a previously misunderstood phenomenon in environmental science.",
++    fakeWords:["thoroughtion","dedicateness","repetitional","professiontion","recognization","clarition"],
++    wordCount:6,
+   },
+   {
+-    id: "fw-c1-1", level: "C1", type: "fake_word_hunt", timeLimit: 600,
+-    instructions: "Read carefully. Find the 7 words that DO NOT exist in real English.",
+-    passage: "The philosopher's central argument rested on the notion that human consciousness is fundamentally unresolvable ÔÇö not merely complex, but resistant to any framework that seeks to overclarify it. Critics argued this position was overly disemphasive of scientific progress, preferring a more rationalistic approach. Yet the philosopher remained unconvinced, insisting that to underlook the subjective dimension of experience was to misrepresent reality entirely. His supporters praised the intricateness of his reasoning, while opponents dismissed it as obfuscation. The debate ultimately remained unsolvated ÔÇö a testament to the enduring difficultness of questions at the intersection of mind and meaning.",
+-    fakeWords: ["unresolvable", "overclarify", "disemphasive", "underlook", "intricateness", "unsolvated", "difficultness"],
+-    wordCount: 7
++    id:"fw-c1-1", level:"C1", timeLimit:600, wordCount:7,
++    instructions:"Read carefully. Find exactly 7 words that do NOT exist in real English. These are harder ÔÇö they look almost completely real. The trick changes in this paragraph.",
++    passage:"The philosopher's central argument rested on the notion that human consciousness carries an inherent vaguety that resists systematic analysis. Critics argued this position showed a fundamental simplisty, preferring instead a rationalistic framework built on observable data. Yet the philosopher remained unconvinced, insisting that to overlook the subjectiveness of lived experience was to misrepresent reality with dangerousity. His supporters praised the intricatety of his reasoning, while opponents dismissed it as deliberate obfuscation designed to mask a core emptiness. The debate ultimately remained unsolvated ÔÇö a testament to the enduring difficultness of questions that lie at the intersection of mind, meaning, and the human conditionality of thought itself.",
++    fakeWords:["vaguety","simplisty","dangerousity","intricatety","unsolvated","difficultness","conditionality"],
+   },
+   {
+-    id: "fw-c2-1", level: "C2", type: "fake_word_hunt", timeLimit: 600,
+-    instructions: "Read carefully. Find the 10 words that DO NOT exist in real English. These are extremely difficult ÔÇö they look and sound completely real.",
+-    passage: "Contemporary discourse on artificial intelligence has grown increasingly polarific, with commentators either embracing its transformative potential or decrying what they perceive as an existential menace. The most thoughtive analysts, however, resist such binary framings, arguing instead for a more granulistic understanding of how these systems will reshape labor, creativity, and cognition. One must not disregard the epistemic humilitude required when navigating questions of such scope ÔÇö to speak with unqualified certainness is itself a form of intellectric dishonesty. The technologism of our era demands not passivation but active engagement: a willingness to interrogate assumptions, to sit with ambiguance, and to resist the allure of oversimplistic narratives. Those who cultivate this kind of cogitative discipline will be better positioned to navigate the uncertainties ahead.",
+-    fakeWords: ["polarific", "thoughtive", "granulistic", "humilitude", "certainness", "intellectric", "passivation", "ambiguance", "cogitative", "technologism"],
+-    wordCount: 10
+-  }
++    id:"fw-c2-1", level:"C2", timeLimit:600, wordCount:10,
++    instructions:"Read carefully. Find exactly 10 words that do NOT exist in real English. These are extremely difficult ÔÇö they look and sound completely real at C2 level. Every fake word uses a different trick.",
++    passage:"Contemporary discourse on artificial intelligence has grown increasingly polarific, with commentators either embracing its transformative potential or decrying what they perceive as an existential menace to human cognition. The most thoughtive analysts, however, resist such binary framings, arguing instead for a more granulistic understanding of how these systems will reshape labor and creativity. One must not disregard the epistemic humilitude required when navigating questions of such scope ÔÇö to speak with unqualified certainness is itself a form of intellectric dishonesty. The technologism of our era demands not passivation but active engagement: a willingness to interrogate assumptions, to sit with ambiguance, and to resist the allure of oversimplistic narratives. Those who cultivate this kind of cogitative discipline will, the argument goes, be better equippened to navigate the profound uncertainties of the decades ahead.",
++    fakeWords:["polarific","thoughtive","granulistic","humilitude","certainness","intellectric","passivation","ambiguance","cogitative","equippened"],
++  },
+ ];
+ 
+ const DETECTIVE_STAGES = [
+-  { stage: 1, targetLevel: "A1-A2", line: "Hello. What is your name and where do you work?" },
+-  { stage: 2, targetLevel: "A2-B1", line: "Were you in the office yesterday afternoon? What were you doing between two and four o'clock?" },
+-  { stage: 3, targetLevel: "B1-B2", line: "Did you notice anything unusual yesterday? Someone acting strangely, perhaps? Take your time." },
+-  { stage: 4, targetLevel: "B2-C1", line: "Interesting. You mentioned a colleague behaving oddly. Hypothetically ÔÇö if you had to guess why someone might take that briefcase, what would your theory be?" },
+-  { stage: 5, targetLevel: "C1-C2", line: "One final question ÔÇö in your professional opinion, how could this company's internal security protocols be improved to prevent incidents like this?" },
++  { stage:1, targetLevel:"A1-A2", line:"Hello. What is your name and where do you work?" },
++  { stage:2, targetLevel:"A2-B1", line:"Were you in the office yesterday afternoon? What were you doing between two and four o'clock?" },
++  { stage:3, targetLevel:"B1-B2", line:"Did you notice anything unusual yesterday? Someone acting strangely, perhaps? Take your time." },
++  { stage:4, targetLevel:"B2-C1", line:"Hypothetically ÔÇö if you had to guess why someone might take that briefcase, what would your theory be?" },
++  { stage:5, targetLevel:"C1-C2", line:"In your professional opinion, how could this company's internal security protocols be improved to prevent incidents like this in the future?" },
+ ];
+ 
+-// ÔöÇÔöÇÔöÇ ADAPTIVE ENGINE ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+-function getQuestionsForSection(bank, level) {
+-  const levelIndex = LEVELS.indexOf(level);
+-  const pool = bank.filter(q => {
+-    const qIndex = LEVELS.indexOf(q.level);
+-    return Math.abs(qIndex - levelIndex) <= 1;
+-  });
+-  return pool.sort(() => Math.random() - 0.5).slice(0, 2);
++function pickQuestions(bank, currentLevel) {
++  const li = LEVELS.indexOf(currentLevel);
++  const pool = bank.filter(q => Math.abs(LEVELS.indexOf(q.level) - li) <= 1);
++  return pool.sort(() => Math.random() - 0.5).slice(0, 3);
++}
++
++function pickPassage(bank, currentLevel) {
++  const li = LEVELS.indexOf(currentLevel);
++  const pool = bank.filter(q => Math.abs(LEVELS.indexOf(q.level) - li) <= 1);
++  return pool.sort(() => Math.random() - 0.5).slice(0, 1);
+ }
+ 
+-// ÔöÇÔöÇÔöÇ STYLES ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++const C = { bg:"#0d0d12", surface:"#141420", border:"#252535", accent:"#7c3aed", accentLight:"#a78bfa", accentBg:"#1a0f35", text:"#e8e6f0", muted:"#6b6b8a", faint:"#1e1e2e", green:"#22c55e", greenBg:"#052e16", greenText:"#86efac", red:"#ef4444", redBg:"#2d0a0a", redText:"#fca5a5" };
+ const S = {
+-  wrap: { minHeight: "100vh", background: "#0f0f14", color: "#e8e6f0", fontFamily: "'Inter', system-ui, sans-serif", display: "flex", flexDirection: "column", alignItems: "center", padding: "0 16px 80px" },
+-  header: { width: "100%", maxWidth: 680, padding: "32px 0 24px", display: "flex", alignItems: "center", justifyContent: "space-between" },
+-  logo: { fontSize: 22, fontWeight: 700, letterSpacing: "-0.5px", color: "#c4b5fd" },
+-  progressBar: { width: "100%", maxWidth: 680, height: 4, background: "#1e1e2e", borderRadius: 2, marginBottom: 32, overflow: "hidden" },
+-  progressFill: (pct) => ({ height: "100%", width: `${pct}%`, background: "linear-gradient(90deg, #7c3aed, #a78bfa)", borderRadius: 2, transition: "width 0.4s ease" }),
+-  card: { width: "100%", maxWidth: 680, background: "#16161f", borderRadius: 20, padding: "32px 28px", border: "1px solid #2a2a3a", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" },
+-  sectionTag: { display: "inline-block", fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", color: "#7c3aed", background: "#1e1030", padding: "4px 10px", borderRadius: 6, marginBottom: 20 },
+-  levelBadge: { display: "inline-block", fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "#a78bfa", background: "#1a1030", padding: "3px 8px", borderRadius: 4, marginLeft: 8 },
+-  passage: { background: "#1a1a27", borderLeft: "3px solid #7c3aed", borderRadius: "0 12px 12px 0", padding: "16px 20px", marginBottom: 24, fontSize: 15, lineHeight: 1.8, color: "#d4d0e8" },
+-  question: { fontSize: 18, fontWeight: 600, lineHeight: 1.6, marginBottom: 28, color: "#f0eeff" },
+-  optionBtn: (selected, correct, wrong, disabled) => ({
+-    width: "100%", textAlign: "left", padding: "14px 18px", marginBottom: 10,
+-    borderRadius: 12, border: `2px solid ${correct ? "#22c55e" : wrong ? "#ef4444" : selected ? "#7c3aed" : "#2a2a3a"}`,
+-    background: correct ? "#052e16" : wrong ? "#2d0a0a" : selected ? "#1e1030" : "#1a1a27",
+-    color: correct ? "#86efac" : wrong ? "#fca5a5" : "#e8e6f0",
+-    fontSize: 15, cursor: disabled ? "default" : "pointer",
+-    transition: "all 0.15s ease", fontFamily: "inherit", fontWeight: selected || correct || wrong ? 600 : 400,
+-    display: "flex", alignItems: "center", gap: 12
+-  }),
+-  optionLetter: (selected, correct, wrong) => ({
+-    width: 28, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+-    background: correct ? "#22c55e22" : wrong ? "#ef444422" : selected ? "#7c3aed33" : "#ffffff11",
+-    color: correct ? "#22c55e" : wrong ? "#ef4444" : selected ? "#a78bfa" : "#888",
+-    fontSize: 12, fontWeight: 700, flexShrink: 0
+-  }),
+-  feedbackBox: (correct) => ({
+-    marginTop: 16, padding: "14px 18px", borderRadius: 12,
+-    background: correct ? "#052e16" : "#2d0a0a",
+-    border: `1px solid ${correct ? "#22c55e33" : "#ef444433"}`,
+-    fontSize: 14, color: correct ? "#86efac" : "#fca5a5", lineHeight: 1.6
+-  }),
+-  nextBtn: { marginTop: 24, width: "100%", padding: "16px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #7c3aed, #a78bfa)", color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", letterSpacing: 0.3 },
+-  timerBox: (urgent) => ({ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 10, background: urgent ? "#2d0a0a" : "#1a1a27", border: `1px solid ${urgent ? "#ef4444" : "#2a2a3a"}`, color: urgent ? "#ef4444" : "#a78bfa", fontSize: 14, fontWeight: 600, marginBottom: 20 }),
+-  textArea: { width: "100%", background: "#1a1a27", border: "2px solid #2a2a3a", borderRadius: 12, padding: "14px 16px", color: "#e8e6f0", fontSize: 15, lineHeight: 1.7, resize: "vertical", minHeight: 120, fontFamily: "inherit", outline: "none", boxSizing: "border-box" },
+-  detectiveBubble: { background: "#1e1030", border: "1px solid #3a2a5a", borderRadius: "0 16px 16px 16px", padding: "16px 20px", marginBottom: 24, fontSize: 15, lineHeight: 1.7, color: "#d4d0e8", position: "relative" },
+-  detectiveLabel: { fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "#7c3aed", textTransform: "uppercase", marginBottom: 8 },
+-  resultCard: { textAlign: "center", padding: "40px 28px" },
+-  levelDisplay: { fontSize: 72, fontWeight: 900, letterSpacing: -3, background: "linear-gradient(135deg, #7c3aed, #c4b5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1 },
+-  resultLabel: { fontSize: 14, color: "#888", marginTop: 8, marginBottom: 32 },
+-  skillGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 24 },
+-  skillBox: { background: "#1a1a27", borderRadius: 12, padding: "14px 16px", border: "1px solid #2a2a3a" },
+-  skillName: { fontSize: 11, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 },
+-  skillLevel: { fontSize: 20, fontWeight: 800, color: "#a78bfa" },
+-  startCard: { textAlign: "center", padding: "48px 28px" },
+-  startTitle: { fontSize: 36, fontWeight: 900, letterSpacing: -1.5, color: "#f0eeff", marginBottom: 12 },
+-  startSub: { fontSize: 16, color: "#888", lineHeight: 1.6, marginBottom: 40, maxWidth: 400, margin: "0 auto 40px" },
+-  startBtn: { padding: "16px 48px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #7c3aed, #a78bfa)", color: "#fff", fontSize: 17, fontWeight: 700, cursor: "pointer", letterSpacing: 0.3 },
+-  infoRow: { display: "flex", gap: 12, justifyContent: "center", marginBottom: 40, flexWrap: "wrap" },
+-  infoPill: { padding: "8px 16px", borderRadius: 20, background: "#1e1e2e", border: "1px solid #2a2a3a", fontSize: 13, color: "#a78bfa", fontWeight: 500 },
++  wrap:{ minHeight:"100vh", background:C.bg, color:C.text, fontFamily:"'Inter',system-ui,sans-serif", display:"flex", flexDirection:"column", alignItems:"center", padding:"0 16px 80px" },
++  header:{ width:"100%", maxWidth:700, padding:"28px 0 20px", display:"flex", alignItems:"center", justifyContent:"space-between" },
++  logo:{ fontSize:20, fontWeight:800, letterSpacing:"-0.5px", color:C.accentLight },
++  bar:{ width:"100%", maxWidth:700, height:3, background:C.faint, borderRadius:2, marginBottom:28, overflow:"hidden" },
++  barFill:(p)=>({ height:"100%", width:`${p}%`, background:`linear-gradient(90deg,${C.accent},${C.accentLight})`, borderRadius:2, transition:"width 0.4s ease" }),
++  card:{ width:"100%", maxWidth:700, background:C.surface, borderRadius:18, padding:"28px 24px", border:`1px solid ${C.border}`, boxShadow:"0 8px 32px rgba(0,0,0,0.4)" },
++  tag:{ display:"inline-block", fontSize:10, fontWeight:700, letterSpacing:2, textTransform:"uppercase", color:C.accent, background:C.accentBg, padding:"4px 10px", borderRadius:6, marginBottom:18 },
++  lvl:{ display:"inline-block", fontSize:10, fontWeight:700, color:C.accentLight, background:C.faint, padding:"3px 8px", borderRadius:4, marginLeft:8 },
++  passage:{ background:C.faint, borderLeft:`3px solid ${C.accent}`, borderRadius:"0 10px 10px 0", padding:"14px 18px", marginBottom:22, fontSize:14, lineHeight:1.85, color:"#c8c5e0", whiteSpace:"pre-wrap" },
++  question:{ fontSize:17, fontWeight:600, lineHeight:1.6, marginBottom:24, color:"#f0eeff" },
++  opt:(sel,ok,bad,dis)=>({ width:"100%", textAlign:"left", padding:"13px 16px", marginBottom:9, borderRadius:11, border:`2px solid ${ok?C.green:bad?C.red:sel?C.accent:C.border}`, background:ok?C.greenBg:bad?C.redBg:sel?C.accentBg:C.faint, color:ok?C.greenText:bad?C.redText:C.text, fontSize:14, cursor:dis?"default":"pointer", transition:"all 0.15s", fontFamily:"inherit", fontWeight:sel||ok||bad?600:400, display:"flex", alignItems:"center", gap:10 }),
++  optLetter:(sel,ok,bad)=>({ width:26, height:26, borderRadius:7, display:"flex", alignItems:"center", justifyContent:"center", background:ok?"#22c55e22":bad?"#ef444422":sel?`${C.accent}33`:"#ffffff11", color:ok?C.green:bad?C.red:sel?C.accentLight:"#666", fontSize:11, fontWeight:700, flexShrink:0 }),
++  fb:(ok)=>({ marginTop:14, padding:"12px 16px", borderRadius:10, background:ok?C.greenBg:C.redBg, border:`1px solid ${ok?"#22c55e33":"#ef444433"}`, fontSize:13, color:ok?C.greenText:C.redText, lineHeight:1.6 }),
++  btn:{ marginTop:22, width:"100%", padding:"15px", borderRadius:12, border:"none", background:`linear-gradient(135deg,${C.accent},${C.accentLight})`, color:"#fff", fontSize:15, fontWeight:700, cursor:"pointer" },
++  btnDim:{ opacity:0.35, pointerEvents:"none" },
++  textarea:{ width:"100%", background:C.faint, border:`2px solid ${C.border}`, borderRadius:11, padding:"13px 15px", color:C.text, fontSize:14, lineHeight:1.7, resize:"vertical", minHeight:110, fontFamily:"inherit", outline:"none", boxSizing:"border-box" },
++  bubble:{ background:C.accentBg, border:`1px solid #3a2a5a`, borderRadius:"0 14px 14px 14px", padding:"14px 18px", marginBottom:22, fontSize:14, lineHeight:1.7, color:"#d4d0e8" },
++  bubbleLabel:{ fontSize:10, fontWeight:700, letterSpacing:1.5, color:C.accent, textTransform:"uppercase", marginBottom:8 },
++  timer:(urg)=>({ display:"flex", alignItems:"center", gap:8, padding:"7px 13px", borderRadius:9, background:urg?C.redBg:C.faint, border:`1px solid ${urg?C.red:C.border}`, color:urg?C.red:C.accentLight, fontSize:13, fontWeight:600, marginBottom:18 }),
++  pill:{ padding:"8px 16px", borderRadius:20, background:C.faint, border:`1px solid ${C.border}`, fontSize:12, color:C.accentLight, fontWeight:500 },
++  resultLevel:{ fontSize:80, fontWeight:900, letterSpacing:-4, background:`linear-gradient(135deg,${C.accent},${C.accentLight})`, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", lineHeight:1, textAlign:"center" },
++  skillBox:{ background:C.faint, borderRadius:11, padding:"13px 15px", border:`1px solid ${C.border}` },
+ };
++const LETTERS = ["A","B","C","D"];
++const SECTION_ORDER = ["grammar","vocabulary","reading","dialogue","listening","writing"];
++const SECTION_LABELS = { grammar:"Grammar", vocabulary:"Vocabulary", reading:"Reading", dialogue:"Dialogue", listening:"Listening", writing:"Writing" };
+ 
+-const LETTERS = ["A", "B", "C", "D"];
+-const SECTIONS = ["vocabulary", "grammar", "comprehension", "listening", "writing"];
+-const SECTION_LABELS = { vocabulary: "Vocabulary", grammar: "Grammar", comprehension: "Comprehension", listening: "Listening", writing: "Writing" };
+-
+-// ÔöÇÔöÇÔöÇ TIMER COMPONENT ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+ function Timer({ seconds, onExpire }) {
+   const [left, setLeft] = useState(seconds);
+-  useEffect(() => {
+-    if (left <= 0) { onExpire(); return; }
+-    const t = setTimeout(() => setLeft(l => l - 1), 1000);
+-    return () => clearTimeout(t);
+-  }, [left]);
+-  const m = Math.floor(left / 60);
+-  const s = left % 60;
+-  const urgent = left < 60;
+-  return (
+-    <div style={S.timerBox(urgent)}>
+-      <span>ÔÅ▒</span>
+-      <span>{m}:{s.toString().padStart(2, "0")} left</span>
+-      {urgent && <span style={{ fontSize: 11 }}>ÔÇö hurry up</span>}
+-    </div>
+-  );
++  useState(() => {
++    const t = setInterval(() => setLeft(l => { if(l<=1){clearInterval(t);onExpire();return 0;}return l-1;}),1000);
++    return ()=>clearInterval(t);
++  },[]);
++  const m=Math.floor(left/60),s=left%60,urg=left<60;
++  return <div style={S.timer(urg)}>ÔÅ▒ {m}:{s.toString().padStart(2,"0")} remaining{urg?" ÔÇö hurry":""}</div>;
+ }
+ 
+-// ÔöÇÔöÇÔöÇ FAKE WORD HUNT COMPONENT ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+-function FakeWordHunt({ question, onAnswer }) {
++function FakeWordHunt({ q, onDone }) {
+   const [selected, setSelected] = useState([]);
+   const [submitted, setSubmitted] = useState(false);
+-  const [expired, setExpired] = useState(false);
+-
+-  const words = question.passage.split(/(\s+|[.,ÔÇö\-ÔÇô])/).filter(w => w.trim().length > 0);
+-  const cleanWord = (w) => w.replace(/[^a-zA-Z]/g, "");
+-
+-  const toggle = (word) => {
+-    if (submitted || expired) return;
+-    const clean = cleanWord(word);
+-    if (!clean) return;
+-    setSelected(prev =>
+-      prev.includes(clean) ? prev.filter(w => w !== clean) : prev.length < question.wordCount ? [...prev, clean] : prev
+-    );
++  const clean = w=>w.replace(/[^a-zA-Z]/g,"");
++  const toggle = raw=>{
++    if(submitted)return;
++    const w=clean(raw);if(!w)return;
++    setSelected(p=>p.map(x=>x.toLowerCase()).includes(w.toLowerCase())?p.filter(x=>x.toLowerCase()!==w.toLowerCase()):p.length<q.wordCount?[...p,w]:p);
+   };
+-
+-  const submit = () => {
+-    if (selected.length !== question.wordCount) return;
++  const isSelected=raw=>selected.map(x=>x.toLowerCase()).includes(clean(raw).toLowerCase());
++  const isFake=raw=>q.fakeWords.map(f=>f.toLowerCase()).includes(clean(raw).toLowerCase());
++  const submit=()=>{
++    if(selected.length!==q.wordCount)return;
+     setSubmitted(true);
+-    const correct = question.fakeWords.filter(w => selected.map(s => s.toLowerCase()).includes(w.toLowerCase())).length;
+-    onAnswer({ correct, total: question.wordCount, selected });
++    const hits=q.fakeWords.filter(f=>selected.map(x=>x.toLowerCase()).includes(f.toLowerCase())).length;
++    setTimeout(()=>onDone(hits,q.wordCount),1800);
+   };
+-
+-  const isSelected = (w) => selected.map(s => s.toLowerCase()).includes(cleanWord(w).toLowerCase());
+-  const isFake = (w) => question.fakeWords.map(f => f.toLowerCase()).includes(cleanWord(w).toLowerCase());
+-
+   return (
+     <div>
+-      <Timer seconds={question.timeLimit} onExpire={() => { setExpired(true); onAnswer({ correct: 0, total: question.wordCount, selected, expired: true }); }} />
+-      <p style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>
+-        Select exactly <strong style={{ color: "#a78bfa" }}>{question.wordCount}</strong> fake words. Selected: {selected.length}/{question.wordCount}
+-      </p>
+-      <div style={{ lineHeight: 2.2, fontSize: 16, color: "#d4d0e8" }}>
+-        {question.passage.split(/\s+/).map((rawWord, i) => {
+-          const clean = cleanWord(rawWord);
+-          const sel = isSelected(rawWord);
+-          const fake = submitted && isFake(rawWord);
+-          const wrongSel = submitted && sel && !isFake(rawWord);
+-          return (
+-            <span key={i}>
+-              <span
+-                onClick={() => toggle(rawWord)}
+-                style={{
+-                  cursor: submitted || expired ? "default" : "pointer",
+-                  padding: "2px 4px", borderRadius: 4,
+-                  background: fake ? "#22c55e22" : wrongSel ? "#ef444422" : sel ? "#7c3aed33" : "transparent",
+-                  border: fake ? "1px solid #22c55e" : wrongSel ? "1px solid #ef4444" : sel ? "1px solid #7c3aed" : "1px solid transparent",
+-                  color: fake ? "#86efac" : wrongSel ? "#fca5a5" : sel ? "#c4b5fd" : "#d4d0e8",
+-                  transition: "all 0.1s",
+-                  textDecoration: sel && !submitted ? "underline" : "none",
+-                  fontWeight: sel || fake ? 600 : 400,
+-                }}
+-              >{rawWord}</span>
+-              {" "}
+-            </span>
+-          );
++      <Timer seconds={q.timeLimit} onExpire={()=>{setSubmitted(true);onDone(0,q.wordCount);}}/>
++      <p style={{fontSize:12,color:C.muted,marginBottom:14}}>Select exactly <strong style={{color:C.accentLight}}>{q.wordCount}</strong> fake words ÔÇö {selected.length}/{q.wordCount} selected</p>
++      <div style={{lineHeight:2.4,fontSize:15,color:"#d4d0e8"}}>
++        {q.passage.split(/\s+/).map((raw,i)=>{
++          const sel=isSelected(raw),fake=submitted&&isFake(raw),wrong=submitted&&sel&&!isFake(raw);
++          return <span key={i}><span onClick={()=>toggle(raw)} style={{cursor:submitted?"default":"pointer",padding:"2px 4px",borderRadius:4,background:fake?"#22c55e22":wrong?"#ef444422":sel?`${C.accent}33`:"transparent",border:fake?`1px solid ${C.green}`:wrong?`1px solid ${C.red}`:sel?`1px solid ${C.accent}`:"1px solid transparent",color:fake?C.greenText:wrong?C.redText:sel?C.accentLight:"#d4d0e8",fontWeight:sel||fake?700:400,transition:"all 0.1s"}}>{raw}</span>{" "}</span>;
+         })}
+       </div>
+-      {!submitted && !expired && (
+-        <button
+-          style={{ ...S.nextBtn, opacity: selected.length === question.wordCount ? 1 : 0.4 }}
+-          onClick={submit}
+-          disabled={selected.length !== question.wordCount}
+-        >
+-          Submit ÔÇö {selected.length}/{question.wordCount} selected
+-        </button>
+-      )}
++      {!submitted&&<button style={{...S.btn,...(selected.length!==q.wordCount?S.btnDim:{})}} onClick={submit}>Submit ÔÇö {selected.length}/{q.wordCount} selected</button>}
+     </div>
+   );
+ }
+ 
+-// ÔöÇÔöÇÔöÇ DETECTIVE WRITING COMPONENT ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+ function DetectiveWriting({ userLevel, onComplete }) {
+-  const stagesForLevel = () => {
+-    const li = LEVELS.indexOf(userLevel);
+-    if (li <= 1) return DETECTIVE_STAGES.slice(0, 2);
+-    if (li === 2) return DETECTIVE_STAGES.slice(0, 3);
+-    if (li === 3) return DETECTIVE_STAGES.slice(0, 4);
+-    return DETECTIVE_STAGES;
+-  };
+-
+-  const stages = stagesForLevel();
+-  const [stageIndex, setStageIndex] = useState(0);
+-  const [responses, setResponses] = useState([]);
+-  const [current, setCurrent] = useState("");
+-  const [evaluating, setEvaluating] = useState(false);
+-  const [feedback, setFeedback] = useState(null);
+-
+-  const stage = stages[stageIndex];
+-
+-  const evaluate = async () => {
+-    if (!current.trim()) return;
+-    setEvaluating(true);
+-    // Placeholder evaluation ÔÇö Groq will replace this
+-    await new Promise(r => setTimeout(r, 1200));
+-    const wordCount = current.trim().split(/\s+/).length;
+-    const hasGoodStructure = current.includes(",") || current.includes(".") || wordCount > 8;
+-    const verdict = wordCount < 4 ? "BELOW" : hasGoodStructure ? "CORRECT" : "PARTIAL";
+-    setFeedback({
+-      verdict,
+-      message: verdict === "CORRECT"
+-        ? "Good response. Clear and well-structured."
+-        : verdict === "PARTIAL"
+-        ? "You answered but could add more detail."
+-        : "Try to write a complete sentence.",
+-    });
+-    setEvaluating(false);
++  const stageCount=LEVELS.indexOf(userLevel)<=1?2:LEVELS.indexOf(userLevel)===2?3:LEVELS.indexOf(userLevel)===3?4:5;
++  const stages=DETECTIVE_STAGES.slice(0,stageCount);
++  const [idx,setIdx]=useState(0);
++  const [text,setText]=useState("");
++  const [submitted,setSubmitted]=useState(false);
++  const [responses,setResponses]=useState([]);
++  const next=()=>{
++    const nr=[...responses,{stage:stages[idx].stage,response:text}];
++    setResponses(nr);
++    if(idx+1>=stages.length){onComplete(nr);}
++    else{setIdx(i=>i+1);setText("");setSubmitted(false);}
+   };
+-
+-  const next = () => {
+-    setResponses(prev => [...prev, { stage: stage.stage, response: current, verdict: feedback?.verdict }]);
+-    if (stageIndex + 1 >= stages.length) {
+-      onComplete(responses);
+-    } else {
+-      setStageIndex(i => i + 1);
+-      setCurrent("");
+-      setFeedback(null);
+-    }
+-  };
+-
+   return (
+     <div>
+-      <div style={{ fontSize: 13, color: "#888", marginBottom: 20 }}>
+-        Stage {stageIndex + 1} of {stages.length} ÔÇö {stage.targetLevel}
+-      </div>
+-      <div style={S.detectiveBubble}>
+-        <div style={S.detectiveLabel}>­ƒòÁ´©Å Detective Harris</div>
+-        <div style={{ fontStyle: "italic" }}>"{stage.line}"</div>
+-      </div>
+-      <textarea
+-        style={S.textArea}
+-        placeholder="Type your response here..."
+-        value={current}
+-        onChange={e => setCurrent(e.target.value)}
+-        disabled={!!feedback || evaluating}
+-      />
+-      {feedback && (
+-        <div style={S.feedbackBox(feedback.verdict === "CORRECT")}>
+-          {feedback.verdict === "CORRECT" ? "Ô£ô " : feedback.verdict === "PARTIAL" ? "ÔùÉ " : "Ô£ù "}
+-          {feedback.message}
+-        </div>
+-      )}
+-      {!feedback && (
+-        <button style={{ ...S.nextBtn, opacity: current.trim() && !evaluating ? 1 : 0.4 }} onClick={evaluate} disabled={!current.trim() || evaluating}>
+-          {evaluating ? "Evaluating..." : "Submit Response"}
+-        </button>
+-      )}
+-      {feedback && (
+-        <button style={S.nextBtn} onClick={next}>
+-          {stageIndex + 1 >= stages.length ? "Finish Test" : "Next Question ÔåÆ"}
+-        </button>
+-      )}
++      <div style={{fontSize:12,color:C.muted,marginBottom:18}}>Stage {idx+1} of {stages.length} ÔÇö Target: {stages[idx].targetLevel}</div>
++      <div style={S.bubble}><div style={S.bubbleLabel}>­ƒòÁ´©Å Detective Harris</div><div style={{fontStyle:"italic"}}>"{stages[idx].line}"</div></div>
++      <textarea style={S.textarea} placeholder="Type your response here..." value={text} onChange={e=>setText(e.target.value)} disabled={submitted}/>
++      {submitted&&<div style={S.fb(true)}>Ô£ô Response recorded.{idx+1<stages.length?" Continue to next question.":" Writing complete."}</div>}
++      {!submitted&&<button style={{...S.btn,...(!text.trim()?S.btnDim:{})}} onClick={()=>setSubmitted(true)} disabled={!text.trim()}>Submit Response</button>}
++      {submitted&&<button style={S.btn} onClick={next}>{idx+1>=stages.length?"See Results ÔåÆ":"Next Question ÔåÆ"}</button>}
+     </div>
+   );
+ }
+ 
+-// ÔöÇÔöÇÔöÇ RESULTS SCREEN ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+-function Results({ scores, totalScore }) {
+-  const finalLevel = () => {
+-    if (totalScore >= 90) return "C2";
+-    if (totalScore >= 80) return "C1";
+-    if (totalScore >= 66) return "B2";
+-    if (totalScore >= 46) return "B1";
+-    if (totalScore >= 26) return "A2";
+-    return "A1";
+-  };
+-
+-  const level = finalLevel();
+-  const descriptions = {
+-    A1: "You're just starting out. Every expert was once a beginner.",
+-    A2: "You know the basics. Now it's time to build.",
+-    B1: "You can communicate. Let's sharpen the details.",
+-    B2: "You're independent. Push toward fluency.",
+-    C1: "You're advanced. Work on mastery and precision.",
+-    C2: "Near-native. You think in English."
+-  };
+-
++function Results({ scores }) {
++  const vals=Object.values(scores);
++  const avg=vals.length?Math.round(vals.reduce((a,b)=>a+(b.pct||0),0)/vals.length):0;
++  const level=avg>=90?"C2":avg>=78?"C1":avg>=62?"B2":avg>=46?"B1":avg>=28?"A2":"A1";
++  const desc={A1:"Just starting out. Every expert was once a beginner.",A2:"You know the basics. Now it's time to build.",B1:"You can communicate. Let's sharpen the details.",B2:"You're independent. Push toward fluency.",C1:"You're advanced. Work on mastery and precision.",C2:"Near-native. You think in English."};
+   return (
+-    <div style={S.resultCard}>
+-      <div style={{ fontSize: 13, color: "#666", textTransform: "uppercase", letterSpacing: 2, marginBottom: 16 }}>Your English Level</div>
+-      <div style={S.levelDisplay}>{level}</div>
+-      <div style={S.resultLabel}>{descriptions[level]}</div>
+-
+-      <div style={S.skillGrid}>
+-        {Object.entries(scores).map(([section, data]) => (
+-          <div key={section} style={S.skillBox}>
+-            <div style={S.skillName}>{SECTION_LABELS[section] || section}</div>
+-            <div style={S.skillLevel}>{data.level || "ÔÇö"}</div>
+-            <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{data.correct}/{data.total} correct</div>
++    <div style={{textAlign:"center",padding:"36px 24px"}}>
++      <div style={{fontSize:12,color:C.muted,textTransform:"uppercase",letterSpacing:2,marginBottom:14}}>Your English Level</div>
++      <div style={S.resultLevel}>{level}</div>
++      <div style={{fontSize:14,color:C.muted,marginTop:10,marginBottom:36}}>{desc[level]}</div>
++      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:28}}>
++        {Object.entries(scores).map(([sec,data])=>(
++          <div key={sec} style={S.skillBox}>
++            <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>{SECTION_LABELS[sec]||sec}</div>
++            <div style={{fontSize:18,fontWeight:800,color:C.accentLight}}>{data.level||"ÔÇö"}</div>
++            <div style={{fontSize:11,color:"#555",marginTop:2}}>{data.correct||0}/{data.total||0}</div>
+           </div>
+         ))}
+       </div>
++      <button style={S.btn} onClick={()=>window.location.reload()}>Take the test again</button>
++    </div>
++  );
++}
+ 
+-      <button style={{ ...S.nextBtn, marginTop: 32 }} onClick={() => window.location.reload()}>
+-        Take the test again
+-      </button>
++// Passage subquestion component to avoid hooks-in-conditionals
++function PassageSection({ q, onNext, onScore, currentLevel }) {
++  const [subIdx, setSubIdx] = useState(0);
++  const [subSel, setSubSel] = useState(null);
++  const [subConf, setSubConf] = useState(false);
++  const subQ = q.questions[subIdx];
++  const last = subIdx >= q.questions.length - 1;
++  return (
++    <div>
++      <div style={S.passage}>{q.passage}</div>
++      <div style={S.question}>{subQ.q}</div>
++      {subQ.options.map((opt,i)=>{
++        const sel=subSel===i,ok=subConf&&i===subQ.answer,bad=subConf&&sel&&i!==subQ.answer;
++        return <button key={i} style={S.opt(sel,ok,bad,subConf)} onClick={()=>!subConf&&setSubSel(i)}><span style={S.optLetter(sel,ok,bad)}>{LETTERS[i]}</span>{opt}{ok&&<span style={{marginLeft:"auto"}}>Ô£ô</span>}{bad&&<span style={{marginLeft:"auto"}}>Ô£ù</span>}</button>;
++      })}
++      {subConf&&<div style={S.fb(subSel===subQ.answer)}>{subSel===subQ.answer?"Ô£ô Correct.":`Ô£ù Correct answer: "${subQ.options[subQ.answer]}"`}</div>}
++      {!subConf&&<button style={{...S.btn,...(subSel===null?S.btnDim:{})}} onClick={()=>{if(subSel===null)return;setSubConf(true);const ok=subSel===subQ.answer;onScore(ok,q.level);}}>Confirm answer</button>}
++      {subConf&&<button style={S.btn} onClick={()=>{if(last){onNext();}else{setSubIdx(i=>i+1);setSubSel(null);setSubConf(false);}}}>{last?"Next section ÔåÆ":"Next question ÔåÆ"}</button>}
+     </div>
+   );
+ }
+ 
+-// ÔöÇÔöÇÔöÇ MAIN COMPONENT ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+ export default function PlacementTest() {
+-  const [phase, setPhase] = useState("start"); // start | test | results
+-  const [sectionIndex, setSectionIndex] = useState(0);
+-  const [questionIndex, setQuestionIndex] = useState(0);
++  const [phase, setPhase] = useState("start");
++  const [secIdx, setSecIdx] = useState(0);
++  const [qIdx, setQIdx] = useState(0);
+   const [currentLevel, setCurrentLevel] = useState("A2");
+-  const [streak, setStreak] = useState(0); // positive = correct streak, negative = wrong streak
+-  const [sectionQuestions, setSectionQuestions] = useState([]);
++  const [streak, setStreak] = useState(0);
++  const [secQs, setSecQs] = useState([]);
+   const [selected, setSelected] = useState(null);
+   const [confirmed, setConfirmed] = useState(false);
+   const [scores, setScores] = useState({});
+-  const [sectionCorrect, setSectionCorrect] = useState(0);
++  const [secCorrect, setSecCorrect] = useState(0);
++  const [secTotal, setSecTotal] = useState(0);
+   const [totalScore, setTotalScore] = useState(0);
+ 
+-  const section = SECTIONS[sectionIndex];
+-
+-  const initSection = (sec, level) => {
+-    if (sec === "vocabulary") setSectionQuestions(getQuestionsForSection(VOCABULARY, level));
+-    else if (sec === "grammar") setSectionQuestions(getQuestionsForSection(GRAMMAR, level));
+-    else if (sec === "comprehension") {
+-      const li = LEVELS.indexOf(level);
+-      if (li >= 3) {
+-        const fw = FAKE_WORD_QUESTIONS.find(q => q.level === level) || FAKE_WORD_QUESTIONS[0];
+-        const mc = COMPREHENSION.filter(q => LEVELS.indexOf(q.level) <= li).slice(-1);
+-        setSectionQuestions([...mc, fw]);
+-      } else {
+-        setSectionQuestions(getQuestionsForSection(COMPREHENSION, level));
+-      }
++  const section = SECTION_ORDER[secIdx];
++
++  const initSection = (sec, lvl) => {
++    if(sec==="grammar") setSecQs(pickQuestions(GRAMMAR,lvl));
++    else if(sec==="vocabulary") setSecQs(pickQuestions(VOCABULARY,lvl));
++    else if(sec==="reading") setSecQs(pickPassage(READING,lvl));
++    else if(sec==="dialogue") setSecQs(pickPassage(DIALOGUE,lvl));
++    else if(sec==="listening") setSecQs(pickQuestions(LISTENING,lvl));
++    else if(sec==="writing"){
++      const li=LEVELS.indexOf(lvl);
++      const qs=[];
++      if(li>=3){const fw=FAKE_WORD_HUNT.find(q=>q.level===lvl)||FAKE_WORD_HUNT[FAKE_WORD_HUNT.length-1];qs.push(fw);}
++      qs.push({id:"detective",type:"detective"});
++      setSecQs(qs);
+     }
+-    else if (sec === "listening") setSectionQuestions(getQuestionsForSection(LISTENING, level));
+-    else if (sec === "writing") setSectionQuestions([{ id: "writing", type: "detective" }]);
+-  };
+-
+-  const startTest = () => {
+-    setPhase("test");
+-    initSection(SECTIONS[0], "A2");
+-    setSectionIndex(0);
+-    setQuestionIndex(0);
+-    setCurrentLevel("A2");
+   };
+ 
+-  const handleMCAnswer = (option) => {
+-    if (confirmed) return;
+-    setSelected(option);
++  const updateAdaptive = (correct) => {
++    // CONSECUTIVE only ÔÇö break resets streak to 1 or -1
++    let ns;
++    if(correct){ ns = streak>0 ? streak+1 : 1; }
++    else { ns = streak<0 ? streak-1 : -1; }
++    let nl = currentLevel;
++    if(ns>=2){ const li=LEVELS.indexOf(currentLevel); if(li<LEVELS.length-1)nl=LEVELS[li+1]; ns=0; }
++    else if(ns<=-2){ const li=LEVELS.indexOf(currentLevel); if(li>0)nl=LEVELS[li-1]; ns=0; }
++    setStreak(ns);
++    setCurrentLevel(nl);
++    return nl;
+   };
+ 
+-  const confirmAnswer = () => {
+-    if (!selected || confirmed) return;
+-    setConfirmed(true);
+-    const q = sectionQuestions[questionIndex];
+-    const correct = selected === q.answer;
+-
+-    const points = { A1: 10, A2: 20, B1: 35, B2: 50, C1: 70, C2: 90 }[q.level] || 20;
+-    if (correct) setTotalScore(s => s + points);
+-
+-    const newStreak = correct ? (streak >= 0 ? streak + 1 : 1) : (streak <= 0 ? streak - 1 : -1);
+-    setStreak(newStreak);
+-    if (correct) setSectionCorrect(s => s + 1);
+-
+-    // Adaptive level change
+-    if (newStreak >= 2) {
+-      const li = LEVELS.indexOf(currentLevel);
+-      if (li < LEVELS.length - 1) setCurrentLevel(LEVELS[li + 1]);
+-      setStreak(0);
+-    } else if (newStreak <= -2) {
+-      const li = LEVELS.indexOf(currentLevel);
+-      if (li > 0) setCurrentLevel(LEVELS[li - 1]);
+-      setStreak(0);
+-    }
++  const recordScore = (correct, level) => {
++    if(correct){ const pts={A1:10,A2:20,B1:35,B2:50,C1:70,C2:90}[level]||20; setTotalScore(s=>s+pts); setSecCorrect(c=>c+1); }
++    setSecTotal(t=>t+1);
++    return updateAdaptive(correct);
+   };
+ 
+-  const nextQuestion = () => {
+-    const isLastQuestion = questionIndex >= sectionQuestions.length - 1;
+-    if (isLastQuestion || sectionQuestions.length === 0) {
+-      // Record section score
+-      setScores(prev => ({
+-        ...prev,
+-        [section]: { correct: sectionCorrect, total: sectionQuestions.length, level: currentLevel }
+-      }));
+-      setSectionCorrect(0);
+-
+-      if (sectionIndex >= SECTIONS.length - 1) {
+-        setPhase("results");
+-      } else {
+-        const nextSection = SECTIONS[sectionIndex + 1];
+-        setSectionIndex(i => i + 1);
+-        setQuestionIndex(0);
+-        setSelected(null);
+-        setConfirmed(false);
+-        initSection(nextSection, currentLevel);
++  const nextQuestion = (overrideLevel) => {
++    const lvl = overrideLevel||currentLevel;
++    const last = qIdx >= secQs.length-1;
++    if(last){
++      setScores(p=>({...p,[section]:{correct:secCorrect,total:secTotal,pct:secTotal>0?Math.round((secCorrect/secTotal)*100):0,level:currentLevel}}));
++      setSecCorrect(0); setSecTotal(0);
++      if(secIdx>=SECTION_ORDER.length-1){ setPhase("results"); }
++      else{
++        const ns=SECTION_ORDER[secIdx+1];
++        setSecIdx(i=>i+1); setQIdx(0); setSelected(null); setConfirmed(false);
++        initSection(ns,lvl);
+       }
+     } else {
+-      setQuestionIndex(i => i + 1);
+-      setSelected(null);
+-      setConfirmed(false);
++      setQIdx(i=>i+1); setSelected(null); setConfirmed(false);
+     }
+   };
+ 
+-  const progress = phase === "test"
+-    ? ((sectionIndex * 20) + ((questionIndex / Math.max(sectionQuestions.length, 1)) * 20))
+-    : phase === "results" ? 100 : 0;
+-
+-  const currentQ = sectionQuestions[questionIndex];
+-  const isListening = section === "listening";
+-  const isWriting = section === "writing";
+-  const isFakeWord = currentQ?.type === "fake_word_hunt";
+-  const isDetective = currentQ?.type === "detective";
+-
+-  if (phase === "start") {
+-    return (
+-      <div style={S.wrap}>
+-        <div style={S.header}>
+-          <div style={S.logo}>engrow</div>
+-        </div>
+-        <div style={{ ...S.card, ...S.startCard }}>
+-          <div style={S.startTitle}>Find your level.</div>
+-          <p style={{ ...S.startSub, color: "#888", fontSize: 15, lineHeight: 1.7, maxWidth: 400, margin: "0 auto 32px" }}>
+-            25 questions across vocabulary, grammar, comprehension, listening, and writing.
+-            Gets harder as you go. Takes about 15 minutes.
+-          </p>
+-          <div style={S.infoRow}>
+-            {["5 sections", "Adaptive difficulty", "~15 minutes", "A1 ÔåÆ C2"].map(t => (
+-              <div key={t} style={S.infoPill}>{t}</div>
+-            ))}
+-          </div>
+-          <button style={S.startBtn} onClick={startTest}>Start the test ÔåÆ</button>
+-        </div>
+-      </div>
+-    );
+-  }
+-
+-  if (phase === "results") {
+-    return (
+-      <div style={S.wrap}>
+-        <div style={S.header}><div style={S.logo}>engrow</div></div>
+-        <div style={S.card}>
+-          <Results scores={scores} totalScore={totalScore} />
++  const start = () => {
++    setPhase("test");
++    initSection(SECTION_ORDER[0],"A2");
++  };
++
++  const progress = phase==="test"?(secIdx/SECTION_ORDER.length)*100+(qIdx/Math.max(secQs.length,1))*(100/SECTION_ORDER.length):phase==="results"?100:0;
++  const q = secQs[qIdx];
++  const isPassage = q && q.questions;
++  const isFakeWord = q && q.type==="fake_word_hunt";
++  const isDetective = q && q.type==="detective";
++  const isListening = section==="listening" && q && q.audio;
++  const isMC = q && !isPassage && !isFakeWord && !isDetective && !isListening;
++
++  if(phase==="start") return (
++    <div style={S.wrap}>
++      <div style={S.header}><div style={S.logo}>engrow</div></div>
++      <div style={{...S.card,textAlign:"center",padding:"44px 28px"}}>
++        <div style={{fontSize:32,fontWeight:900,letterSpacing:-1.5,color:"#f0eeff",marginBottom:12}}>Find your level.</div>
++        <p style={{fontSize:14,color:C.muted,lineHeight:1.8,maxWidth:380,margin:"0 auto 32px"}}>6 sections. Grammar, vocabulary, reading, dialogue, listening, and writing. Gets harder as you answer correctly. Takes about 20 minutes.</p>
++        <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginBottom:36}}>
++          {["6 sections","Fully adaptive","~20 minutes","A1 ÔåÆ C2"].map(t=><div key={t} style={S.pill}>{t}</div>)}
+         </div>
++        <button style={S.btn} onClick={start}>Start the test ÔåÆ</button>
+       </div>
+-    );
+-  }
++    </div>
++  );
++
++  if(phase==="results") return (
++    <div style={S.wrap}>
++      <div style={S.header}><div style={S.logo}>engrow</div></div>
++      <div style={S.card}><Results scores={scores}/></div>
++    </div>
++  );
+ 
+   return (
+     <div style={S.wrap}>
+       <div style={S.header}>
+         <div style={S.logo}>engrow</div>
+-        <div style={{ fontSize: 13, color: "#555", fontWeight: 500 }}>
+-          {sectionIndex + 1} / {SECTIONS.length}
+-        </div>
+-      </div>
+-
+-      <div style={S.progressBar}>
+-        <div style={S.progressFill(progress)} />
++        <div style={{fontSize:12,color:C.muted}}>{secIdx+1} / {SECTION_ORDER.length} ÔÇö {SECTION_LABELS[section]}</div>
+       </div>
+-
++      <div style={S.bar}><div style={S.barFill(progress)}/></div>
+       <div style={S.card}>
+-        <div>
+-          <span style={S.sectionTag}>{SECTION_LABELS[section]}</span>
+-          <span style={S.levelBadge}>{currentLevel}</span>
+-        </div>
++        <div style={{marginBottom:4}}><span style={S.tag}>{SECTION_LABELS[section]}</span><span style={S.lvl}>{currentLevel}</span></div>
++
++        {isPassage && q && (
++          <PassageSection q={q} currentLevel={currentLevel}
++            onScore={(ok,level)=>recordScore(ok,level)}
++            onNext={()=>nextQuestion()}
++          />
++        )}
+ 
+-        {/* LISTENING */}
+-        {isListening && currentQ && (
++        {isListening && (
+           <div>
+-            <div style={{ background: "#1a1a27", borderRadius: 14, padding: "20px", marginBottom: 24, border: "1px solid #2a2a3a" }}>
+-              <div style={{ fontSize: 12, color: "#7c3aed", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>­ƒÄº Listen carefully</div>
+-              <audio
+-                controls
+-                src={`https://engrow-1.onrender.com${currentQ.audio}`}
+-                style={{ width: "100%", borderRadius: 8, accentColor: "#7c3aed" }}
+-              />
+-              <div style={{ fontSize: 12, color: "#555", marginTop: 10 }}>You can replay the audio as many times as you need.</div>
++            <div style={{background:C.faint,borderRadius:12,padding:"18px",marginBottom:22,border:`1px solid ${C.border}`}}>
++              <div style={{fontSize:10,color:C.accent,fontWeight:700,textTransform:"uppercase",letterSpacing:1.5,marginBottom:10}}>­ƒÄº Listen carefully ÔÇö replay as many times as you need</div>
++              <audio controls src={`https://engrow-1.onrender.com${q.audio}`} style={{width:"100%",accentColor:C.accent}}/>
+             </div>
+-            <div style={S.question}>{currentQ.question}</div>
+-            {currentQ.options.map((opt, i) => {
+-              const isSelected = selected === i;
+-              const isCorrect = confirmed && i === currentQ.answer;
+-              const isWrong = confirmed && isSelected && i !== currentQ.answer;
+-              return (
+-                <button key={i} style={S.optionBtn(isSelected, isCorrect, isWrong, confirmed)} onClick={() => !confirmed && setSelected(i)}>
+-                  <span style={S.optionLetter(isSelected, isCorrect, isWrong)}>{LETTERS[i]}</span>
+-                  {opt}
+-                  {isCorrect && <span style={{ marginLeft: "auto" }}>Ô£ô</span>}
+-                  {isWrong && <span style={{ marginLeft: "auto" }}>Ô£ù</span>}
+-                </button>
+-              );
++            <div style={S.question}>{q.question}</div>
++            {q.options.map((opt,i)=>{
++              const sel=selected===i,ok=confirmed&&i===q.answer,bad=confirmed&&sel&&i!==q.answer;
++              return <button key={i} style={S.opt(sel,ok,bad,confirmed)} onClick={()=>!confirmed&&setSelected(i)}><span style={S.optLetter(sel,ok,bad)}>{LETTERS[i]}</span>{opt}{ok&&<span style={{marginLeft:"auto"}}>Ô£ô</span>}{bad&&<span style={{marginLeft:"auto"}}>Ô£ù</span>}</button>;
+             })}
+-            {confirmed && (
+-              <div style={S.feedbackBox(selected === currentQ.answer)}>
+-                {selected === currentQ.answer ? "Ô£ô Correct." : `Ô£ù The correct answer is: "${currentQ.options[currentQ.answer]}"`}
+-              </div>
+-            )}
+-            {!confirmed && (
+-              <button style={{ ...S.nextBtn, opacity: selected !== null ? 1 : 0.35 }} onClick={() => {
+-                if (selected === null) return;
+-                setConfirmed(true);
+-                const correct = selected === currentQ.answer;
+-                const points = { A1: 10, A2: 20, B1: 35, B2: 50, C1: 70, C2: 90 }[currentQ.level] || 20;
+-                if (correct) { setTotalScore(s => s + points); setSectionCorrect(c => c + 1); }
+-                const newStreak = correct ? (streak >= 0 ? streak + 1 : 1) : (streak <= 0 ? streak - 1 : -1);
+-                setStreak(newStreak);
+-                if (newStreak >= 2) { const li = LEVELS.indexOf(currentLevel); if (li < LEVELS.length - 1) setCurrentLevel(LEVELS[li + 1]); setStreak(0); }
+-                else if (newStreak <= -2) { const li = LEVELS.indexOf(currentLevel); if (li > 0) setCurrentLevel(LEVELS[li - 1]); setStreak(0); }
+-              }} disabled={selected === null}>
+-                Confirm answer
+-              </button>
+-            )}
+-            {confirmed && (
+-              <button style={S.nextBtn} onClick={nextQuestion}>
+-                {questionIndex >= sectionQuestions.length - 1 ? `Next: ${SECTION_LABELS[SECTIONS[sectionIndex + 1]] || "Results"} ÔåÆ` : "Next question ÔåÆ"}
+-              </button>
+-            )}
++            {confirmed&&<div style={S.fb(selected===q.answer)}>{selected===q.answer?"Ô£ô Correct.":`Ô£ù Correct answer: "${q.options[q.answer]}"`}</div>}
++            {!confirmed&&<button style={{...S.btn,...(selected===null?S.btnDim:{})}} onClick={()=>{if(selected===null)return;setConfirmed(true);recordScore(selected===q.answer,q.level);}}>Confirm answer</button>}
++            {confirmed&&<button style={S.btn} onClick={()=>nextQuestion()}>{qIdx>=secQs.length-1?"Next section ÔåÆ":"Next question ÔåÆ"}</button>}
+           </div>
+         )}
+ 
+-        {/* DETECTIVE WRITING */}
+-        {isDetective && (
++        {isFakeWord && (
+           <div>
+-            <div style={S.question}>The Missing Briefcase ÔÇö Detective Roleplay</div>
+-            <DetectiveWriting userLevel={currentLevel} onComplete={(responses) => {
+-              setScores(prev => ({ ...prev, writing: { correct: responses.filter(r => r.verdict === "CORRECT").length, total: responses.length, level: currentLevel } }));
++            <div style={S.question}>{q.instructions}</div>
++            <FakeWordHunt q={q} onDone={(hits,total)=>{
++              const pts={B2:50,C1:70,C2:90}[q.level]||50;
++              setTotalScore(s=>s+Math.round((hits/total)*pts));
++              setSecCorrect(c=>c+(hits===total?1:0));
++              setSecTotal(t=>t+1);
+               nextQuestion();
+-            }} />
++            }}/>
+           </div>
+         )}
+ 
+-        {/* FAKE WORD HUNT */}
+-        {isFakeWord && !isDetective && (
++        {isDetective && (
+           <div>
+-            <div style={S.question}>{currentQ.instructions}</div>
+-            <FakeWordHunt question={currentQ} onAnswer={({ correct, total }) => {
+-              const points = { B2: 50, C1: 70, C2: 90 }[currentQ.level] || 50;
+-              setTotalScore(s => s + Math.round((correct / total) * points));
+-              setSectionCorrect(c => c + (correct === total ? 1 : 0));
+-              setConfirmed(true);
+-            }} />
+-            {confirmed && <button style={S.nextBtn} onClick={nextQuestion}>Next ÔåÆ</button>}
++            <div style={S.question}>The Missing Briefcase ÔÇö Answer Detective Harris's questions.</div>
++            <DetectiveWriting userLevel={currentLevel} onComplete={responses=>{
++              setScores(p=>({...p,writing:{correct:responses.length,total:responses.length,pct:80,level:currentLevel}}));
++              nextQuestion();
++            }}/>
+           </div>
+         )}
+ 
+-        {/* STANDARD MC */}
+-        {!isListening && !isDetective && !isFakeWord && currentQ && (
++        {isMC && (
+           <div>
+-            {currentQ.passage && <div style={S.passage}>{currentQ.passage}</div>}
+-            <div style={S.question}>{currentQ.question}</div>
+-
+-            {currentQ.options.map((opt, i) => {
+-              const isSelected = selected === opt;
+-              const isCorrect = confirmed && opt === currentQ.answer;
+-              const isWrong = confirmed && isSelected && opt !== currentQ.answer;
+-              return (
+-                <button
+-                  key={opt}
+-                  style={S.optionBtn(isSelected, isCorrect, isWrong, confirmed)}
+-                  onClick={() => handleMCAnswer(opt)}
+-                >
+-                  <span style={S.optionLetter(isSelected, isCorrect, isWrong)}>{LETTERS[i]}</span>
+-                  {opt}
+-                  {isCorrect && <span style={{ marginLeft: "auto", fontSize: 16 }}>Ô£ô</span>}
+-                  {isWrong && <span style={{ marginLeft: "auto", fontSize: 16 }}>Ô£ù</span>}
+-                </button>
+-              );
++            <div style={S.question}>{q.question}</div>
++            {q.options.map((opt,i)=>{
++              const sel=selected===opt,ok=confirmed&&opt===q.answer,bad=confirmed&&sel&&opt!==q.answer;
++              return <button key={opt} style={S.opt(sel,ok,bad,confirmed)} onClick={()=>!confirmed&&setSelected(opt)}><span style={S.optLetter(sel,ok,bad)}>{LETTERS[i]}</span>{opt}{ok&&<span style={{marginLeft:"auto"}}>Ô£ô</span>}{bad&&<span style={{marginLeft:"auto"}}>Ô£ù</span>}</button>;
+             })}
+-
+-            {confirmed && (
+-              <div style={S.feedbackBox(selected === currentQ.answer)}>
+-                {selected === currentQ.answer
+-                  ? "Ô£ô Correct."
+-                  : `Ô£ù The correct answer is: "${currentQ.answer}"`}
+-              </div>
+-            )}
+-
+-            {!confirmed && (
+-              <button
+-                style={{ ...S.nextBtn, opacity: selected ? 1 : 0.35 }}
+-                onClick={confirmAnswer}
+-                disabled={!selected}
+-              >
+-                Confirm answer
+-              </button>
+-            )}
+-
+-            {confirmed && (
+-              <button style={S.nextBtn} onClick={nextQuestion}>
+-                {questionIndex >= sectionQuestions.length - 1 ? `Next: ${SECTION_LABELS[SECTIONS[sectionIndex + 1]] || "Results"} ÔåÆ` : "Next question ÔåÆ"}
+-              </button>
+-            )}
++            {confirmed&&<div style={S.fb(selected===q.answer)}>{selected===q.answer?"Ô£ô Correct.":`Ô£ù Correct answer: "${q.answer}"`}</div>}
++            {!confirmed&&<button style={{...S.btn,...(!selected?S.btnDim:{})}} onClick={()=>{if(!selected)return;setConfirmed(true);recordScore(selected===q.answer,q.level);}}>Confirm answer</button>}
++            {confirmed&&<button style={S.btn} onClick={()=>nextQuestion()}>{qIdx>=secQs.length-1?`Next: ${SECTION_LABELS[SECTION_ORDER[secIdx+1]]||"Results"} ÔåÆ`:"Next question ÔåÆ"}</button>}
+           </div>
+         )}
+       </div>
